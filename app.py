@@ -95,23 +95,54 @@ if prompt := st.chat_input(placeholder):
   with st.chat_message("assistant"):
     with st.spinner("SkyeChat đang suy nghĩ..."):
       try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
+       url = (
+    "https://generativelanguage.googleapis.com/"
+    "v1beta/models/gemini-2.0-flash:generateContent"
+)
 
-        contents = []
-        for msg in st.session_state.messages:
-          role_name = "user" if msg["role"] == "user" else "model"
-          contents.append(
-              {"role": role_name, "parts": [{"text": msg["content"]}]}
-          )
+contents = []
 
-        sys_prompt = SYSTEM_PROMPT_VI if is_vi else SYSTEM_PROMPT_EN
-        payload = {
-            "contents": contents,
-            "systemInstruction": {"parts": [{"text": sys_prompt}]},
+for msg in st.session_state.messages:
+    role_name = "user" if msg["role"] == "user" else "model"
+
+    contents.append(
+        {
+            "role": role_name,
+            "parts": [
+                {
+                    "text": msg["content"]
+                }
+            ]
         }
+    )
 
-        headers = {"Content-Type": "application/json"}
-        response = requests.post(url, json=payload, headers=headers)
+
+sys_prompt = SYSTEM_PROMPT_VI if is_vi else SYSTEM_PROMPT_EN
+
+payload = {
+    "contents": contents,
+    "systemInstruction": {
+        "parts": [
+            {
+                "text": sys_prompt
+            }
+        ]
+    }
+}
+
+
+headers = {
+    "Content-Type": "application/json",
+    "x-goog-api-key": GEMINI_API_KEY
+}
+
+
+response = requests.post(
+    url,
+    json=payload,
+    headers=headers,
+    timeout=60
+)
         res_data = response.json()
 
         if response.status_code == 200:
