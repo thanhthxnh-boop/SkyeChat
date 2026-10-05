@@ -6,12 +6,13 @@ import google.generativeai as genai
 # 0. CẤU HÌNH GEMINI API KEY
 # ==========================================
 # Dán API Key Gemini của em vào giữa 2 dấu ngoặc kép bên dưới:
+# ==========================================
+# 0. CẤU HÌNH GEMINI API KEY
+# ==========================================
 GEMINI_API_KEY = "AQ.Ab8RN6L1Bm4Vv2BJkJWLKTpmqhApxWXceHjuBLwfor6_vBBm8A"
 
-if GEMINI_API_KEY and GEMINI_API_KEY != "AQ.Ab8RN6L1Bm4Vv2BJkJWLKTpmqhApxWXceHjuBLwfor6_vBBm8A" :
+if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
-else :
-    st.error("Vui lòng dán API Key Gemini vào dòng GEMINI_API_KEY trong file app.py!")
 # ==========================================
 # 1. CẤU HÌNH TRANG CHUNG
 # ==========================================
