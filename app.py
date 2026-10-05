@@ -2,48 +2,78 @@ import streamlit as st
 import requests
 
 # 1. Cấu hình trang Streamlit
-st.set_page_config(page_title="SkyeChat", page_icon="☁️", layout="centered")
+st.set_page_config(page_title="SkyeChat - Sơ cứu tâm lý học đường", page_icon="☁️", layout="wide")
 
-# 2. Khai báo API Key (AQ.Ab8RN6I9wtOccQSGABf5TWTsNLrPoU1O3yRruqPAGpAFqzO2dA)
-GEMINI_API_KEY = "AQ..."  # Thay bằng mã API Key của em
+# 2. Mã API Key (Dùng mã AQ... của em)
+GEMINI_API_KEY = "AQ.Ab8RN6I9wtOccQSGABf5TWTsNLrPoU1O3yRruqPAGpAFqzO2dA"
 
-# 3. System Prompt
-SYSTEM_PROMPT = """Bạn là SkyeChat, một trợ lý AI thân thiện, cởi mở, không phán xét, chuyên hỗ trợ tâm lý và lắng nghe người dùng."""
+# 3. System Prompts (Hỗ trợ đa ngôn ngữ)
+SYSTEM_PROMPT_VI = """Bạn là SkyeChat, một trợ lý AI thân thiện, cởi mở, không phán xét, chuyên hỗ trợ sơ cứu tâm lý học đường và lắng nghe học sinh, sinh viên. Hãy lắng nghe và phản hồi bằng tiếng Việt ấm áp, chu đáo."""
 
-st.title("☁️ SkyeChat")
-st.caption("Ứng dụng AI hỗ trợ sơ cứu tâm lý học đường.")
+SYSTEM_PROMPT_EN = """You are SkyeChat, a friendly, open, non-judgmental AI assistant specializing in school psychological first aid and listening to students. Respond with care and empathy."""
 
-# 4. Khởi tạo lịch sử chat
+# 4. Khởi tạo Session State
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# 5. Hiển thị lại các tin nhắn cũ
+if "nickname" not in st.session_state:
+    st.session_state.nickname = "THANHAI"
+
+# 5. Thanh Sidebar bên trái (Đầy đủ chức năng)
+with st.sidebar:
+    st.title("⚙️ Cấu hình SkyeChat")
+    
+    # Quản lý biệt danh
+    nickname_input = st.text_input("Biệt danh của bạn:", value=st.session_state.nickname)
+    if nickname_input:
+        st.session_state.nickname = nickname_input
+        
+    st.success(f"👋 Chào mừng **{st.session_state.nickname}**!")
+    
+    # Chọn ngôn ngữ
+    lang = st.radio("Ngôn ngữ / Language:", ["Tiếng Việt 🇻🇳", "English 🇬🇧"])
+    is_vi = "Tiếng Việt" in lang
+    
+    st.divider()
+    
+    # Nút xóa lịch sử chat
+    if st.button("🗑️ Xóa lịch sử trò chuyện"):
+        st.session_state.messages = []
+        st.rerun()
+
+    st.markdown("---")
+    st.warning("⚠️ **Lưu ý an toàn:** SkyeChat hỗ trợ sơ cứu tâm lý ban đầu. Trong trường hợp khủng hoảng nghiêm trọng, vui lòng liên hệ ngay người thân hoặc tổng đài bảo vệ trẻ em **111**.")
+
+# 6. Khung chat chính
+st.title("☁️ SkyeChat")
+st.caption(f"Xin chào **{st.session_state.nickname}**! Lời khuyên & lắng nghe tâm lý học đường.")
+
+# Hiển thị các tin nhắn đã gửi
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 6. Xử lý khi người dùng gửi tin nhắn
-if prompt := st.chat_input("Hãy chia sẻ với SkyeChat..."):
-    # Hiển thị tin nhắn người dùng
+# 7. Nhập tin nhắn & Gọi Gemini REST API
+placeholder = "Hãy chia sẻ với SkyeChat..." if is_vi else "Share your thoughts with SkyeChat..."
+if prompt := st.chat_input(placeholder):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Gọi Gemini REST API
     with st.chat_message("assistant"):
         with st.spinner("SkyeChat đang suy nghĩ..."):
             try:
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
                 
-                # Chuẩn bị dữ liệu lịch sử cuộc trò chuyện
                 contents = []
                 for msg in st.session_state.messages:
                     role_name = "user" if msg["role"] == "user" else "model"
                     contents.append({"role": role_name, "parts": [{"text": msg["content"]}]})
 
+                sys_prompt = SYSTEM_PROMPT_VI if is_vi else SYSTEM_PROMPT_EN
                 payload = {
                     "contents": contents,
-                    "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]}
+                    "systemInstruction": {"parts": [{"text": sys_prompt}]}
                 }
 
                 headers = {"Content-Type": "application/json"}
@@ -56,7 +86,7 @@ if prompt := st.chat_input("Hãy chia sẻ với SkyeChat..."):
                     st.session_state.messages.append({"role": "assistant", "content": bot_reply})
                 else:
                     err_msg = res_data.get("error", {}).get("message", "Lỗi không xác định")
-                    st.error(f"❌ Lỗi từ Gemini API ({response.status_code}): {err_msg}")
+                    st.error(f"❌ Lỗi API ({response.status_code}): {err_msg}")
 
             except Exception as e:
                 st.error(f"❌ Lỗi kết nối: {e}")
