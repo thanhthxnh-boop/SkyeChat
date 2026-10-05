@@ -2,7 +2,10 @@ import streamlit as st
 import requests
 
 # 1. Cấu hình trang Streamlit
-st.set_page_config(page_title="SkyeChat - Sơ cứu tâm lý học đường", page_icon="☁️", layout="wide")
+try:
+    st.set_page_config(page_title="SkyeChat - Sơ cứu tâm lý học đường", page_icon="logo.jpg", layout="wide")
+except Exception:
+    st.set_page_config(page_title="SkyeChat - Sơ cứu tâm lý học đường", page_icon="☁️", layout="wide")
 
 # 2. Mã API Key (Dùng mã AQ... của em)
 GEMINI_API_KEY = "AQ.Ab8RN6I9wtOccQSGABf5TWTsNLrPoU1O3yRruqPAGpAFqzO2dA"
@@ -17,13 +20,19 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if "nickname" not in st.session_state:
-    st.session_state.nickname = "THANHAI"
+    st.session_state.nickname = "Bạn"
 
-# 5. Thanh Sidebar bên trái (Đầy đủ chức năng)
+# 5. Thanh Sidebar bên trái
 with st.sidebar:
+    # Hiển thị Logo trên Sidebar
+    try:
+        st.image("logo.jpg", width=150)
+    except Exception:
+        pass  # Tự động bỏ qua nếu chưa tìm thấy file logo.jpg
+
     st.title("⚙️ Cấu hình SkyeChat")
     
-    # Quản lý biệt danh
+    # Quản lý biệt danh người dùng
     nickname_input = st.text_input("Biệt danh của bạn:", value=st.session_state.nickname)
     if nickname_input:
         st.session_state.nickname = nickname_input
@@ -36,6 +45,9 @@ with st.sidebar:
     
     st.divider()
     
+    # Thông tin nhà phát triển
+    st.markdown("👨‍💻 **Nhà phát triển:** ThanhAI")
+    
     # Nút xóa lịch sử chat
     if st.button("🗑️ Xóa lịch sử trò chuyện"):
         st.session_state.messages = []
@@ -44,9 +56,17 @@ with st.sidebar:
     st.markdown("---")
     st.warning("⚠️ **Lưu ý an toàn:** SkyeChat hỗ trợ sơ cứu tâm lý ban đầu. Trong trường hợp khủng hoảng nghiêm trọng, vui lòng liên hệ ngay người thân hoặc tổng đài bảo vệ trẻ em **111**.")
 
-# 6. Khung chat chính
-st.title("☁️ SkyeChat")
-st.caption(f"Xin chào **{st.session_state.nickname}**! Lời khuyên & lắng nghe tâm lý học đường.")
+# 6. Khung chat chính (Logo hiển thị cạnh Tiêu đề)
+col1, col2 = st.columns([1, 8])
+with col1:
+    try:
+        st.image("logo.jpg", width=70)
+    except Exception:
+        st.write("☁️")
+with col2:
+    st.title("SkyeChat")
+
+st.caption("Trợ lý AI hỗ trợ sơ cứu tâm lý học đường | Phát triển bởi **ThanhAI**")
 
 # Hiển thị các tin nhắn đã gửi
 for message in st.session_state.messages:
