@@ -9,7 +9,7 @@ import google.generativeai as genai
 # ==========================================
 # 0. CẤU HÌNH GEMINI API KEY
 # ==========================================
-GEMINI_API_KEY = "AQ.Ab8RN6L1Bm4Vv2BJkJWLKTpmqhApxWXceHjuBLwfor6_vBBm8A"
+GEMINI_API_KEY = "AQ.Ab8RN6I4evp8JpU9GHxHyxdR5Cr-yKKTTYHJcJerarWGyuELqg"
 
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
