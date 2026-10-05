@@ -192,7 +192,7 @@ else:
                 # 1. Thiết lập System Prompt chỉ dẫn tâm lý cho Gemini
                 sys_instruction = SYSTEM_PROMPT_VI if is_vi else SYSTEM_PROMPT_EN
                 model = genai.GenerativeModel(
-                    model_name="gemini-1.5-flash",
+                   model_name="gemini-2.0-flash",
                     system_instruction=sys_instruction
                 )
 
