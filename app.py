@@ -18,7 +18,7 @@ logo_file = next(
     None,
 )
 st.set_page_config(
-    page_title="SkyeChat | Góc nhỏ để sẻ chia",
+    page_title="SkyeChat - Trợ lý AI hỗ trợ tâm lý học đường | ThanhAI",
     page_icon=str(logo_file) if logo_file else "☁️",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -687,6 +687,19 @@ else:
         """,
         unsafe_allow_html=True,
     )
+
+    if is_vi:
+        st.header("Trợ lý AI hỗ trợ tâm lý học đường")
+        st.text(
+            "SkyeChat là không gian lắng nghe dành cho học sinh, sinh viên, giúp bạn chia sẻ cảm xúc "
+            "và tìm bước hỗ trợ ban đầu một cách nhẹ nhàng, không phán xét."
+        )
+    else:
+        st.header("AI support for school wellbeing")
+        st.text(
+            "SkyeChat is a gentle, non-judgmental listening space for students to share how they feel "
+            "and explore helpful first steps."
+        )
 
     if not st.session_state.messages:
         if is_vi:
