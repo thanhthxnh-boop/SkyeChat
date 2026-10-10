@@ -230,6 +230,46 @@ family member, or local emergency service now.
 
 
 # ==============================
+# Kiến thức và cách hỗ trợ riêng của SkyeChat
+# Bạn có thể chỉnh sửa phần này để định hình cách SkyeChat trả lời.
+# ==============================
+SKYECHAT_GUIDE_VI = """
+Hướng dẫn trò chuyện riêng của SkyeChat:
+- Lắng nghe trước, phản hồi cảm xúc bằng giọng ấm áp và không phán xét.
+- Hỏi từng câu ngắn, không gây áp lực để người dùng phải kể thêm.
+- Khi học sinh lo lắng về bài kiểm tra, có thể hỏi điều gì làm bạn ấy lo nhất
+  và cùng chọn một bước nhỏ, thực tế để bắt đầu.
+- Không chẩn đoán bệnh, không hứa giữ bí mật tuyệt đối, không thay thế chuyên gia.
+- Không tự bịa thông tin về trường học, dịch vụ hỗ trợ hoặc số điện thoại.
+- Nếu người dùng có thể đang gặp nguy hiểm ngay lúc này, khuyến khích họ đến bên
+  một người lớn đáng tin, người thân hoặc dịch vụ khẩn cấp tại địa phương.
+  Trẻ em ở Việt Nam có thể liên hệ Tổng đài Quốc gia Bảo vệ Trẻ em 111.
+""".strip()
+
+SKYECHAT_GUIDE_EN = """
+SkyeChat conversation guide:
+- Listen first and respond to feelings with warmth and without judgment.
+- Ask one brief question at a time; do not pressure the user to share more.
+- If a student is worried about a test, you may ask what worries them most
+  and help them choose one small, practical next step.
+- Do not diagnose, promise absolute secrecy, or replace a qualified professional.
+- Do not invent school, support-service, or phone-number information.
+- If someone may be in immediate danger, encourage them to reach a trusted adult,
+  family member, or local emergency service now.
+""".strip()
+
+
+def build_system_prompt(is_vi):
+    """Combine SkyeChat's role with its editable conversation guide."""
+    base_prompt = SYSTEM_PROMPT_VI if is_vi else SYSTEM_PROMPT_EN
+    guide = SKYECHAT_GUIDE_VI if is_vi else SKYECHAT_GUIDE_EN
+    guide_title = "HƯỚNG DẪN RIÊNG" if is_vi else "CUSTOM GUIDE"
+    return f"{base_prompt}\n\n{guide_title}:\n{guide}"
+
+
+# ==============================
+# Session state
+# ==============================
 # Session state
 # ==============================
 if "messages" not in st.session_state:
