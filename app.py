@@ -24,6 +24,11 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+try:
+    IS_DARK_THEME = st.context.theme.type == "dark"
+except Exception:
+    IS_DARK_THEME = False
+
 API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 DEFAULT_MODEL = "gemini-3.8-flash"
 FALLBACK_MODEL = "gemini-3.6-flash"
@@ -167,15 +172,41 @@ st.markdown(
     [data-testid="stChatInput"] button:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(70,143,88,.36); }
     div[data-testid="stAlert"] { border-radius: 15px; }
     .footer { color: #7d9181; text-align: center; font-size: .82rem; padding: 1.2rem 0 .3rem; }
+    .teru-bozu {
+      position: fixed; top: .1rem; right: 5.1rem; z-index: 1001;
+      width: 54px; height: 86px; pointer-events: none;
+      transform-origin: 50% 0; animation: teru-sway 4.8s ease-in-out infinite;
+      filter: drop-shadow(0 5px 8px rgba(41, 78, 52, .16));
+    }
+    .teru-bozu svg { display: block; width: 100%; height: 100%; overflow: visible; }
+    @keyframes teru-sway { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
     @media (prefers-reduced-motion: reduce) {
       *, *:before, *:after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+      .teru-bozu { animation: none !important; }
     }
     @media (max-width: 700px) {
       .hero { padding: 1.3rem; border-radius: 20px; }
       .hero-title { font-size: 1.9rem; }
       .hero:after { right: -5%; font-size: 110px; }
+      .teru-bozu { right: 4.2rem; width: 42px; height: 68px; }
     }
     </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    """
+    <div class="teru-bozu" aria-hidden="true">
+      <svg viewBox="0 0 64 104" xmlns="http://www.w3.org/2000/svg">
+        <path d="M32 0v18" stroke="#6d9b73" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="32" cy="37" r="19" fill="#fffdf5" stroke="#dce9d8" stroke-width="2"/>
+        <path d="M18 49c-1 8-7 13-10 23-2 7 4 12 9 10 5-1 7-5 11-3 3 2 6 5 10 3 4-1 6-5 10-4 5 2 8 4 12 0 5-5 0-13-4-20-3-5-5-9-6-15-5 5-10 7-16 7s-12-2-16-8z" fill="#fffdf5" stroke="#dce9d8" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M24 37h.2M40 37h.2" stroke="#405a45" stroke-width="4" stroke-linecap="round"/>
+        <path d="M29 44q3 3 6 0" fill="none" stroke="#7c9d7a" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M27 54q5 4 10 0" fill="none" stroke="#86ad83" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
     """,
     unsafe_allow_html=True,
 )
