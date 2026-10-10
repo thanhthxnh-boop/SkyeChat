@@ -1,7 +1,9 @@
 import os
 import random
 import time
+from datetime import datetime
 from pathlib import Path
+from uuid import uuid4
 
 import requests
 import streamlit as st
@@ -43,13 +45,6 @@ def get_secret(name, default=None):
 GEMINI_API_KEY = get_secret("GEMINI_API_KEY")
 PRIMARY_MODEL = get_secret("GEMINI_MODEL", DEFAULT_MODEL)
 
-if not GEMINI_API_KEY:
-    st.error(
-        "Chưa tìm thấy `GEMINI_API_KEY`. Hãy thêm khóa vào Streamlit Secrets "
-        "hoặc biến môi trường trước khi chạy SkyeChat."
-    )
-    st.stop()
-
 
 # ==============================
 # Nhận diện thương hiệu SkyeChat
@@ -67,7 +62,16 @@ st.markdown(
       --sky-mint: #c9f2e7;
       --sky-peach: #ffe2cc;
       --sky-paper: #f7f8ff;
+      --primary-color: #4f9b6b;
+      --sky-ink: #24443a;
+      --sky-muted: #71877b;
+      --sky-blue: #438d68;
+      --sky-lilac: #83bd98;
+      --sky-mint: #d9f1e1;
+      --sky-peach: #f6e7cf;
+      --sky-paper: #f5faf6;
     }
+    input[type="radio"] { accent-color: #4f9b6b; }
     html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
     .stApp {
       color: var(--sky-ink);
@@ -75,13 +79,20 @@ st.markdown(
         radial-gradient(ellipse at 8% 0%, rgba(202,220,255,.52), transparent 32%),
         radial-gradient(ellipse at 96% 12%, rgba(232,216,255,.48), transparent 30%),
         #f8f9ff;
+        radial-gradient(ellipse at 8% 0%, rgba(194,232,204,.55), transparent 32%),
+        radial-gradient(ellipse at 96% 12%, rgba(217,241,225,.62), transparent 30%),
+        #f7faf6;
     }
     [data-testid="stHeader"] { background: rgba(248,249,255,.78); }
+    [data-testid="stHeader"] { background: rgba(247,250,246,.82); }
     [data-testid="stSidebar"] {
       background: linear-gradient(180deg, #f0f4ff 0%, #f7f2ff 58%, #f4fbfa 100%);
       border-right: 1px solid rgba(121,142,203,.14);
+      background: linear-gradient(180deg, #edf7ef 0%, #f2f8ef 58%, #edf8f3 100%);
+      border-right: 1px solid rgba(101,151,117,.16);
     }
     [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color: #56617d; }
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color: #526b5d; }
     h1, h2, h3 { font-family: 'Nunito', sans-serif !important; color: var(--sky-ink); }
     h1 { letter-spacing: -1.2px; }
     .hero {
@@ -91,6 +102,8 @@ st.markdown(
       border-radius: 26px;
       background: linear-gradient(115deg, rgba(224,235,255,.96), rgba(242,231,255,.94) 58%, rgba(224,248,241,.9));
       box-shadow: 0 16px 45px rgba(77,91,145,.09);
+      background: linear-gradient(115deg, rgba(220,241,222,.98), rgba(232,244,220,.96) 58%, rgba(218,243,232,.94));
+      box-shadow: 0 16px 45px rgba(62,112,78,.10);
       margin: .35rem 0 1.2rem;
       animation: hero-arrive .65s ease-out both;
     }
@@ -111,59 +124,94 @@ st.markdown(
     .hero-eyebrow { color: #6679b1; font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
     .hero-title { color: #293658; font: 900 2.25rem/1.12 'Nunito', sans-serif; margin: .25rem 0 .45rem; }
     .hero-copy { color: #626e8c; max-width: 660px; font-size: 1rem; margin: 0; }
+    .hero-eyebrow { color: #4e8061; font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+    .hero-title { color: #29483a; font: 900 2.25rem/1.12 'Nunito', sans-serif; margin: .25rem 0 .45rem; }
+    .hero-copy { color: #5d7666; max-width: 660px; font-size: 1rem; margin: 0; }
     .welcome-card {
       border: 1px solid rgba(151,167,220,.18); border-radius: 22px;
+      border: 1px solid rgba(133,177,143,.22); border-radius: 22px;
       padding: 1.25rem 1.4rem; margin: .8rem 0 1.25rem;
       background: rgba(255,255,255,.78); box-shadow: 0 10px 30px rgba(66,82,133,.055);
+      background: rgba(255,255,255,.82); box-shadow: 0 10px 30px rgba(62,112,78,.07);
       animation: hero-arrive .75s .08s ease-out both;
     }
     .welcome-card strong { color: #536fc5; }
     .soft-note { color: #7b86a0; font-size: .88rem; }
+    .welcome-card strong { color: #43805d; }
+    .soft-note { color: #71877b; font-size: .88rem; }
+    .diary-intro {
+      border: 1px solid rgba(160,213,197,.27); border-radius: 20px;
+      border: 1px solid rgba(139,192,151,.32); border-radius: 20px;
+      padding: 1rem 1.2rem; margin: .7rem 0 1rem;
+      background: linear-gradient(115deg, rgba(255,255,255,.88), rgba(229,248,241,.78));
+      color: #586b78;
+      background: linear-gradient(115deg, rgba(255,255,255,.9), rgba(226,245,228,.84));
+      color: #536c5b;
+    }
     .sidebar-brand {
       padding: 1rem; margin: .25rem 0 1.2rem; border-radius: 20px;
       background: linear-gradient(135deg, #dfeaff, #efe4ff 65%, #ddf6ed);
       text-align: center; color: #46577e;
+      background: linear-gradient(135deg, #dcefdc, #e8f2d9 65%, #d9f0e4);
+      text-align: center; color: #486450;
     }
     .sidebar-brand .cloud { font-size: 2.2rem; }
     .sidebar-brand strong { display: block; font: 900 1.25rem 'Nunito', sans-serif; color: #2e3b61; }
+    .sidebar-brand strong { display: block; font: 900 1.25rem 'Nunito', sans-serif; color: #29483a; }
     .sidebar-brand span { font-size: .82rem; }
     div[data-testid="stChatMessage"] {
       border: 1px solid rgba(147,161,207,.13); border-radius: 20px;
+      border: 1px solid rgba(128,163,137,.2); border-radius: 20px;
       padding: .85rem 1rem; background: rgba(255,255,255,.75);
       box-shadow: 0 8px 24px rgba(54,72,126,.045); margin-bottom: .85rem;
+      box-shadow: 0 8px 24px rgba(56,99,66,.055); margin-bottom: .85rem;
       transition: box-shadow .2s ease, transform .2s ease;
     }
     div[data-testid="stChatMessage"]:hover { box-shadow: 0 11px 28px rgba(54,72,126,.075); transform: translateY(-1px); }
+    div[data-testid="stChatMessage"]:hover { box-shadow: 0 11px 28px rgba(56,99,66,.09); transform: translateY(-1px); }
     div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
       background: linear-gradient(115deg, rgba(224,235,255,.96), rgba(242,231,255,.92));
       border-color: rgba(144,164,231,.2);
+      background: linear-gradient(115deg, rgba(224,242,222,.98), rgba(235,244,218,.94));
+      border-color: rgba(132,176,125,.28);
     }
     div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
       background: linear-gradient(115deg, rgba(255,255,255,.96), rgba(239,251,247,.94));
       border-color: rgba(160,213,197,.25);
+      background: linear-gradient(115deg, rgba(255,255,255,.97), rgba(230,246,235,.95));
+      border-color: rgba(145,193,156,.3);
     }
     [data-testid="stChatInput"] textarea {
       border-radius: 18px !important; border: 1px solid #dce3f7 !important;
+      border-radius: 18px !important; border: 1px solid #d3e5d5 !important;
       background: rgba(255,255,255,.92) !important;
       box-shadow: 0 8px 24px rgba(69,88,145,.055);
+      box-shadow: 0 8px 24px rgba(62,112,78,.07);
       transition: border-color .2s ease, box-shadow .2s ease;
     }
     [data-testid="stChatInput"] textarea:focus { border-color: #92aaf5 !important; box-shadow: 0 0 0 3px rgba(107,141,242,.13) !important; }
+    [data-testid="stChatInput"] textarea:focus { border-color: #80b48c !important; box-shadow: 0 0 0 3px rgba(75,143,94,.14) !important; }
     .stButton button {
       border-radius: 13px; border: 1px solid #d8def2; color: #5369aa;
+      border-radius: 13px; border: 1px solid #d3e5d5; color: #426b50;
       background: rgba(255,255,255,.76); font-weight: 700;
       transition: all .18s ease;
     }
     .stButton button:hover { border-color: #aab9f2; color: #405aa7; background: #f3f5ff; transform: translateY(-1px); box-shadow: 0 7px 16px rgba(80,102,174,.12); }
+    .stButton button:hover { border-color: #91bd99; color: #315d41; background: #f0f8ef; transform: translateY(-1px); box-shadow: 0 7px 16px rgba(67,119,76,.14); }
     [data-testid="stChatInput"] button {
       border: 0 !important; border-radius: 13px !important; color: white !important;
       background: linear-gradient(135deg, #7897f5, #a58af6) !important;
       box-shadow: 0 5px 14px rgba(107,141,242,.26);
+      background: linear-gradient(135deg, #4f9b6b, #83bd8c) !important;
+      box-shadow: 0 5px 14px rgba(70,143,88,.28);
       transition: transform .18s ease, box-shadow .18s ease;
     }
     [data-testid="stChatInput"] button:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(107,141,242,.34); }
+    [data-testid="stChatInput"] button:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(70,143,88,.36); }
     div[data-testid="stAlert"] { border-radius: 15px; }
     .footer { color: #8b94aa; text-align: center; font-size: .82rem; padding: 1.2rem 0 .3rem; }
+    .footer { color: #7d9181; text-align: center; font-size: .82rem; padding: 1.2rem 0 .3rem; }
     @media (prefers-reduced-motion: reduce) {
       *, *:before, *:after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
     }
@@ -207,6 +255,8 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "nickname" not in st.session_state:
     st.session_state.nickname = "Bạn"
+if "diary_entries" not in st.session_state:
+    st.session_state.diary_entries = []
 
 
 def api_error_message(response):
@@ -219,6 +269,11 @@ def api_error_message(response):
 
 def generate_reply(history, system_prompt):
     """Call Gemini with bounded exponential backoff and one overload fallback."""
+    if not GEMINI_API_KEY:
+        raise RuntimeError(
+            "Chưa cấu hình GEMINI_API_KEY. Hãy thêm khóa vào .streamlit/secrets.toml để dùng tính năng trò chuyện."
+        )
+
     contents = []
     for msg in history[-MAX_HISTORY_MESSAGES:]:
         contents.append(
@@ -323,6 +378,14 @@ with st.sidebar:
     st.success(f"👋 Chào {st.session_state.nickname}!")
     lang = st.radio("Ngôn ngữ / Language", ["Tiếng Việt 🇻🇳", "English 🇬🇧"], label_visibility="visible")
     is_vi = lang.startswith("Tiếng Việt")
+    page_mode = st.radio(
+        "Mục bạn muốn mở" if is_vi else "Choose a space",
+        ["💬 Trò chuyện", "📔 Nhật ký"] if is_vi else ["💬 Chat", "📔 Journal"],
+        key="page_mode",
+    )
+    is_diary = "Nhật ký" in page_mode or "Journal" in page_mode
+    if not GEMINI_API_KEY and not is_diary:
+        st.info("Thêm `GEMINI_API_KEY` vào `.streamlit/secrets.toml` để bật trò chuyện với AI.")
 
     st.divider()
     st.markdown("**Nhà phát triển:** ThanhAI")
@@ -343,62 +406,165 @@ with st.sidebar:
 # ==============================
 # Header và hội thoại
 # ==============================
-st.markdown(
-    """
-    <section class="hero">
-      <div class="hero-eyebrow">Không gian an toàn để sẻ chia</div>
-      <div class="hero-title">Chào bạn, mình là SkyeChat ☁️</div>
-      <p class="hero-copy">Bạn có thể bắt đầu từ bất cứ điều gì đang ở trong lòng. Mình sẽ lắng nghe, không phán xét.</p>
-    </section>
-    """,
-    unsafe_allow_html=True,
-)
-
-if not st.session_state.messages:
+if is_diary:
     if is_vi:
         st.markdown(
             """
-            <div class="welcome-card">
-              <strong>Đây là không gian của bạn.</strong><br>
-              Bạn không cần phải tìm đúng từ ngữ. Hãy kể một điều nhỏ đang khiến bạn bận tâm,
-              hoặc chỉ cần nói hôm nay bạn cảm thấy thế nào.
-              <div class="soft-note" style="margin-top:.7rem">Mình ở đây để lắng nghe, từng chút một.</div>
-            </div>
+            <section class="hero">
+              <div class="hero-eyebrow">Một khoảng lặng dành cho bạn</div>
+              <div class="hero-title">Nhật ký của bạn 📔</div>
+              <p class="hero-copy">Ghi lại cảm xúc và những điều bạn muốn nhớ, theo cách của riêng mình.</p>
+            </section>
             """,
             unsafe_allow_html=True,
         )
+        st.markdown(
+            '<div class="diary-intro">Không cần viết hay hoặc viết dài. Một vài dòng thật lòng cũng đủ để bắt đầu.</div>',
+            unsafe_allow_html=True,
+        )
+        title_label, entry_label, mood_label = "Tiêu đề (không bắt buộc)", "Hôm nay bạn muốn ghi lại điều gì?", "Tâm trạng hôm nay"
+        title_placeholder, entry_placeholder = "Ví dụ: Một ngày nhiều suy nghĩ", "Bạn có thể viết về điều đã xảy ra, cảm xúc của mình, hoặc điều bạn mong muốn..."
+        save_label, empty_error = "Lưu trang nhật ký", "Hãy viết vài dòng trước khi lưu nhé."
+        history_label, download_label, delete_label = "Những trang đã viết", "⬇️ Tải nhật ký về máy", "Xóa trang này"
+        empty_label, privacy_label = "Bạn chưa viết trang nhật ký nào. Khi sẵn sàng, hãy bắt đầu bằng vài dòng về hôm nay.", "Nhật ký chỉ được giữ trong phiên trình duyệt hiện tại. Hãy tải bản sao về máy nếu muốn giữ lại sau khi đóng hoặc tải lại trang."
+        mood_options = ["😟 Rất tệ", "🙁 Không ổn", "😐 Bình thường", "🙂 Ổn", "😊 Tốt"]
     else:
         st.markdown(
             """
-            <div class="welcome-card">
-              <strong>This is your space.</strong><br>
-              You do not need to find the perfect words. Share one small thing on your mind,
-              or simply tell me how today feels.
-              <div class="soft-note" style="margin-top:.7rem">I’m here to listen, one step at a time.</div>
-            </div>
+            <section class="hero">
+              <div class="hero-eyebrow">A quiet moment for you</div>
+              <div class="hero-title">Your journal 📔</div>
+              <p class="hero-copy">Write down your feelings and the moments you want to remember, in your own way.</p>
+            </section>
             """,
             unsafe_allow_html=True,
         )
+        st.markdown(
+            '<div class="diary-intro">You do not need to write something polished or long. A few honest lines are enough.</div>',
+            unsafe_allow_html=True,
+        )
+        title_label, entry_label, mood_label = "Title (optional)", "What would you like to write about today?", "How are you feeling today?"
+        title_placeholder, entry_placeholder = "Example: A day with a lot on my mind", "Write about what happened, how you feel, or what you hope for..."
+        save_label, empty_error = "Save journal entry", "Write a few lines before saving."
+        history_label, download_label, delete_label = "Your entries", "⬇️ Download journal", "Delete this entry"
+        empty_label, privacy_label = "You have not written any entries yet. Start with a few lines about today whenever you feel ready.", "Entries are kept only for the current browser session. Download a copy if you want to keep them after closing or refreshing the page."
+        mood_options = ["😟 Very low", "🙁 Not great", "😐 Okay", "🙂 Good", "😊 Great"]
 
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+    with st.form("diary_entry_form", clear_on_submit=True):
+        diary_title = st.text_input(title_label, placeholder=title_placeholder, max_chars=80)
+        diary_mood = st.select_slider(mood_label, options=mood_options, value=mood_options[2])
+        diary_text = st.text_area(entry_label, placeholder=entry_placeholder, height=180, max_chars=5000)
+        save_entry = st.form_submit_button(save_label, type="primary", use_container_width=True)
 
-placeholder = "Hãy chia sẻ với SkyeChat..." if is_vi else "Share your thoughts with SkyeChat..."
-if prompt := st.chat_input(placeholder, max_chars=8000):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+    if save_entry:
+        if diary_text.strip():
+            st.session_state.diary_entries.append(
+                {
+                    "id": uuid4().hex,
+                    "title": diary_title.strip(),
+                    "mood": diary_mood,
+                    "content": diary_text.strip(),
+                    "created_at": datetime.now().astimezone().strftime("%d/%m/%Y %H:%M"),
+                }
+            )
+            st.success("Đã lưu nhật ký." if is_vi else "Journal entry saved.")
+        else:
+            st.warning(empty_error)
 
-    with st.chat_message("assistant"):
-        with st.spinner("SkyeChat đang lắng nghe..." if is_vi else "SkyeChat is listening..."):
-            try:
-                system_prompt = SYSTEM_PROMPT_VI if is_vi else SYSTEM_PROMPT_EN
-                bot_reply = generate_reply(st.session_state.messages, system_prompt)
-                st.markdown(bot_reply)
-                st.session_state.messages.append({"role": "assistant", "content": bot_reply})
-            except Exception as exc:
-                st.error(f"Không gửi được tin nhắn: {exc}")
+    st.divider()
+    st.subheader(history_label)
+    entries = st.session_state.diary_entries
+    if entries:
+        export_lines = ["# Nhật ký SkyeChat" if is_vi else "# SkyeChat Journal", ""]
+        for entry in reversed(entries):
+            export_lines.extend(
+                [
+                    f"## {entry['title'] or ('Trang nhật ký' if is_vi else 'Journal entry')}",
+                    f"{entry['created_at']} · {entry['mood']}",
+                    "",
+                    entry["content"],
+                    "",
+                    "---",
+                    "",
+                ]
+            )
+        st.download_button(
+            download_label,
+            data="\n".join(export_lines),
+            file_name=f"skyechat_journal_{datetime.now().strftime('%Y%m%d')}.md",
+            mime="text/markdown",
+            use_container_width=True,
+        )
+        for entry in reversed(entries):
+            label = entry["title"] or ("Trang nhật ký" if is_vi else "Journal entry")
+            with st.expander(f"{entry['mood']} · {label} · {entry['created_at']}"):
+                st.write(entry["content"])
+                if st.button(delete_label, key=f"delete_diary_{entry['id']}"):
+                    st.session_state.diary_entries = [
+                        item for item in st.session_state.diary_entries if item["id"] != entry["id"]
+                    ]
+                    st.rerun()
+    else:
+        st.info(empty_label)
+    st.caption(privacy_label)
+
+else:
+    st.markdown(
+        """
+        <section class="hero">
+          <div class="hero-eyebrow">Không gian an toàn để sẻ chia</div>
+          <div class="hero-title">Chào bạn, mình là SkyeChat ☁️</div>
+          <p class="hero-copy">Bạn có thể bắt đầu từ bất cứ điều gì đang ở trong lòng. Mình sẽ lắng nghe, không phán xét.</p>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if not st.session_state.messages:
+        if is_vi:
+            st.markdown(
+                """
+                <div class="welcome-card">
+                  <strong>Đây là không gian của bạn.</strong><br>
+                  Bạn không cần phải tìm đúng từ ngữ. Hãy kể một điều nhỏ đang khiến bạn bận tâm,
+                  hoặc chỉ cần nói hôm nay bạn cảm thấy thế nào.
+                  <div class="soft-note" style="margin-top:.7rem">Mình ở đây để lắng nghe, từng chút một.</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                """
+                <div class="welcome-card">
+                  <strong>This is your space.</strong><br>
+                  You do not need to find the perfect words. Share one small thing on your mind,
+                  or simply tell me how today feels.
+                  <div class="soft-note" style="margin-top:.7rem">I’m here to listen, one step at a time.</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    placeholder = "Hãy chia sẻ với SkyeChat..." if is_vi else "Share your thoughts with SkyeChat..."
+    if prompt := st.chat_input(placeholder, max_chars=8000):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        with st.chat_message("assistant"):
+            with st.spinner("SkyeChat đang lắng nghe..." if is_vi else "SkyeChat is listening..."):
+                try:
+                    system_prompt = SYSTEM_PROMPT_VI if is_vi else SYSTEM_PROMPT_EN
+                    bot_reply = generate_reply(st.session_state.messages, system_prompt)
+                    st.markdown(bot_reply)
+                    st.session_state.messages.append({"role": "assistant", "content": bot_reply})
+                except Exception as exc:
+                    st.error(f"Không gửi được tin nhắn: {exc}")
 
 st.markdown(
     '<div class="footer">SkyeChat · Lắng nghe bằng sự tử tế · Phát triển bởi ThanhAI</div>',
