@@ -3,7 +3,6 @@ import random
 import time
 from datetime import datetime
 from pathlib import Path
-from uuid import uuid4
 
 import requests
 import streamlit as st
@@ -58,30 +57,30 @@ st.markdown(
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Nunito:wght@500;600;700;800;900&display=swap');
 
     :root {
-      --primary-color: #4f9b6b;
-      --sky-ink: #24443a;
-      --sky-muted: #71877b;
-      --sky-blue: #438d68;
-      --sky-lilac: #83bd98;
-      --sky-mint: #d9f1e1;
-      --sky-peach: #f6e7cf;
-      --sky-paper: #f5faf6;
+      --primary-color: #729b87;
+      --sky-ink: #354b45;
+      --sky-muted: #788b84;
+      --sky-blue: #82aeb3;
+      --sky-lilac: #aaaec5;
+      --sky-mint: #e5f0e9;
+      --sky-peach: #f6eee2;
+      --sky-paper: #f7f8f5;
     }
-    input[type="radio"] { accent-color: #4f9b6b; }
+    input[type="radio"] { accent-color: #729b87; }
     html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
     .stApp {
       color: var(--sky-ink);
       background:
-        radial-gradient(ellipse at 8% 0%, rgba(194,232,204,.55), transparent 32%),
-        radial-gradient(ellipse at 96% 12%, rgba(217,241,225,.62), transparent 30%),
-        #f7faf6;
+        radial-gradient(ellipse at 8% 0%, rgba(215,233,220,.72), transparent 34%),
+        radial-gradient(ellipse at 96% 12%, rgba(218,233,237,.70), transparent 32%),
+        #f7f8f5;
     }
-    [data-testid="stHeader"] { background: rgba(247,250,246,.82); }
+    [data-testid="stHeader"] { background: rgba(247,248,245,.86); }
     [data-testid="stSidebar"] {
-      background: linear-gradient(180deg, #edf7ef 0%, #f2f8ef 58%, #edf8f3 100%);
-      border-right: 1px solid rgba(101,151,117,.16);
+      background: linear-gradient(180deg, #edf4ef 0%, #f4f3ed 58%, #edf3f3 100%);
+      border-right: 1px solid rgba(112,151,139,.18);
     }
-    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color: #526b5d; }
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color: #586d66; }
     h1, h2, h3 { font-family: 'Nunito', sans-serif !important; color: var(--sky-ink); }
     h1 { letter-spacing: -1.2px; }
     .hero {
@@ -89,8 +88,8 @@ st.markdown(
       padding: 1.65rem 2rem 1.55rem;
       border: 1px solid rgba(255,255,255,.9);
       border-radius: 26px;
-      background: linear-gradient(115deg, rgba(220,241,222,.98), rgba(232,244,220,.96) 58%, rgba(218,243,232,.94));
-      box-shadow: 0 16px 45px rgba(62,112,78,.10);
+      background: linear-gradient(115deg, rgba(225,239,228,.98), rgba(246,239,224,.96) 55%, rgba(222,237,239,.96));
+      box-shadow: 0 16px 45px rgba(74,111,101,.11);
       margin: .35rem 0 1.2rem;
       animation: hero-arrive .65s ease-out both;
     }
@@ -108,71 +107,77 @@ st.markdown(
     }
     @keyframes hero-arrive { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes cloud-drift { 0%, 100% { translate: 0 0; } 50% { translate: 0 8px; } }
-    .hero-eyebrow { color: #4e8061; font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
-    .hero-title { color: #29483a; font: 900 2.25rem/1.12 'Nunito', sans-serif; margin: .25rem 0 .45rem; }
-    .hero-copy { color: #5d7666; max-width: 660px; font-size: 1rem; margin: 0; }
+    .hero-eyebrow { color: #668c79; font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+    .hero-title { color: #354b45; font: 900 2.25rem/1.22 'Nunito', sans-serif; margin: .25rem 0 .45rem; }
+    .hero-tagline {
+      display: inline-block; vertical-align: .22em; margin-left: .4rem;
+      padding: .33rem .72rem; border: 1px solid rgba(112,151,139,.22);
+      border-radius: 999px; background: rgba(255,255,255,.62);
+      color: #628274; font: 700 .82rem/1.25 'DM Sans', sans-serif;
+      letter-spacing: .01em; white-space: normal;
+    }
+    .hero-copy { color: #60766e; max-width: 660px; font-size: 1rem; margin: 0; }
     .welcome-card {
-      border: 1px solid rgba(133,177,143,.22); border-radius: 22px;
+      border: 1px solid rgba(137,172,157,.24); border-radius: 22px;
       padding: 1.25rem 1.4rem; margin: .8rem 0 1.25rem;
-      background: rgba(255,255,255,.82); box-shadow: 0 10px 30px rgba(62,112,78,.07);
+      background: rgba(255,255,255,.84); box-shadow: 0 10px 30px rgba(75,111,101,.07);
       animation: hero-arrive .75s .08s ease-out both;
     }
-    .welcome-card strong { color: #43805d; }
-    .soft-note { color: #71877b; font-size: .88rem; }
+    .welcome-card strong { color: #638875; }
+    .soft-note { color: #788b84; font-size: .88rem; }
     .diary-intro {
-      border: 1px solid rgba(139,192,151,.32); border-radius: 20px;
+      border: 1px solid rgba(139,174,168,.32); border-radius: 20px;
       padding: 1rem 1.2rem; margin: .7rem 0 1rem;
-      background: linear-gradient(115deg, rgba(255,255,255,.9), rgba(226,245,228,.84));
-      color: #536c5b;
+      background: linear-gradient(115deg, rgba(255,255,255,.92), rgba(230,240,232,.88) 55%, rgba(224,238,240,.82));
+      color: #586f68;
     }
     .sidebar-brand {
       padding: 1rem; margin: .25rem 0 1.2rem; border-radius: 20px;
-      background: linear-gradient(135deg, #dcefdc, #e8f2d9 65%, #d9f0e4);
-      text-align: center; color: #486450;
+      background: linear-gradient(135deg, #dfede2, #f1eadc 65%, #deebed);
+      text-align: center; color: #536d63;
     }
     .sidebar-brand .cloud { font-size: 2.2rem; }
-    .sidebar-brand strong { display: block; font: 900 1.25rem 'Nunito', sans-serif; color: #29483a; }
+    .sidebar-brand strong { display: block; font: 900 1.25rem 'Nunito', sans-serif; color: #354b45; }
     .sidebar-brand span { font-size: .82rem; }
     div[data-testid="stChatMessage"] {
-      border: 1px solid rgba(128,163,137,.2); border-radius: 20px;
+      border: 1px solid rgba(133,164,157,.23); border-radius: 20px;
       padding: .85rem 1rem; background: rgba(255,255,255,.75);
       box-shadow: 0 8px 24px rgba(56,99,66,.055); margin-bottom: .85rem;
       transition: box-shadow .2s ease, transform .2s ease;
     }
     div[data-testid="stChatMessage"]:hover { box-shadow: 0 11px 28px rgba(56,99,66,.09); transform: translateY(-1px); }
     div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
-      background: linear-gradient(115deg, rgba(224,242,222,.98), rgba(235,244,218,.94));
-      border-color: rgba(132,176,125,.28);
+      background: linear-gradient(115deg, rgba(229,240,227,.98), rgba(241,237,222,.94));
+      border-color: rgba(143,174,147,.30);
     }
     div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
-      background: linear-gradient(115deg, rgba(255,255,255,.97), rgba(230,246,235,.95));
-      border-color: rgba(145,193,156,.3);
+      background: linear-gradient(115deg, rgba(255,255,255,.97), rgba(231,240,237,.95));
+      border-color: rgba(145,178,171,.30);
     }
     [data-testid="stChatInput"] textarea {
-      border-radius: 18px !important; border: 1px solid #d3e5d5 !important;
+      border-radius: 18px !important; border: 1px solid #d4e1dc !important;
       background: rgba(255,255,255,.92) !important;
       box-shadow: 0 8px 24px rgba(62,112,78,.07);
       transition: border-color .2s ease, box-shadow .2s ease;
     }
-    [data-testid="stChatInput"] textarea:focus { border-color: #80b48c !important; box-shadow: 0 0 0 3px rgba(75,143,94,.14) !important; }
+    [data-testid="stChatInput"] textarea:focus { border-color: #8caf9f !important; box-shadow: 0 0 0 3px rgba(112,151,139,.16) !important; }
     .stButton button {
-      border-radius: 13px; border: 1px solid #d3e5d5; color: #426b50;
+      border-radius: 13px; border: 1px solid #d4e1dc; color: #536f63;
       background: rgba(255,255,255,.76); font-weight: 700;
       transition: all .18s ease;
     }
-    .stButton button:hover { border-color: #91bd99; color: #315d41; background: #f0f8ef; transform: translateY(-1px); box-shadow: 0 7px 16px rgba(67,119,76,.14); }
+    .stButton button:hover { border-color: #98b8a8; color: #3d6255; background: #edf4ef; transform: translateY(-1px); box-shadow: 0 7px 16px rgba(77,119,103,.14); }
     [data-testid="stChatInput"] button {
       border: 0 !important; border-radius: 13px !important; color: white !important;
-      background: linear-gradient(135deg, #4f9b6b, #83bd8c) !important;
-      box-shadow: 0 5px 14px rgba(70,143,88,.28);
+      background: linear-gradient(135deg, #719b86, #8bb5a1) !important;
+      box-shadow: 0 5px 14px rgba(83,133,111,.26);
       transition: transform .18s ease, box-shadow .18s ease;
     }
-    [data-testid="stChatInput"] button:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(70,143,88,.36); }
+    [data-testid="stChatInput"] button:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(83,133,111,.34); }
     div[data-testid="stAlert"] { border-radius: 15px; }
     .footer { color: #7d9181; text-align: center; font-size: .82rem; padding: 1.2rem 0 .3rem; }
     .teru-bozu {
       position: fixed; top: .1rem; right: 5.1rem; z-index: 1001;
-      width: 54px; height: 86px; pointer-events: none;
       width: 62px; height: 122px; pointer-events: none;
       transform-origin: 50% 0; animation: teru-sway 4.8s ease-in-out infinite;
       filter: drop-shadow(0 5px 8px rgba(41, 78, 52, .16));
@@ -186,8 +191,8 @@ st.markdown(
     @media (max-width: 700px) {
       .hero { padding: 1.3rem; border-radius: 20px; }
       .hero-title { font-size: 1.9rem; }
+      .hero-tagline { margin-left: .1rem; font-size: .72rem; padding: .3rem .58rem; }
       .hero:after { right: -5%; font-size: 110px; }
-      .teru-bozu { right: 4.2rem; width: 42px; height: 68px; }
       .teru-bozu { right: 4.2rem; width: 48px; height: 96px; }
     }
     </style>
@@ -198,13 +203,6 @@ st.markdown(
 st.markdown(
     """
     <div class="teru-bozu" aria-hidden="true">
-      <svg viewBox="0 0 64 104" xmlns="http://www.w3.org/2000/svg">
-        <path d="M32 0v18" stroke="#6d9b73" stroke-width="2" stroke-linecap="round"/>
-        <circle cx="32" cy="37" r="19" fill="#fffdf5" stroke="#dce9d8" stroke-width="2"/>
-        <path d="M18 49c-1 8-7 13-10 23-2 7 4 12 9 10 5-1 7-5 11-3 3 2 6 5 10 3 4-1 6-5 10-4 5 2 8 4 12 0 5-5 0-13-4-20-3-5-5-9-6-15-5 5-10 7-16 7s-12-2-16-8z" fill="#fffdf5" stroke="#dce9d8" stroke-width="2" stroke-linejoin="round"/>
-        <path d="M24 37h.2M40 37h.2" stroke="#405a45" stroke-width="4" stroke-linecap="round"/>
-        <path d="M29 44q3 3 6 0" fill="none" stroke="#7c9d7a" stroke-width="1.8" stroke-linecap="round"/>
-        <path d="M27 54q5 4 10 0" fill="none" stroke="#86ad83" stroke-width="2" stroke-linecap="round"/>
       <svg viewBox="0 0 64 128" xmlns="http://www.w3.org/2000/svg">
         <path d="M32 0v27" stroke="#6d9b73" stroke-width="2" stroke-linecap="round"/>
         <circle cx="32" cy="46" r="19" fill="#fffdf5" stroke="#dce9d8" stroke-width="2"/>
@@ -286,8 +284,6 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "nickname" not in st.session_state:
     st.session_state.nickname = "Bạn"
-if "diary_entries" not in st.session_state:
-    st.session_state.diary_entries = []
 if "auth_access_token" not in st.session_state:
     st.session_state.auth_access_token = None
 if "auth_refresh_token" not in st.session_state:
@@ -330,7 +326,6 @@ def clear_auth_state():
     st.session_state.auth_user_id = None
     st.session_state.auth_email = ""
     st.session_state.messages = []
-    st.session_state.diary_entries = []
 
 
 def restore_auth_state(client):
@@ -668,16 +663,16 @@ if IS_DARK_THEME:
         .stApp {
           color: #e4eee4 !important;
           background:
-            radial-gradient(ellipse at 8% 0%, rgba(40, 77, 48, .42), transparent 34%),
-            radial-gradient(ellipse at 96% 12%, rgba(43, 75, 55, .34), transparent 32%),
-            #141b16 !important;
+            radial-gradient(ellipse at 8% 0%, rgba(49, 79, 67, .42), transparent 34%),
+            radial-gradient(ellipse at 96% 12%, rgba(48, 75, 82, .34), transparent 32%),
+            #171d1b !important;
         }
         [data-testid="stAppViewContainer"],
         [data-testid="stMain"],
-        [data-testid="stMainBlockContainer"] { background-color: #141b16 !important; }
-        [data-testid="stHeader"] { background: rgba(20, 27, 22, .92) !important; }
+        [data-testid="stMainBlockContainer"] { background-color: #171d1b !important; }
+        [data-testid="stHeader"] { background: rgba(23, 29, 27, .92) !important; }
         [data-testid="stSidebar"] {
-          background: linear-gradient(180deg, #1a271d 0%, #20291f 58%, #192720 100%) !important;
+          background: linear-gradient(180deg, #1d2925 0%, #232c28 58%, #1b292a 100%) !important;
           border-right: 1px solid rgba(137, 179, 139, .18) !important;
         }
         [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color: #c1d0c2 !important; }
@@ -691,12 +686,13 @@ if IS_DARK_THEME:
         [data-testid="stMain"] label { color: #e4eee4 !important; }
         [data-testid="stCaptionContainer"] { color: #afc0b0 !important; }
         .hero {
-          background: linear-gradient(115deg, #263b2b, #303b28 58%, #20382d) !important;
+          background: linear-gradient(115deg, #293b32, #353a32 58%, #26393b) !important;
           border-color: rgba(171, 205, 166, .18) !important;
           box-shadow: 0 16px 45px rgba(0, 0, 0, .22) !important;
         }
         .hero-eyebrow { color: #acd4a8 !important; }
         .hero-title { color: #eff7ed !important; }
+        .hero-tagline { color: #cfdfd6 !important; background: rgba(35, 52, 47, .82) !important; border-color: rgba(166, 193, 181, .25) !important; }
         .hero-copy { color: #c5d4c5 !important; }
         .welcome-card {
           background: linear-gradient(135deg, #202c23, #202d27) !important;
@@ -801,7 +797,6 @@ if is_diary:
         title_placeholder, entry_placeholder = "Ví dụ: Một ngày nhiều suy nghĩ", "Bạn có thể viết về điều đã xảy ra, cảm xúc của mình, hoặc điều bạn mong muốn..."
         save_label, empty_error = "Lưu trang nhật ký", "Hãy viết vài dòng trước khi lưu nhé."
         history_label, download_label, delete_label = "Những trang đã viết", "⬇️ Tải nhật ký về máy", "Xóa trang này"
-        empty_label, privacy_label = "Bạn chưa viết trang nhật ký nào. Khi sẵn sàng, hãy bắt đầu bằng vài dòng về hôm nay.", "Nhật ký chỉ được giữ trong phiên trình duyệt hiện tại. Hãy tải bản sao về máy nếu muốn giữ lại sau khi đóng hoặc tải lại trang."
         empty_label, privacy_label = "Bạn chưa viết trang nhật ký nào. Khi sẵn sàng, hãy bắt đầu bằng vài dòng về hôm nay.", "Nhật ký được lưu theo tài khoản Supabase để bạn có thể xem lại sau khi đăng nhập trên thiết bị khác."
         mood_options = ["😟 Rất tệ", "🙁 Không ổn", "😐 Bình thường", "🙂 Ổn", "😊 Tốt"]
     else:
@@ -823,7 +818,6 @@ if is_diary:
         title_placeholder, entry_placeholder = "Example: A day with a lot on my mind", "Write about what happened, how you feel, or what you hope for..."
         save_label, empty_error = "Save journal entry", "Write a few lines before saving."
         history_label, download_label, delete_label = "Your entries", "⬇️ Download journal", "Delete this entry"
-        empty_label, privacy_label = "You have not written any entries yet. Start with a few lines about today whenever you feel ready.", "Entries are kept only for the current browser session. Download a copy if you want to keep them after closing or refreshing the page."
         empty_label, privacy_label = "You have not written any entries yet. Start with a few lines about today whenever you feel ready.", "Journal entries are saved to your Supabase account so you can view them after signing in on another device."
         mood_options = ["😟 Very low", "🙁 Not great", "😐 Okay", "🙂 Good", "😊 Great"]
 
@@ -835,16 +829,6 @@ if is_diary:
 
     if save_entry:
         if diary_text.strip():
-            st.session_state.diary_entries.append(
-                {
-                    "id": uuid4().hex,
-                    "title": diary_title.strip(),
-                    "mood": diary_mood,
-                    "content": diary_text.strip(),
-                    "created_at": datetime.now().astimezone().strftime("%d/%m/%Y %H:%M"),
-                }
-            )
-            st.success("Đã lưu nhật ký." if is_vi else "Journal entry saved.")
             try:
                 supabase_client.table("diary_entries").insert(
                     {
@@ -867,7 +851,6 @@ if is_diary:
 
     st.divider()
     st.subheader(history_label)
-    entries = st.session_state.diary_entries
     try:
         entries = load_diary_entries(supabase_client, st.session_state.auth_user_id)
     except Exception:
@@ -880,23 +863,26 @@ if is_diary:
     if entries:
         export_lines = ["# Nhật ký SkyeChat" if is_vi else "# SkyeChat Journal", ""]
         for entry in reversed(entries):
-            created_at = entry.get("created_at", "")
+            raw_created_at = str(entry.get("created_at", ""))
             try:
-                created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00")).astimezone().strftime("%d/%m/%Y %H:%M")
-            except (AttributeError, ValueError):
-                created_at = str(created_at)
+                formatted_created_at = datetime.fromisoformat(
+                    raw_created_at.replace("Z", "+00:00")
+                ).astimezone().strftime("%d/%m/%Y %H:%M")
+            except ValueError:
+                formatted_created_at = raw_created_at
+
             export_lines.extend(
                 [
-                    f"## {entry['title'] or ('Trang nhật ký' if is_vi else 'Journal entry')}",
-                    f"{entry['created_at']} · {entry['mood']}",
-                    f"{created_at} · {entry['mood']}",
+                    f"## {entry.get('title') or ('Trang nhật ký' if is_vi else 'Journal entry')}",
+                    f"{formatted_created_at} · {entry.get('mood', '')}",
                     "",
-                    entry["content"],
+                    entry.get("content", ""),
                     "",
                     "---",
                     "",
                 ]
             )
+
         st.download_button(
             download_label,
             data="\n".join(export_lines),
@@ -904,49 +890,31 @@ if is_diary:
             mime="text/markdown",
             use_container_width=True,
         )
-       for entry in reversed(entries):
-        raw_created = entry.get("created_at", "")
-        formatted_created = raw_created
-        try:
-            formatted_created = datetime.fromisoformat(raw_created.replace("Z", "+00:00")).astimezone().strftime("%d/%m/%Y %H:%M")
-        except (AttributeError, ValueError):
-            formatted_created = str(raw_created)
-            
-        export_lines.extend([
-            f"## {entry['title'] or ('Trang nhật ký' if is_vi else 'Journal entry')}",
-            f"{formatted_created} · {entry['mood']}",
-            "",
-            entry["content"],
-            "",
-            "---",
-            "",
-        ])
 
-    st.download_button(
-        download_label,
-        data="\n".join(export_lines),
-        file_name=f"skyechat_journal_{datetime.now().strftime('%Y%m%d')}.md",
-        mime="text/markdown",
-        use_container_width=True,
-    )
+        for entry in reversed(entries):
+            label = entry.get("title") or ("Trang nhật ký" if is_vi else "Journal entry")
+            raw_created_at = str(entry.get("created_at", ""))
+            try:
+                formatted_created_at = datetime.fromisoformat(
+                    raw_created_at.replace("Z", "+00:00")
+                ).astimezone().strftime("%d/%m/%Y %H:%M")
+            except ValueError:
+                formatted_created_at = raw_created_at
 
-    for entry in reversed(entries):
-        label = entry["title"] or ("Trang nhật ký" if is_vi else "Journal entry")
-        created_at = entry.get("created_at", "")
-        try:
-            created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00")).astimezone().strftime("%d/%m/%Y %H:%M")
-        except (AttributeError, ValueError):
-            created_at = str(created_at)
-            
-        with st.expander(f"{entry['mood']} · {label} · {created_at}"):
-            st.write(entry["content"])
-            if st.button(delete_label, key=f"delete_diary_{entry['id']}"):
-                st.session_state.diary_entries = [item for item in st.session_state.diary_entries if item["id"] != entry["id"]]
-                supabase_client.table("diary_entries").delete().eq("id", entry["id"]).eq("user_id", st.session_state.auth_user_id).execute()
-                st.rerun()
+            with st.expander(f"{entry.get('mood', '')} · {label} · {formatted_created_at}"):
+                st.write(entry.get("content", ""))
+                if st.button(delete_label, key=f"delete_diary_{entry['id']}"):
+                    (
+                        supabase_client.table("diary_entries")
+                        .delete()
+                        .eq("id", entry["id"])
+                        .eq("user_id", st.session_state.auth_user_id)
+                        .execute()
+                    )
                     st.rerun()
     else:
         st.info(empty_label)
+
     st.caption(privacy_label)
 
 else:
@@ -954,7 +922,7 @@ else:
         """
         <section class="hero">
           <div class="hero-eyebrow">Không gian an toàn để sẻ chia</div>
-          <div class="hero-title">Chào bạn, mình là SkyeChat ☁️</div>
+          <div class="hero-title">Chào bạn, mình là SkyeChat <span class="hero-tagline">Everything is gonna be alright.</span> ☁️</div>
           <p class="hero-copy">Bạn có thể bắt đầu từ bất cứ điều gì đang ở trong lòng. Mình sẽ lắng nghe, không phán xét.</p>
         </section>
         """,
@@ -1013,7 +981,6 @@ else:
         with st.chat_message("assistant"):
             with st.spinner("SkyeChat đang lắng nghe..." if is_vi else "SkyeChat is listening..."):
                 try:
-                    system_prompt = SYSTEM_PROMPT_VI if is_vi else SYSTEM_PROMPT_EN
                     system_prompt = build_system_prompt(is_vi)
                     bot_reply = generate_reply(st.session_state.messages, system_prompt)
                     st.markdown(bot_reply)
