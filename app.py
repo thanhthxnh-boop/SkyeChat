@@ -904,23 +904,46 @@ if is_diary:
             mime="text/markdown",
             use_container_width=True,
         )
-        for entry in reversed(entries):
-            label = entry["title"] or ("Trang nhật ký" if is_vi else "Journal entry")
-            created_at = entry.get("created_at", "")
-            try:
-                created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00")).astimezone().strftime("%d/%m/%Y %H:%M")
-            except (AttributeError, ValueError):
-                created_at = str(created_at)
-            with st.expander(f"{entry['mood']} · {label} · {entry['created_at']}"):
-            with st.expander(f"{entry['mood']} · {label} · {created_at}"):
-                st.write(entry["content"])
-                if st.button(delete_label, key=f"delete_diary_{entry['id']}"):
-                    st.session_state.diary_entries = [
-                        item for item in st.session_state.diary_entries if item["id"] != entry["id"]
-                    ]
-                    supabase_client.table("diary_entries").delete().eq("id", entry["id"]).eq(
-                        "user_id", st.session_state.auth_user_id
-                    ).execute()
+       for entry in reversed(entries):
+        raw_created = entry.get("created_at", "")
+        formatted_created = raw_created
+        try:
+            formatted_created = datetime.fromisoformat(raw_created.replace("Z", "+00:00")).astimezone().strftime("%d/%m/%Y %H:%M")
+        except (AttributeError, ValueError):
+            formatted_created = str(raw_created)
+            
+        export_lines.extend([
+            f"## {entry['title'] or ('Trang nhật ký' if is_vi else 'Journal entry')}",
+            f"{formatted_created} · {entry['mood']}",
+            "",
+            entry["content"],
+            "",
+            "---",
+            "",
+        ])
+
+    st.download_button(
+        download_label,
+        data="\n".join(export_lines),
+        file_name=f"skyechat_journal_{datetime.now().strftime('%Y%m%d')}.md",
+        mime="text/markdown",
+        use_container_width=True,
+    )
+
+    for entry in reversed(entries):
+        label = entry["title"] or ("Trang nhật ký" if is_vi else "Journal entry")
+        created_at = entry.get("created_at", "")
+        try:
+            created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00")).astimezone().strftime("%d/%m/%Y %H:%M")
+        except (AttributeError, ValueError):
+            created_at = str(created_at)
+            
+        with st.expander(f"{entry['mood']} · {label} · {created_at}"):
+            st.write(entry["content"])
+            if st.button(delete_label, key=f"delete_diary_{entry['id']}"):
+                st.session_state.diary_entries = [item for item in st.session_state.diary_entries if item["id"] != entry["id"]]
+                supabase_client.table("diary_entries").delete().eq("id", entry["id"]).eq("user_id", st.session_state.auth_user_id).execute()
+                st.rerun()
                     st.rerun()
     else:
         st.info(empty_label)
