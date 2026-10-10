@@ -7,6 +7,7 @@ from uuid import uuid4
 
 import requests
 import streamlit as st
+from supabase import create_client
 
 
 # ==============================
@@ -44,6 +45,8 @@ def get_secret(name, default=None):
 
 GEMINI_API_KEY = get_secret("GEMINI_API_KEY")
 PRIMARY_MODEL = get_secret("GEMINI_MODEL", DEFAULT_MODEL)
+SUPABASE_URL = get_secret("SUPABASE_URL")
+SUPABASE_KEY = get_secret("SUPABASE_PUBLISHABLE_KEY") or get_secret("SUPABASE_ANON_KEY")
 
 
 # ==============================
@@ -169,6 +172,7 @@ st.markdown(
     .footer { color: #7d9181; text-align: center; font-size: .82rem; padding: 1.2rem 0 .3rem; }
     .teru-bozu {
       position: fixed; top: .1rem; right: 5.1rem; z-index: 1001;
+      width: 54px; height: 86px; pointer-events: none;
       width: 62px; height: 122px; pointer-events: none;
       transform-origin: 50% 0; animation: teru-sway 4.8s ease-in-out infinite;
       filter: drop-shadow(0 5px 8px rgba(41, 78, 52, .16));
@@ -183,6 +187,7 @@ st.markdown(
       .hero { padding: 1.3rem; border-radius: 20px; }
       .hero-title { font-size: 1.9rem; }
       .hero:after { right: -5%; font-size: 110px; }
+      .teru-bozu { right: 4.2rem; width: 42px; height: 68px; }
       .teru-bozu { right: 4.2rem; width: 48px; height: 96px; }
     }
     </style>
@@ -193,7 +198,14 @@ st.markdown(
 st.markdown(
     """
     <div class="teru-bozu" aria-hidden="true">
-       <svg viewBox="0 0 64 128" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 64 104" xmlns="http://www.w3.org/2000/svg">
+        <path d="M32 0v18" stroke="#6d9b73" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="32" cy="37" r="19" fill="#fffdf5" stroke="#dce9d8" stroke-width="2"/>
+        <path d="M18 49c-1 8-7 13-10 23-2 7 4 12 9 10 5-1 7-5 11-3 3 2 6 5 10 3 4-1 6-5 10-4 5 2 8 4 12 0 5-5 0-13-4-20-3-5-5-9-6-15-5 5-10 7-16 7s-12-2-16-8z" fill="#fffdf5" stroke="#dce9d8" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M24 37h.2M40 37h.2" stroke="#405a45" stroke-width="4" stroke-linecap="round"/>
+        <path d="M29 44q3 3 6 0" fill="none" stroke="#7c9d7a" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M27 54q5 4 10 0" fill="none" stroke="#86ad83" stroke-width="2" stroke-linecap="round"/>
+      <svg viewBox="0 0 64 128" xmlns="http://www.w3.org/2000/svg">
         <path d="M32 0v27" stroke="#6d9b73" stroke-width="2" stroke-linecap="round"/>
         <circle cx="32" cy="46" r="19" fill="#fffdf5" stroke="#dce9d8" stroke-width="2"/>
         <path d="M18 58c-1 12-7 20-9 36-2 12 4 19 9 16 5-2 8-7 12-3 3 4 7 8 11 4 4-3 7-8 11-4 5 3 10 6 14 0 5-8-1-20-6-31-3-6-5-11-6-18-5 5-10 7-16 7s-12-2-16-7z" fill="#fffdf5" stroke="#dce9d8" stroke-width="2" stroke-linejoin="round"/>
@@ -270,19 +282,166 @@ def build_system_prompt(is_vi):
 # ==============================
 # Session state
 # ==============================
-# Session state
-# ==============================
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "nickname" not in st.session_state:
     st.session_state.nickname = "Bạn"
 if "diary_entries" not in st.session_state:
     st.session_state.diary_entries = []
+if "auth_access_token" not in st.session_state:
+    st.session_state.auth_access_token = None
+if "auth_refresh_token" not in st.session_state:
+    st.session_state.auth_refresh_token = None
+if "auth_user_id" not in st.session_state:
+    st.session_state.auth_user_id = None
+if "auth_email" not in st.session_state:
+    st.session_state.auth_email = ""
 if "dark_mode" not in st.session_state:
     try:
         st.session_state.dark_mode = st.context.theme.type == "dark"
     except Exception:
         st.session_state.dark_mode = False
+
+
+def save_auth_state(auth_response):
+    """Keep the signed-in user's tokens in this browser session."""
+    auth_session = getattr(auth_response, "session", None)
+    auth_user = getattr(auth_response, "user", None)
+    if not auth_session:
+        return False
+
+    st.session_state.auth_access_token = auth_session.access_token
+    st.session_state.auth_refresh_token = auth_session.refresh_token
+    if auth_user:
+        st.session_state.auth_user_id = auth_user.id
+        st.session_state.auth_email = auth_user.email or ""
+        metadata = getattr(auth_user, "user_metadata", {}) or {}
+        st.session_state.nickname = metadata.get("nickname") or auth_user.email or "Bạn"
+    elif getattr(auth_session, "user", None):
+        auth_user = auth_session.user
+        st.session_state.auth_user_id = auth_user.id
+        st.session_state.auth_email = auth_user.email or ""
+    return bool(st.session_state.auth_user_id)
+
+
+def clear_auth_state():
+    st.session_state.auth_access_token = None
+    st.session_state.auth_refresh_token = None
+    st.session_state.auth_user_id = None
+    st.session_state.auth_email = ""
+    st.session_state.messages = []
+    st.session_state.diary_entries = []
+
+
+def restore_auth_state(client):
+    """Restore and refresh this user's Supabase session after a Streamlit rerun."""
+    access_token = st.session_state.auth_access_token
+    refresh_token = st.session_state.auth_refresh_token
+    if not access_token or not refresh_token:
+        return False
+    try:
+        auth_response = client.auth.set_session(access_token, refresh_token)
+        if not save_auth_state(auth_response):
+            user_response = client.auth.get_user()
+            auth_user = getattr(user_response, "user", None)
+            if auth_user:
+                st.session_state.auth_user_id = auth_user.id
+                st.session_state.auth_email = auth_user.email or ""
+                metadata = getattr(auth_user, "user_metadata", {}) or {}
+                st.session_state.nickname = metadata.get("nickname") or auth_user.email or "Bạn"
+        return bool(st.session_state.auth_user_id)
+    except Exception:
+        clear_auth_state()
+        return False
+
+
+def load_diary_entries(client, user_id):
+    """Load only the signed-in user's entries; Supabase RLS enforces ownership."""
+    result = (
+        client.table("diary_entries")
+        .select("id, user_id, title, mood, content, created_at")
+        .eq("user_id", user_id)
+        .order("created_at", desc=True)
+        .execute()
+    )
+    return result.data or []
+
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    st.error(
+        "SkyeChat cần cấu hình Supabase để bật đăng nhập. "
+        "Hãy thêm `SUPABASE_URL` và `SUPABASE_PUBLISHABLE_KEY` "
+        "(hoặc `SUPABASE_ANON_KEY`) trong phần Secrets của Streamlit."
+    )
+    st.stop()
+
+try:
+    supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
+except Exception as exc:
+    st.error(f"Không khởi tạo được Supabase: {exc}")
+    st.stop()
+
+is_authenticated = restore_auth_state(supabase_client)
+if not is_authenticated:
+    st.markdown(
+        """
+        <section class="hero">
+          <div class="hero-eyebrow">Chào mừng đến với SkyeChat</div>
+          <div class="hero-title">Đăng nhập để tiếp tục ☁️</div>
+          <p class="hero-copy">Tạo tài khoản để dùng không gian trò chuyện và lưu nhật ký riêng của bạn.</p>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+    login_tab, signup_tab = st.tabs(["Đăng nhập", "Tạo tài khoản"])
+
+    with login_tab:
+        with st.form("skyechat_login_form"):
+            login_email = st.text_input("Email", placeholder="ban@example.com")
+            login_password = st.text_input("Mật khẩu", type="password")
+            login_submitted = st.form_submit_button("Đăng nhập", type="primary", use_container_width=True)
+        if login_submitted:
+            try:
+                auth_response = supabase_client.auth.sign_in_with_password(
+                    {"email": login_email.strip(), "password": login_password}
+                )
+                if save_auth_state(auth_response):
+                    st.rerun()
+                st.info("Hãy xác nhận email đăng ký rồi thử đăng nhập lại.")
+            except Exception:
+                st.error("Đăng nhập chưa thành công. Hãy kiểm tra email, mật khẩu và trạng thái xác nhận email.")
+
+    with signup_tab:
+        with st.form("skyechat_signup_form"):
+            signup_nickname = st.text_input("Biệt danh", max_chars=32)
+            signup_email = st.text_input("Email", placeholder="ban@example.com")
+            signup_password = st.text_input("Tạo mật khẩu", type="password", help="Nên dùng ít nhất 8 ký tự.")
+            signup_password_confirm = st.text_input("Nhập lại mật khẩu", type="password")
+            signup_submitted = st.form_submit_button("Tạo tài khoản", type="primary", use_container_width=True)
+        if signup_submitted:
+            if not signup_email.strip() or not signup_nickname.strip():
+                st.warning("Hãy nhập email và biệt danh.")
+            elif len(signup_password) < 8:
+                st.warning("Mật khẩu cần có ít nhất 8 ký tự.")
+            elif signup_password != signup_password_confirm:
+                st.warning("Hai mật khẩu chưa khớp.")
+            else:
+                try:
+                    auth_response = supabase_client.auth.sign_up(
+                        {
+                            "email": signup_email.strip(),
+                            "password": signup_password,
+                            "options": {"data": {"nickname": signup_nickname.strip()}},
+                        }
+                    )
+                    if save_auth_state(auth_response):
+                        st.rerun()
+                    st.success("Tài khoản đã được tạo. Nếu Supabase yêu cầu xác nhận email, hãy mở email rồi đăng nhập.")
+                except Exception:
+                    st.error("Chưa tạo được tài khoản. Hãy kiểm tra email hoặc thử một địa chỉ email khác.")
+
+    st.markdown('<div class="footer">SkyeChat · By ThanhAI</div>', unsafe_allow_html=True)
+    st.stop()
 
 
 def api_error_message(response):
@@ -396,6 +555,14 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
     st.subheader("Cài đặt của bạn")
+    st.caption(f"Tài khoản: {st.session_state.auth_email}")
+    if st.button("Đăng xuất", use_container_width=True):
+        try:
+            supabase_client.auth.sign_out()
+        except Exception:
+            pass
+        clear_auth_state()
+        st.rerun()
 
     nickname_input = st.text_input("Biệt danh", value=st.session_state.nickname, max_chars=32)
     if nickname_input.strip():
@@ -635,6 +802,7 @@ if is_diary:
         save_label, empty_error = "Lưu trang nhật ký", "Hãy viết vài dòng trước khi lưu nhé."
         history_label, download_label, delete_label = "Những trang đã viết", "⬇️ Tải nhật ký về máy", "Xóa trang này"
         empty_label, privacy_label = "Bạn chưa viết trang nhật ký nào. Khi sẵn sàng, hãy bắt đầu bằng vài dòng về hôm nay.", "Nhật ký chỉ được giữ trong phiên trình duyệt hiện tại. Hãy tải bản sao về máy nếu muốn giữ lại sau khi đóng hoặc tải lại trang."
+        empty_label, privacy_label = "Bạn chưa viết trang nhật ký nào. Khi sẵn sàng, hãy bắt đầu bằng vài dòng về hôm nay.", "Nhật ký được lưu theo tài khoản Supabase để bạn có thể xem lại sau khi đăng nhập trên thiết bị khác."
         mood_options = ["😟 Rất tệ", "🙁 Không ổn", "😐 Bình thường", "🙂 Ổn", "😊 Tốt"]
     else:
         st.markdown(
@@ -656,6 +824,7 @@ if is_diary:
         save_label, empty_error = "Save journal entry", "Write a few lines before saving."
         history_label, download_label, delete_label = "Your entries", "⬇️ Download journal", "Delete this entry"
         empty_label, privacy_label = "You have not written any entries yet. Start with a few lines about today whenever you feel ready.", "Entries are kept only for the current browser session. Download a copy if you want to keep them after closing or refreshing the page."
+        empty_label, privacy_label = "You have not written any entries yet. Start with a few lines about today whenever you feel ready.", "Journal entries are saved to your Supabase account so you can view them after signing in on another device."
         mood_options = ["😟 Very low", "🙁 Not great", "😐 Okay", "🙂 Good", "😊 Great"]
 
     with st.form("diary_entry_form", clear_on_submit=True):
@@ -676,19 +845,51 @@ if is_diary:
                 }
             )
             st.success("Đã lưu nhật ký." if is_vi else "Journal entry saved.")
+            try:
+                supabase_client.table("diary_entries").insert(
+                    {
+                        "user_id": st.session_state.auth_user_id,
+                        "title": diary_title.strip(),
+                        "mood": diary_mood,
+                        "content": diary_text.strip(),
+                    }
+                ).execute()
+                st.success("Đã lưu nhật ký." if is_vi else "Journal entry saved.")
+                st.rerun()
+            except Exception:
+                st.error(
+                    "Chưa lưu được nhật ký. Hãy kiểm tra đã chạy file `supabase_setup.sql` và bật quyền truy cập an toàn."
+                    if is_vi
+                    else "Could not save the entry. Check that `supabase_setup.sql` has been applied and database access is configured."
+                )
         else:
             st.warning(empty_error)
 
     st.divider()
     st.subheader(history_label)
     entries = st.session_state.diary_entries
+    try:
+        entries = load_diary_entries(supabase_client, st.session_state.auth_user_id)
+    except Exception:
+        entries = []
+        st.error(
+            "Chưa tải được nhật ký. Hãy kiểm tra đã tạo bảng `diary_entries` trong Supabase."
+            if is_vi
+            else "Could not load entries. Check that the `diary_entries` table exists in Supabase."
+        )
     if entries:
         export_lines = ["# Nhật ký SkyeChat" if is_vi else "# SkyeChat Journal", ""]
         for entry in reversed(entries):
+            created_at = entry.get("created_at", "")
+            try:
+                created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00")).astimezone().strftime("%d/%m/%Y %H:%M")
+            except (AttributeError, ValueError):
+                created_at = str(created_at)
             export_lines.extend(
                 [
                     f"## {entry['title'] or ('Trang nhật ký' if is_vi else 'Journal entry')}",
                     f"{entry['created_at']} · {entry['mood']}",
+                    f"{created_at} · {entry['mood']}",
                     "",
                     entry["content"],
                     "",
@@ -705,12 +906,21 @@ if is_diary:
         )
         for entry in reversed(entries):
             label = entry["title"] or ("Trang nhật ký" if is_vi else "Journal entry")
+            created_at = entry.get("created_at", "")
+            try:
+                created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00")).astimezone().strftime("%d/%m/%Y %H:%M")
+            except (AttributeError, ValueError):
+                created_at = str(created_at)
             with st.expander(f"{entry['mood']} · {label} · {entry['created_at']}"):
+            with st.expander(f"{entry['mood']} · {label} · {created_at}"):
                 st.write(entry["content"])
                 if st.button(delete_label, key=f"delete_diary_{entry['id']}"):
                     st.session_state.diary_entries = [
                         item for item in st.session_state.diary_entries if item["id"] != entry["id"]
                     ]
+                    supabase_client.table("diary_entries").delete().eq("id", entry["id"]).eq(
+                        "user_id", st.session_state.auth_user_id
+                    ).execute()
                     st.rerun()
     else:
         st.info(empty_label)
@@ -781,6 +991,7 @@ else:
             with st.spinner("SkyeChat đang lắng nghe..." if is_vi else "SkyeChat is listening..."):
                 try:
                     system_prompt = SYSTEM_PROMPT_VI if is_vi else SYSTEM_PROMPT_EN
+                    system_prompt = build_system_prompt(is_vi)
                     bot_reply = generate_reply(st.session_state.messages, system_prompt)
                     st.markdown(bot_reply)
                     st.session_state.messages.append({"role": "assistant", "content": bot_reply})
