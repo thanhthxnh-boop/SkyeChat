@@ -24,11 +24,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-try:
-    IS_DARK_THEME = st.context.theme.type == "dark"
-except Exception:
-    IS_DARK_THEME = False
-
 API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 DEFAULT_MODEL = "gemini-3.8-flash"
 FALLBACK_MODEL = "gemini-3.6-flash"
@@ -243,6 +238,11 @@ if "nickname" not in st.session_state:
     st.session_state.nickname = "Bạn"
 if "diary_entries" not in st.session_state:
     st.session_state.diary_entries = []
+if "dark_mode" not in st.session_state:
+    try:
+        st.session_state.dark_mode = st.context.theme.type == "dark"
+    except Exception:
+        st.session_state.dark_mode = False
 
 
 def api_error_message(response):
@@ -370,6 +370,12 @@ with st.sidebar:
         key="page_mode",
     )
     is_diary = "Nhật ký" in page_mode or "Journal" in page_mode
+    st.toggle(
+        "Giao diện tối" if is_vi else "Dark appearance",
+        key="dark_mode",
+        help="Bật giao diện xanh lá tối, dễ nhìn khi dùng ban đêm." if is_vi else "Use the dark green appearance.",
+    )
+    IS_DARK_THEME = st.session_state.dark_mode
     if not GEMINI_API_KEY and not is_diary:
         st.info("Thêm `GEMINI_API_KEY` vào `.streamlit/secrets.toml` để bật trò chuyện với AI.")
 
@@ -438,6 +444,127 @@ if is_diary:
           background: rgba(247, 252, 246, .92) !important;
         }
         [data-testid="stExpander"] summary:hover { background: #edf6eb !important; }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+if IS_DARK_THEME:
+    st.markdown(
+        """
+        <style>
+        :root {
+          --sky-ink: #e5efe5;
+          --sky-muted: #b0c1b1;
+          --sky-paper: #141d17;
+        }
+        .stApp {
+          color: #e4eee4 !important;
+          background:
+            radial-gradient(ellipse at 8% 0%, rgba(40, 77, 48, .42), transparent 34%),
+            radial-gradient(ellipse at 96% 12%, rgba(43, 75, 55, .34), transparent 32%),
+            #141b16 !important;
+        }
+        [data-testid="stAppViewContainer"],
+        [data-testid="stMain"],
+        [data-testid="stMainBlockContainer"] { background-color: #141b16 !important; }
+        [data-testid="stHeader"] { background: rgba(20, 27, 22, .92) !important; }
+        [data-testid="stSidebar"] {
+          background: linear-gradient(180deg, #1a271d 0%, #20291f 58%, #192720 100%) !important;
+          border-right: 1px solid rgba(137, 179, 139, .18) !important;
+        }
+        [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color: #c1d0c2 !important; }
+        h1, h2, h3,
+        [data-testid="stMarkdownContainer"],
+        [data-testid="stMarkdownContainer"] p,
+        [data-testid="stMarkdownContainer"] li,
+        [data-testid="stWidgetLabel"],
+        [data-testid="stWidgetLabel"] p,
+        [data-testid="stSidebar"] label,
+        [data-testid="stMain"] label { color: #e4eee4 !important; }
+        [data-testid="stCaptionContainer"] { color: #afc0b0 !important; }
+        .hero {
+          background: linear-gradient(115deg, #263b2b, #303b28 58%, #20382d) !important;
+          border-color: rgba(171, 205, 166, .18) !important;
+          box-shadow: 0 16px 45px rgba(0, 0, 0, .22) !important;
+        }
+        .hero-eyebrow { color: #acd4a8 !important; }
+        .hero-title { color: #eff7ed !important; }
+        .hero-copy { color: #c5d4c5 !important; }
+        .welcome-card {
+          background: linear-gradient(135deg, #202c23, #202d27) !important;
+          border-color: #394d3c !important;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, .18) !important;
+          color: #dce8dc !important;
+        }
+        .welcome-card strong { color: #a9d5ae !important; }
+        .soft-note { color: #afc2b0 !important; }
+        .diary-intro {
+          background: linear-gradient(115deg, #202c23, #203229) !important;
+          border-color: #405b44 !important;
+          color: #cfe0d0 !important;
+        }
+        .sidebar-brand {
+          background: linear-gradient(135deg, #2b3e2d, #34402c 65%, #243b30) !important;
+          color: #c9d9ca !important;
+        }
+        .sidebar-brand strong { color: #f0f6ed !important; }
+        div[data-testid="stChatMessage"] {
+          background: #202a22 !important;
+          border-color: #39483b !important;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, .16) !important;
+          color: #e4eee4 !important;
+        }
+        div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
+          background: linear-gradient(115deg, #293b2b, #303b29) !important;
+          border-color: #4a6046 !important;
+        }
+        div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
+          background: linear-gradient(115deg, #202b23, #20312a) !important;
+          border-color: #3b5544 !important;
+        }
+        [data-testid="stChatInput"] textarea,
+        [data-testid="stTextInput"] input,
+        [data-testid="stTextArea"] textarea {
+          background: #202a22 !important;
+          color: #edf5ed !important;
+          border-color: #455a47 !important;
+        }
+        [data-testid="stChatInput"] textarea::placeholder,
+        [data-testid="stTextInput"] input::placeholder,
+        [data-testid="stTextArea"] textarea::placeholder { color: #a8b9a9 !important; }
+        [data-testid="stChatInput"] textarea:focus,
+        [data-testid="stTextInput"] input:focus,
+        [data-testid="stTextArea"] textarea:focus {
+          border-color: #85b98b !important;
+          box-shadow: 0 0 0 3px rgba(112, 175, 122, .18) !important;
+        }
+        [data-testid="stForm"] {
+          background: linear-gradient(145deg, #202b22, #1e2c23) !important;
+          border-color: #3c5540 !important;
+          box-shadow: 0 12px 28px rgba(0, 0, 0, .18) !important;
+        }
+        [data-testid="stExpander"] {
+          background: #1d2921 !important;
+          border-color: #3c5140 !important;
+          color: #e2ece2 !important;
+        }
+        [data-testid="stExpander"] summary:hover { background: #29392b !important; }
+        .stButton button {
+          background: #253329 !important;
+          border-color: #4a624b !important;
+          color: #dcebdc !important;
+        }
+        .stButton button:hover { background: #304532 !important; color: #f2f8f1 !important; }
+        [data-testid="stChatInput"] button,
+        [data-testid="stDownloadButton"] button,
+        [data-testid="stFormSubmitButton"] button {
+          background: linear-gradient(135deg, #438d5c, #72ad78) !important;
+          border-color: #75a97a !important;
+          color: #fff !important;
+        }
+        .footer { color: #9bad9d !important; }
+        .teru-bozu { filter: drop-shadow(0 5px 9px rgba(0, 0, 0, .42)); }
         </style>
         """,
         unsafe_allow_html=True,
