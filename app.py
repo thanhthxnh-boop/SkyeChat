@@ -55,13 +55,6 @@ st.markdown(
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Nunito:wght@500;600;700;800;900&display=swap');
 
     :root {
-      --sky-ink: #263251;
-      --sky-muted: #74809a;
-      --sky-blue: #6b8df2;
-      --sky-lilac: #a58af6;
-      --sky-mint: #c9f2e7;
-      --sky-peach: #ffe2cc;
-      --sky-paper: #f7f8ff;
       --primary-color: #4f9b6b;
       --sky-ink: #24443a;
       --sky-muted: #71877b;
@@ -76,22 +69,15 @@ st.markdown(
     .stApp {
       color: var(--sky-ink);
       background:
-        radial-gradient(ellipse at 8% 0%, rgba(202,220,255,.52), transparent 32%),
-        radial-gradient(ellipse at 96% 12%, rgba(232,216,255,.48), transparent 30%),
-        #f8f9ff;
         radial-gradient(ellipse at 8% 0%, rgba(194,232,204,.55), transparent 32%),
         radial-gradient(ellipse at 96% 12%, rgba(217,241,225,.62), transparent 30%),
         #f7faf6;
     }
-    [data-testid="stHeader"] { background: rgba(248,249,255,.78); }
     [data-testid="stHeader"] { background: rgba(247,250,246,.82); }
     [data-testid="stSidebar"] {
-      background: linear-gradient(180deg, #f0f4ff 0%, #f7f2ff 58%, #f4fbfa 100%);
-      border-right: 1px solid rgba(121,142,203,.14);
       background: linear-gradient(180deg, #edf7ef 0%, #f2f8ef 58%, #edf8f3 100%);
       border-right: 1px solid rgba(101,151,117,.16);
     }
-    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color: #56617d; }
     [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color: #526b5d; }
     h1, h2, h3 { font-family: 'Nunito', sans-serif !important; color: var(--sky-ink); }
     h1 { letter-spacing: -1.2px; }
@@ -100,8 +86,6 @@ st.markdown(
       padding: 1.65rem 2rem 1.55rem;
       border: 1px solid rgba(255,255,255,.9);
       border-radius: 26px;
-      background: linear-gradient(115deg, rgba(224,235,255,.96), rgba(242,231,255,.94) 58%, rgba(224,248,241,.9));
-      box-shadow: 0 16px 45px rgba(77,91,145,.09);
       background: linear-gradient(115deg, rgba(220,241,222,.98), rgba(232,244,220,.96) 58%, rgba(218,243,232,.94));
       box-shadow: 0 16px 45px rgba(62,112,78,.10);
       margin: .35rem 0 1.2rem;
@@ -121,96 +105,67 @@ st.markdown(
     }
     @keyframes hero-arrive { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes cloud-drift { 0%, 100% { translate: 0 0; } 50% { translate: 0 8px; } }
-    .hero-eyebrow { color: #6679b1; font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
-    .hero-title { color: #293658; font: 900 2.25rem/1.12 'Nunito', sans-serif; margin: .25rem 0 .45rem; }
-    .hero-copy { color: #626e8c; max-width: 660px; font-size: 1rem; margin: 0; }
     .hero-eyebrow { color: #4e8061; font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
     .hero-title { color: #29483a; font: 900 2.25rem/1.12 'Nunito', sans-serif; margin: .25rem 0 .45rem; }
     .hero-copy { color: #5d7666; max-width: 660px; font-size: 1rem; margin: 0; }
     .welcome-card {
-      border: 1px solid rgba(151,167,220,.18); border-radius: 22px;
       border: 1px solid rgba(133,177,143,.22); border-radius: 22px;
       padding: 1.25rem 1.4rem; margin: .8rem 0 1.25rem;
-      background: rgba(255,255,255,.78); box-shadow: 0 10px 30px rgba(66,82,133,.055);
       background: rgba(255,255,255,.82); box-shadow: 0 10px 30px rgba(62,112,78,.07);
       animation: hero-arrive .75s .08s ease-out both;
     }
-    .welcome-card strong { color: #536fc5; }
-    .soft-note { color: #7b86a0; font-size: .88rem; }
     .welcome-card strong { color: #43805d; }
     .soft-note { color: #71877b; font-size: .88rem; }
     .diary-intro {
-      border: 1px solid rgba(160,213,197,.27); border-radius: 20px;
       border: 1px solid rgba(139,192,151,.32); border-radius: 20px;
       padding: 1rem 1.2rem; margin: .7rem 0 1rem;
-      background: linear-gradient(115deg, rgba(255,255,255,.88), rgba(229,248,241,.78));
-      color: #586b78;
       background: linear-gradient(115deg, rgba(255,255,255,.9), rgba(226,245,228,.84));
       color: #536c5b;
     }
     .sidebar-brand {
       padding: 1rem; margin: .25rem 0 1.2rem; border-radius: 20px;
-      background: linear-gradient(135deg, #dfeaff, #efe4ff 65%, #ddf6ed);
-      text-align: center; color: #46577e;
       background: linear-gradient(135deg, #dcefdc, #e8f2d9 65%, #d9f0e4);
       text-align: center; color: #486450;
     }
     .sidebar-brand .cloud { font-size: 2.2rem; }
-    .sidebar-brand strong { display: block; font: 900 1.25rem 'Nunito', sans-serif; color: #2e3b61; }
     .sidebar-brand strong { display: block; font: 900 1.25rem 'Nunito', sans-serif; color: #29483a; }
     .sidebar-brand span { font-size: .82rem; }
     div[data-testid="stChatMessage"] {
-      border: 1px solid rgba(147,161,207,.13); border-radius: 20px;
       border: 1px solid rgba(128,163,137,.2); border-radius: 20px;
       padding: .85rem 1rem; background: rgba(255,255,255,.75);
-      box-shadow: 0 8px 24px rgba(54,72,126,.045); margin-bottom: .85rem;
       box-shadow: 0 8px 24px rgba(56,99,66,.055); margin-bottom: .85rem;
       transition: box-shadow .2s ease, transform .2s ease;
     }
-    div[data-testid="stChatMessage"]:hover { box-shadow: 0 11px 28px rgba(54,72,126,.075); transform: translateY(-1px); }
     div[data-testid="stChatMessage"]:hover { box-shadow: 0 11px 28px rgba(56,99,66,.09); transform: translateY(-1px); }
     div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
-      background: linear-gradient(115deg, rgba(224,235,255,.96), rgba(242,231,255,.92));
-      border-color: rgba(144,164,231,.2);
       background: linear-gradient(115deg, rgba(224,242,222,.98), rgba(235,244,218,.94));
       border-color: rgba(132,176,125,.28);
     }
     div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
-      background: linear-gradient(115deg, rgba(255,255,255,.96), rgba(239,251,247,.94));
-      border-color: rgba(160,213,197,.25);
       background: linear-gradient(115deg, rgba(255,255,255,.97), rgba(230,246,235,.95));
       border-color: rgba(145,193,156,.3);
     }
     [data-testid="stChatInput"] textarea {
-      border-radius: 18px !important; border: 1px solid #dce3f7 !important;
       border-radius: 18px !important; border: 1px solid #d3e5d5 !important;
       background: rgba(255,255,255,.92) !important;
-      box-shadow: 0 8px 24px rgba(69,88,145,.055);
       box-shadow: 0 8px 24px rgba(62,112,78,.07);
       transition: border-color .2s ease, box-shadow .2s ease;
     }
-    [data-testid="stChatInput"] textarea:focus { border-color: #92aaf5 !important; box-shadow: 0 0 0 3px rgba(107,141,242,.13) !important; }
     [data-testid="stChatInput"] textarea:focus { border-color: #80b48c !important; box-shadow: 0 0 0 3px rgba(75,143,94,.14) !important; }
     .stButton button {
-      border-radius: 13px; border: 1px solid #d8def2; color: #5369aa;
       border-radius: 13px; border: 1px solid #d3e5d5; color: #426b50;
       background: rgba(255,255,255,.76); font-weight: 700;
       transition: all .18s ease;
     }
-    .stButton button:hover { border-color: #aab9f2; color: #405aa7; background: #f3f5ff; transform: translateY(-1px); box-shadow: 0 7px 16px rgba(80,102,174,.12); }
     .stButton button:hover { border-color: #91bd99; color: #315d41; background: #f0f8ef; transform: translateY(-1px); box-shadow: 0 7px 16px rgba(67,119,76,.14); }
     [data-testid="stChatInput"] button {
       border: 0 !important; border-radius: 13px !important; color: white !important;
-      background: linear-gradient(135deg, #7897f5, #a58af6) !important;
-      box-shadow: 0 5px 14px rgba(107,141,242,.26);
       background: linear-gradient(135deg, #4f9b6b, #83bd8c) !important;
       box-shadow: 0 5px 14px rgba(70,143,88,.28);
       transition: transform .18s ease, box-shadow .18s ease;
     }
-    [data-testid="stChatInput"] button:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(107,141,242,.34); }
     [data-testid="stChatInput"] button:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(70,143,88,.36); }
     div[data-testid="stAlert"] { border-radius: 15px; }
-    .footer { color: #8b94aa; text-align: center; font-size: .82rem; padding: 1.2rem 0 .3rem; }
     .footer { color: #7d9181; text-align: center; font-size: .82rem; padding: 1.2rem 0 .3rem; }
     @media (prefers-reduced-motion: reduce) {
       *, *:before, *:after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
@@ -622,6 +577,6 @@ else:
                     st.error(f"Không gửi được tin nhắn: {exc}")
 
 st.markdown(
-    '<div class="footer">SkyeChat · Lắng nghe bằng sự tử tế · Phát triển bởi ThanhAI</div>',
+    '<div class="footer">SkyeChat · Lắng nghe bằng sự tử tế · By ThanhAI</div>',
     unsafe_allow_html=True,
 )
