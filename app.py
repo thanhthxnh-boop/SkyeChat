@@ -403,6 +403,61 @@ with st.sidebar:
     st.caption("Cuộc trò chuyện được lưu trong phiên trình duyệt hiện tại.")
 
 
+if is_diary:
+    st.markdown(
+        """
+        <style>
+        [data-testid="stForm"] {
+          background: linear-gradient(145deg, #f3faf2, #e8f5e9);
+          border: 1px solid #cfe5d0;
+          border-radius: 22px;
+          padding: 1.1rem 1.2rem 1.2rem;
+          box-shadow: 0 12px 28px rgba(57, 111, 69, .07);
+        }
+        [data-testid="stTextInput"] input,
+        [data-testid="stTextArea"] textarea {
+          background: #fbfefb !important;
+          border: 1px solid #c9dfcb !important;
+          border-radius: 13px !important;
+        }
+        [data-testid="stTextInput"] input:focus,
+        [data-testid="stTextArea"] textarea:focus {
+          border-color: #72a97c !important;
+          box-shadow: 0 0 0 3px rgba(79, 155, 107, .13) !important;
+        }
+        [data-testid="stSelectSlider"] [role="slider"] {
+          background: #438d5c !important;
+          border-color: #438d5c !important;
+        }
+        [data-testid="stDownloadButton"] button,
+        [data-testid="stFormSubmitButton"] button {
+          color: #fff !important;
+          border: 1px solid #3f8052 !important;
+          border-radius: 13px !important;
+          background: linear-gradient(135deg, #438d5c, #72ad78) !important;
+          box-shadow: 0 6px 15px rgba(63, 128, 82, .18);
+          transition: transform .18s ease, box-shadow .18s ease;
+        }
+        [data-testid="stDownloadButton"] button:hover,
+        [data-testid="stFormSubmitButton"] button:hover {
+          color: #fff !important;
+          border-color: #2f7045 !important;
+          background: linear-gradient(135deg, #367c50, #5b9b66) !important;
+          transform: translateY(-1px);
+          box-shadow: 0 9px 20px rgba(63, 128, 82, .24);
+        }
+        [data-testid="stExpander"] {
+          border: 1px solid #d4e7d4 !important;
+          border-radius: 16px !important;
+          background: rgba(247, 252, 246, .92) !important;
+        }
+        [data-testid="stExpander"] summary:hover { background: #edf6eb !important; }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 # ==============================
 # Header và hội thoại
 # ==============================
