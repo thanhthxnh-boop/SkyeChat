@@ -1,4 +1,5 @@
 import os
+import json
 import random
 import time
 from datetime import datetime
@@ -27,9 +28,14 @@ st.set_page_config(
 API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 DEFAULT_MODEL = "gemini-3.8-flash"
 FALLBACK_MODEL = "gemini-3.6-flash"
-MAX_HISTORY_MESSAGES = 24
-MAX_RETRIES = 3
+MAX_HISTORY_MESSAGES = 16
+MAX_RETRIES = 2
 
+def get_http_session():
+    """Reuse pooled HTTP connections within this user session."""
+    if "_http_session" not in st.session_state:
+        st.session_state["_http_session"] = requests.Session()
+    return st.session_state["_http_session"]
 
 def get_secret(name, default=None):
     """Read a Streamlit secret first, then an environment variable."""
@@ -54,7 +60,6 @@ SUPABASE_KEY = get_secret("SUPABASE_PUBLISHABLE_KEY") or get_secret("SUPABASE_AN
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Nunito:wght@500;600;700;800;900&display=swap');
 
     :root {
       --primary-color: #729b87;
@@ -67,7 +72,7 @@ st.markdown(
       --sky-paper: #f7f8f5;
     }
     input[type="radio"] { accent-color: #729b87; }
-    html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
+    html, body, [class*="css"] { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; }
     .stApp {
       color: var(--sky-ink);
       background:
@@ -81,7 +86,7 @@ st.markdown(
       border-right: 1px solid rgba(112,151,139,.18);
     }
     [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color: #586d66; }
-    h1, h2, h3 { font-family: 'Nunito', sans-serif !important; color: var(--sky-ink); }
+    h1, h2, h3 { font-family: Inter, ui-sans-serif, system-ui, sans-serif !important; color: var(--sky-ink); }
     h1 { letter-spacing: -1.2px; }
     .hero {
       position: relative; overflow: hidden;
@@ -108,12 +113,12 @@ st.markdown(
     @keyframes hero-arrive { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes cloud-drift { 0%, 100% { translate: 0 0; } 50% { translate: 0 8px; } }
     .hero-eyebrow { color: #668c79; font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
-    .hero-title { color: #354b45; font: 900 2.25rem/1.22 'Nunito', sans-serif; margin: .25rem 0 .45rem; }
+    .hero-title { color: #354b45; font: 900 2.25rem/1.22 Inter, ui-sans-serif, system-ui, sans-serif; margin: .25rem 0 .45rem; }
     .hero-tagline {
       display: inline-block; vertical-align: .22em; margin-left: .4rem;
       padding: .33rem .72rem; border: 1px solid rgba(112,151,139,.22);
       border-radius: 999px; background: rgba(255,255,255,.62);
-      color: #628274; font: 700 .82rem/1.25 'DM Sans', sans-serif;
+      color: #628274; font: 700 .82rem/1.25 Inter, ui-sans-serif, system-ui, sans-serif;
       letter-spacing: .01em; white-space: normal;
     }
     .hero-copy { color: #60766e; max-width: 660px; font-size: 1rem; margin: 0; }
@@ -137,7 +142,7 @@ st.markdown(
       text-align: center; color: #536d63;
     }
     .sidebar-brand .cloud { font-size: 2.2rem; }
-    .sidebar-brand strong { display: block; font: 900 1.25rem 'Nunito', sans-serif; color: #354b45; }
+    .sidebar-brand strong { display: block; font: 900 1.25rem Inter, ui-sans-serif, system-ui, sans-serif; color: #354b45; }
     .sidebar-brand span { font-size: .82rem; }
     div[data-testid="stChatMessage"] {
       border: 1px solid rgba(133,164,157,.23); border-radius: 20px;
@@ -292,6 +297,14 @@ if "auth_user_id" not in st.session_state:
     st.session_state.auth_user_id = None
 if "auth_email" not in st.session_state:
     st.session_state.auth_email = ""
+if "recovery_otp_sent" not in st.session_state:
+    st.session_state.recovery_otp_sent = False
+if "recovery_target" not in st.session_state:
+    st.session_state.recovery_target = ""
+if "recovery_type" not in st.session_state:
+    st.session_state.recovery_type = ""
+if "password_reset_pending" not in st.session_state:
+    st.session_state.password_reset_pending = False
 if "dark_mode" not in st.session_state:
     try:
         st.session_state.dark_mode = st.context.theme.type == "dark"
@@ -371,12 +384,47 @@ if not SUPABASE_URL or not SUPABASE_KEY:
     st.stop()
 
 try:
-    supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    # Keep this stateful auth client private to this browser session.
+    if "_supabase_client" not in st.session_state:
+        st.session_state["_supabase_client"] = create_client(SUPABASE_URL, SUPABASE_KEY)
+    supabase_client = st.session_state["_supabase_client"]
 except Exception as exc:
     st.error(f"Không khởi tạo được Supabase: {exc}")
     st.stop()
 
 is_authenticated = restore_auth_state(supabase_client)
+if is_authenticated and st.session_state.password_reset_pending:
+    st.markdown(
+        """
+        <section class="hero">
+          <div class="hero-eyebrow">Kh\u00f4i ph\u1ee5c t\u00e0i kho\u1ea3n</div>
+          <div class="hero-title">\u0110\u1eb7t m\u1eadt kh\u1ea9u m\u1edbi</div>
+          <p class="hero-copy">T\u1ea1o m\u1eadt kh\u1ea9u m\u1edbi \u0111\u1ec3 ho\u00e0n t\u1ea5t kh\u00f4i ph\u1ee5c t\u00e0i kho\u1ea3n.</p>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+    with st.form("skyechat_set_new_password_form"):
+        new_password = st.text_input("M\u1eadt kh\u1ea9u m\u1edbi", type="password")
+        confirm_new_password = st.text_input("Nh\u1eadp l\u1ea1i m\u1eadt kh\u1ea9u", type="password")
+        password_submitted = st.form_submit_button(
+            "L\u01b0u m\u1eadt kh\u1ea9u m\u1edbi", type="primary", use_container_width=True
+        )
+    if password_submitted:
+        if len(new_password) < 8:
+            st.warning("M\u1eadt kh\u1ea9u c\u1ea7n c\u00f3 ít nh\u1ea5t 8 k\u00fd t\u1ef1.")
+        elif new_password != confirm_new_password:
+            st.warning("Hai m\u1eadt kh\u1ea9u ch\u01b0a kh\u1edbp.")
+        else:
+            try:
+                supabase_client.auth.update_user({"password": new_password})
+                st.session_state.password_reset_pending = False
+                st.session_state.recovery_target = ""
+                st.success("\u0110\u00e3 \u0111\u1ed5i m\u1eadt kh\u1ea9u. B\u1ea1n c\u00f3 th\u1ec3 ti\u1ebfp t\u1ee5c.")
+                st.rerun()
+            except Exception:
+                st.error("Ch\u01b0a \u0111\u1ed5i \u0111\u01b0\u1ee3c m\u1eadt kh\u1ea9u. H\u00e3y x\u00e1c minh l\u1ea1i r\u1ed3i th\u1eed l\u1ea1i.")
+    st.stop()
 if not is_authenticated:
     st.markdown(
         """
@@ -388,17 +436,17 @@ if not is_authenticated:
         """,
         unsafe_allow_html=True,
     )
-    login_tab, signup_tab = st.tabs(["Đăng nhập", "Tạo tài khoản"])
+    login_tab, signup_tab, recovery_tab = st.tabs(["\u0110\u0103ng nh\u1eadp", "T\u1ea1o t\u00e0i kho\u1ea3n", "Qu\u00ean m\u1eadt kh\u1ea9u"])
 
     with login_tab:
         with st.form("skyechat_login_form"):
-            login_email = st.text_input("Email", placeholder="ban@example.com")
+            login_identity = st.text_input("Email ho\u1eb7c s\u1ed1 điện thoại", placeholder="ban@example.com hoặc +84901234567")
             login_password = st.text_input("Mật khẩu", type="password")
             login_submitted = st.form_submit_button("Đăng nhập", type="primary", use_container_width=True)
         if login_submitted:
             try:
                 auth_response = supabase_client.auth.sign_in_with_password(
-                    {"email": login_email.strip(), "password": login_password}
+                    {"email": login_identity.strip(), "password": login_password} if "@" in login_identity else {"phone": login_identity.strip(), "password": login_password}
                 )
                 if save_auth_state(auth_response):
                     st.rerun()
@@ -435,6 +483,79 @@ if not is_authenticated:
                 except Exception:
                     st.error("Chưa tạo được tài khoản. Hãy kiểm tra email hoặc thử một địa chỉ email khác.")
 
+    with recovery_tab:
+        st.caption(
+            "M\u00e3 OTP email c\u1ea7n email template Supabase c\u00f3 {{ .Token }}. "
+            "SMS c\u1ea7n b\u1eadt x\u00e1c minh s\u1ed1 \u0111i\u1ec7n tho\u1ea1i v\u00e0 nh\u00e0 cung c\u1ea5p SMS."
+        )
+        with st.form("skyechat_recovery_request_form"):
+            recovery_channel = st.radio(
+                "Ph\u01b0\u01a1ng th\u1ee9c x\u00e1c minh", ["Email", "SMS"], horizontal=True
+            )
+            if recovery_channel == "Email":
+                recovery_target = st.text_input(
+                    "Email \u0111\u00e3 \u0111\u0103ng k\u00fd", placeholder="ban@example.com"
+                )
+            else:
+                recovery_target = st.text_input(
+                    "S\u1ed1 \u0111i\u1ec7n tho\u1ea1i \u0111\u00e3 \u0111\u0103ng k\u00fd",
+                    placeholder="+84901234567",
+                )
+            send_code = st.form_submit_button(
+                "G\u1eedi m\u00e3 x\u00e1c minh", type="primary", use_container_width=True
+            )
+
+        if send_code:
+            target = recovery_target.strip()
+            if not target or (recovery_channel == "SMS" and not target.startswith("+")):
+                st.warning("H\u00e3y nh\u1eadp email ho\u1eb7c s\u1ed1 \u0111i\u1ec7n tho\u1ea1i k\u00e8m m\u00e3 qu\u1ed1c gia.")
+            else:
+                try:
+                    if recovery_channel == "Email":
+                        supabase_client.auth.sign_in_with_otp(
+                            {"email": target, "options": {"should_create_user": False}}
+                        )
+                        st.session_state.recovery_type = "email"
+                    else:
+                        supabase_client.auth.sign_in_with_otp(
+                            {"phone": target, "options": {"should_create_user": False}}
+                        )
+                        st.session_state.recovery_type = "phone"
+                    st.session_state.recovery_target = target
+                    st.session_state.recovery_otp_sent = True
+                    st.success("N\u1ebfu t\u00e0i kho\u1ea3n t\u1ed3n t\u1ea1i, m\u00e3 x\u00e1c minh đ\u00e3 \u0111\u01b0\u1ee3c g\u1eedi.")
+                except Exception:
+                    st.error("Ch\u01b0a g\u1eedi \u0111\u01b0\u1ee3c m\u00e3. H\u00e3y ki\u1ec3m tra k\u00eanh x\u00e1c minh.")
+
+        if st.session_state.recovery_otp_sent:
+            st.caption(f"Nh\u1eadp m\u00e3 \u0111\u00e3 g\u1eedi t\u1edbi {st.session_state.recovery_target}.")
+            with st.form("skyechat_recovery_verify_form"):
+                recovery_code = st.text_input("M\u00e3 x\u00e1c minh", max_chars=12)
+                verify_code = st.form_submit_button(
+                    "X\u00e1c minh m\u00e3", type="primary", use_container_width=True
+                )
+            if verify_code:
+                try:
+                    if st.session_state.recovery_type == "email":
+                        verification = {
+                            "email": st.session_state.recovery_target,
+                            "token": recovery_code.strip(),
+                            "type": "email",
+                        }
+                    else:
+                        verification = {
+                            "phone": st.session_state.recovery_target,
+                            "token": recovery_code.strip(),
+                            "type": "sms",
+                        }
+                    auth_response = supabase_client.auth.verify_otp(verification)
+                    if save_auth_state(auth_response):
+                        st.session_state.password_reset_pending = True
+                        st.session_state.recovery_otp_sent = False
+                        st.rerun()
+                    st.error("M\u00e3 x\u00e1c minh ch\u01b0a m\u1edf \u0111\u01b0\u1ee3c phi\u00ean. H\u00e3y g\u1eedi m\u00e3 m\u1edbi.")
+                except Exception:
+                    st.error("M\u00e3 kh\u00f4ng h\u1ee3p l\u1ec7 ho\u1eb7c \u0111\u00e3 h\u1ebft h\u1ea1n. H\u00e3y g\u1eedi m\u00e3 m\u1edbi.")
     st.markdown('<div class="footer">SkyeChat · By ThanhAI</div>', unsafe_allow_html=True)
     st.stop()
 
@@ -448,90 +569,107 @@ def api_error_message(response):
 
 
 def generate_reply(history, system_prompt):
-    """Call Gemini with bounded exponential backoff and one overload fallback."""
+    """Yield Gemini response text as it arrives for faster perceived replies."""
     if not GEMINI_API_KEY:
         raise RuntimeError(
-            "Chưa cấu hình GEMINI_API_KEY. Hãy thêm khóa vào .streamlit/secrets.toml để dùng tính năng trò chuyện."
+            "GEMINI_API_KEY is missing. Add it to .streamlit/secrets.toml to enable chat."
         )
 
-    contents = []
-    for msg in history[-MAX_HISTORY_MESSAGES:]:
-        contents.append(
-            {
-                "role": "user" if msg["role"] == "user" else "model",
-                "parts": [{"text": msg["content"]}],
-            }
-        )
-
+    contents = [
+        {
+            "role": "user" if msg["role"] == "user" else "model",
+            "parts": [{"text": msg["content"]}],
+        }
+        for msg in history[-MAX_HISTORY_MESSAGES:]
+    ]
     payload = {
         "systemInstruction": {"parts": [{"text": system_prompt}]},
         "contents": contents,
+        "generationConfig": {"maxOutputTokens": 512, "temperature": 0.7},
     }
-    headers = {
-        "Content-Type": "application/json",
-        "x-goog-api-key": GEMINI_API_KEY,
-    }
+    headers = {"Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY}
     models = [PRIMARY_MODEL]
     if FALLBACK_MODEL != PRIMARY_MODEL:
         models.append(FALLBACK_MODEL)
 
     last_response = None
     last_exception = None
+    last_error_message = None
     for model_index, model in enumerate(models):
         for attempt in range(MAX_RETRIES):
+            emitted = False
             try:
-                response = requests.post(
-                    f"{API_BASE}/{model}:generateContent",
+                with get_http_session().post(
+                    f"{API_BASE}/{model}:streamGenerateContent?alt=sse",
                     json=payload,
                     headers=headers,
-                    timeout=(10, 60),
-                )
-                last_response = response
-                if response.status_code == 200:
-                    data = response.json()
-                    candidates = data.get("candidates", [])
-                    if not candidates:
-                        raise ValueError("Gemini không trả về nội dung. Hãy thử gửi lại tin nhắn.")
-                    parts = candidates[0].get("content", {}).get("parts", [])
-                    text = "\n".join(part.get("text", "") for part in parts if part.get("text"))
-                    if not text.strip():
-                        raise ValueError("Gemini chưa tạo được câu trả lời. Bạn thử diễn đạt lại nhé.")
-                    return text.strip()
+                    stream=True,
+                    timeout=(5, 45),
+                ) as response:
+                    last_response = response
+                    if response.status_code == 200:
+                        response.encoding = "utf-8"
+                        for line in response.iter_lines(decode_unicode=True):
+                            if isinstance(line, bytes):
+                                line = line.decode("utf-8", errors="replace")
+                            if not line or not line.startswith("data:"):
+                                continue
+                            raw_data = line[5:].strip()
+                            if raw_data == "[DONE]":
+                                break
+                            try:
+                                data = json.loads(raw_data)
+                            except ValueError:
+                                continue
+                            candidates = data.get("candidates", [])
+                            if not candidates:
+                                continue
+                            parts = candidates[0].get("content", {}).get("parts", [])
+                            for part in parts:
+                                chunk = part.get("text", "")
+                                if chunk:
+                                    emitted = True
+                                    yield chunk
+                        if not emitted:
+                            raise ValueError("Gemini did not return text. Please try again.")
+                        return
 
-                if response.status_code not in (408, 429, 500, 502, 503, 504):
-                    raise RuntimeError(f"API ({response.status_code}): {api_error_message(response)}")
+                    last_error_message = api_error_message(response)
+                    if response.status_code not in (408, 429, 500, 502, 503, 504):
+                        raise RuntimeError(
+                            f"Gemini API ({response.status_code}): {last_error_message}"
+                        )
 
-                if attempt < MAX_RETRIES - 1:
-                    retry_after = response.headers.get("Retry-After")
-                    try:
-                        delay = min(float(retry_after), 12.0) if retry_after else min(1.5 * (2**attempt), 8.0)
-                    except ValueError:
-                        delay = min(1.5 * (2**attempt), 8.0)
-                    time.sleep(delay + random.uniform(0, 0.6))
-
-            except (requests.Timeout, requests.ConnectionError) as exc:
+                    if attempt < MAX_RETRIES - 1:
+                        retry_after = response.headers.get("Retry-After")
+                        try:
+                            delay = max(0.2, min(float(retry_after), 2.5)) if retry_after else 0.8 * (2 ** attempt)
+                        except ValueError:
+                            delay = 0.8 * (2 ** attempt)
+                        time.sleep(delay + random.uniform(0, 0.25))
+            except requests.RequestException as exc:
+                if emitted:
+                    raise
                 last_exception = exc
                 if attempt < MAX_RETRIES - 1:
-                    time.sleep(min(1.5 * (2**attempt), 8.0) + random.uniform(0, 0.6))
+                    time.sleep(min(0.8 * (2 ** attempt), 2.0) + random.uniform(0, 0.25))
             except (ValueError, RuntimeError):
                 raise
 
-        # If the primary model stayed overloaded, give the stable fallback a turn.
         if model_index == 0 and len(models) > 1:
             continue
 
     if last_response is not None:
         status = last_response.status_code
-        message = api_error_message(last_response)
+        message = last_error_message or "Unknown API error."
         if status in (429, 503, 504):
             raise RuntimeError(
-                "Các model Gemini đang quá tải hoặc giới hạn lượt gọi đã chạm ngưỡng "
-                f"(HTTP {status}). Mình đã thử lại và chuyển model dự phòng nhưng chưa thành công. "
-                "Bạn đợi một chút rồi gửi lại nhé."
+                f"Gemini models are busy or rate-limited (HTTP {status}). Please try again shortly."
             )
         raise RuntimeError(f"Gemini API ({status}): {message}")
-    raise RuntimeError(f"Không kết nối được Gemini API: {last_exception or 'lỗi mạng không xác định'}")
-
+    raise RuntimeError(
+        f"Could not connect to Gemini API: {last_exception or 'unknown network error'}"
+    )
 
 # ==============================
 # Sidebar
@@ -982,8 +1120,7 @@ else:
             with st.spinner("SkyeChat đang lắng nghe..." if is_vi else "SkyeChat is listening..."):
                 try:
                     system_prompt = build_system_prompt(is_vi)
-                    bot_reply = generate_reply(st.session_state.messages, system_prompt)
-                    st.markdown(bot_reply)
+                    bot_reply = st.write_stream(generate_reply(st.session_state.messages, system_prompt))
                     st.session_state.messages.append({"role": "assistant", "content": bot_reply})
                 except Exception as exc:
                     st.error(f"Không gửi được tin nhắn: {exc}")
