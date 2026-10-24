@@ -1,10 +1,12 @@
 import os
 import json
+import logging
 import random
 import re
 import time
 from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import requests
 import streamlit as st
@@ -30,6 +32,7 @@ API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 DEFAULT_MODEL = "gemini-3.8-flash"
 FALLBACK_MODEL = "gemini-3.6-flash"
 MAX_HISTORY_MESSAGES = 16
+MAX_STORED_MESSAGES = 64
 MAX_RETRIES = 2
 
 def get_http_session():
@@ -53,6 +56,8 @@ GEMINI_API_KEY = get_secret("GEMINI_API_KEY")
 PRIMARY_MODEL = get_secret("GEMINI_MODEL", DEFAULT_MODEL)
 SUPABASE_URL = get_secret("SUPABASE_URL")
 SUPABASE_KEY = get_secret("SUPABASE_PUBLISHABLE_KEY") or get_secret("SUPABASE_ANON_KEY")
+APP_TIMEZONE = get_secret("APP_TIMEZONE", "Asia/Ho_Chi_Minh")
+LOGGER = logging.getLogger("skyechat")
 
 
 # ==============================
@@ -82,6 +87,7 @@ st.markdown(
         #f7f8f5;
     }
     [data-testid="stHeader"] { background: rgba(247,248,245,.86); }
+    [data-testid="stMainBlockContainer"] { max-width: 1120px; padding-top: 1.4rem; }
     [data-testid="stSidebar"] {
       background: linear-gradient(180deg, #edf4ef 0%, #f4f3ed 58%, #edf3f3 100%);
       border-right: 1px solid rgba(112,151,139,.18);
@@ -173,6 +179,7 @@ st.markdown(
       transition: all .18s ease;
     }
     .stButton button:hover { border-color: #98b8a8; color: #3d6255; background: #edf4ef; transform: translateY(-1px); box-shadow: 0 7px 16px rgba(77,119,103,.14); }
+    .stButton button:focus-visible, [data-testid="stChatInput"] button:focus-visible { outline: 3px solid rgba(91,145,118,.58); outline-offset: 2px; }
     [data-testid="stChatInput"] button {
       border: 0 !important; border-radius: 13px !important; color: white !important;
       background: linear-gradient(135deg, #719b86, #8bb5a1) !important;
@@ -269,6 +276,8 @@ SkyeChat conversation guide:
 - If a student is worried about a test, you may ask what worries them most
   and help them choose one small, practical next step.
 - Do not diagnose, promise absolute secrecy, or replace a qualified professional.
+- Do not ask the user for passwords, home addresses, school/class names, or sensitive identifying information.
+- Remind the user not to share sensitive identifying details when discussing private experiences.
 - Do not invent school, support-service, or phone-number information.
 - If someone may be in immediate danger, encourage them to reach a trusted adult,
   family member, or local emergency service now.
@@ -290,6 +299,8 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "nickname" not in st.session_state:
     st.session_state.nickname = "Bạn"
+if "nickname_is_custom" not in st.session_state:
+    st.session_state.nickname_is_custom = False
 if "auth_access_token" not in st.session_state:
     st.session_state.auth_access_token = None
 if "auth_refresh_token" not in st.session_state:
@@ -306,6 +317,12 @@ if "recovery_type" not in st.session_state:
     st.session_state.recovery_type = ""
 if "password_reset_pending" not in st.session_state:
     st.session_state.password_reset_pending = False
+if "confirm_delete_diary_id" not in st.session_state:
+    st.session_state.confirm_delete_diary_id = None
+if "confirm_clear_chat" not in st.session_state:
+    st.session_state.confirm_clear_chat = False
+if "clear_diary_form" not in st.session_state:
+    st.session_state.clear_diary_form = False
 if "dark_mode" not in st.session_state:
     try:
         st.session_state.dark_mode = st.context.theme.type == "dark"
@@ -326,11 +343,15 @@ def save_auth_state(auth_response):
         st.session_state.auth_user_id = auth_user.id
         st.session_state.auth_email = auth_user.email or ""
         metadata = getattr(auth_user, "user_metadata", {}) or {}
-        st.session_state.nickname = metadata.get("nickname") or auth_user.email or "Bạn"
+        if not st.session_state.nickname_is_custom:
+            st.session_state.nickname = metadata.get("nickname") or auth_user.email or "Bạn"
     elif getattr(auth_session, "user", None):
         auth_user = auth_session.user
         st.session_state.auth_user_id = auth_user.id
         st.session_state.auth_email = auth_user.email or ""
+        metadata = getattr(auth_user, "user_metadata", {}) or {}
+        if not st.session_state.nickname_is_custom:
+            st.session_state.nickname = metadata.get("nickname") or auth_user.email or "Bạn"
     return bool(st.session_state.auth_user_id)
 
 
@@ -339,7 +360,21 @@ def clear_auth_state():
     st.session_state.auth_refresh_token = None
     st.session_state.auth_user_id = None
     st.session_state.auth_email = ""
+    st.session_state.nickname = "Bạn"
+    st.session_state.nickname_is_custom = False
     st.session_state.messages = []
+    st.session_state.recovery_otp_sent = False
+    st.session_state.recovery_target = ""
+    st.session_state.recovery_type = ""
+    st.session_state.password_reset_pending = False
+    st.session_state.confirm_delete_diary_id = None
+    st.session_state.confirm_clear_chat = False
+    st.session_state.clear_diary_form = False
+    st.session_state.pop("journal_saved_recently", None)
+    st.session_state.pop("diary_title_input", None)
+    st.session_state.pop("diary_mood_input", None)
+    st.session_state.pop("diary_text_input", None)
+    st.session_state.page_mode = "chat"
 
 
 def restore_auth_state(client):
@@ -347,6 +382,8 @@ def restore_auth_state(client):
     access_token = st.session_state.auth_access_token
     refresh_token = st.session_state.auth_refresh_token
     if not access_token or not refresh_token:
+        if access_token or refresh_token or st.session_state.auth_user_id:
+            clear_auth_state()
         return False
     try:
         auth_response = client.auth.set_session(access_token, refresh_token)
@@ -357,23 +394,53 @@ def restore_auth_state(client):
                 st.session_state.auth_user_id = auth_user.id
                 st.session_state.auth_email = auth_user.email or ""
                 metadata = getattr(auth_user, "user_metadata", {}) or {}
-                st.session_state.nickname = metadata.get("nickname") or auth_user.email or "Bạn"
+                if not st.session_state.nickname_is_custom:
+                    st.session_state.nickname = metadata.get("nickname") or auth_user.email or "Bạn"
         return bool(st.session_state.auth_user_id)
     except Exception:
+        try:
+            client.auth.sign_out()
+        except Exception:
+            pass
         clear_auth_state()
         return False
 
 
 def load_diary_entries(client, user_id):
     """Load only the signed-in user's entries; Supabase RLS enforces ownership."""
+    if not user_id:
+        return []
     result = (
         client.table("diary_entries")
         .select("id, user_id, title, mood, content, created_at")
         .eq("user_id", user_id)
         .order("created_at", desc=True)
+        .limit(100)
         .execute()
     )
     return result.data or []
+
+
+def get_app_timezone():
+    """Return configured display timezone, falling back safely to UTC."""
+    try:
+        return ZoneInfo(str(APP_TIMEZONE))
+    except (ZoneInfoNotFoundError, ValueError, TypeError):
+        return ZoneInfo("UTC")
+
+
+def format_created_at(value):
+    """Format Supabase timestamps consistently, including UTC and bad values."""
+    raw_value = str(value or "")
+    if not raw_value:
+        return ""
+    try:
+        timestamp = datetime.fromisoformat(raw_value.replace("Z", "+00:00"))
+        if timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=ZoneInfo("UTC"))
+        return timestamp.astimezone(get_app_timezone()).strftime("%d/%m/%Y %H:%M")
+    except (ValueError, OverflowError, OSError):
+        return raw_value
 
 
 if not SUPABASE_URL or not SUPABASE_KEY:
@@ -390,7 +457,8 @@ try:
         st.session_state["_supabase_client"] = create_client(SUPABASE_URL, SUPABASE_KEY)
     supabase_client = st.session_state["_supabase_client"]
 except Exception as exc:
-    st.error(f"Không khởi tạo được Supabase: {exc}")
+    LOGGER.warning("Supabase client initialization failed: %s", type(exc).__name__)
+    st.error("Không khởi tạo được Supabase. Hãy kiểm tra URL và publishable key trong Secrets.")
     st.stop()
 
 is_authenticated = restore_auth_state(supabase_client)
@@ -421,11 +489,16 @@ if is_authenticated and st.session_state.password_reset_pending:
                 supabase_client.auth.update_user({"password": new_password})
                 st.session_state.password_reset_pending = False
                 st.session_state.recovery_target = ""
+                st.session_state.recovery_type = ""
+                st.session_state.password_change_success = True
                 st.success("\u0110\u00e3 \u0111\u1ed5i m\u1eadt kh\u1ea9u. B\u1ea1n c\u00f3 th\u1ec3 ti\u1ebfp t\u1ee5c.")
                 st.rerun()
-            except Exception:
+            except Exception as exc:
+                LOGGER.warning("Password update failed: %s", type(exc).__name__)
                 st.error("Ch\u01b0a \u0111\u1ed5i \u0111\u01b0\u1ee3c m\u1eadt kh\u1ea9u. H\u00e3y x\u00e1c minh l\u1ea1i r\u1ed3i th\u1eed l\u1ea1i.")
     st.stop()
+if is_authenticated and st.session_state.pop("password_change_success", False):
+    st.success("Đã đổi mật khẩu thành công.")
 if not is_authenticated:
     st.markdown(
         """
@@ -530,116 +603,140 @@ if not is_authenticated:
                     show_auth_error(exc, "Tạo tài khoản")
     with recovery_tab:
         st.caption(
-            "M\u00e3 OTP email c\u1ea7n email template Supabase c\u00f3 {{ .Token }}. "
-            "SMS c\u1ea7n b\u1eadt x\u00e1c minh s\u1ed1 \u0111i\u1ec7n tho\u1ea1i v\u00e0 nh\u00e0 cung c\u1ea5p SMS."
+            "Khôi phục qua email. Mẫu email khôi phục của Supabase cần hiển thị mã {{ .Token }} "
+            "để bạn có thể nhập mã trực tiếp tại đây."
         )
         with st.form("skyechat_recovery_request_form"):
-            recovery_channel = st.radio(
-                "Ph\u01b0\u01a1ng th\u1ee9c x\u00e1c minh", ["Email", "SMS"], horizontal=True
+            recovery_target = st.text_input(
+                "Email đã đăng ký", placeholder="ban@example.com", autocomplete="email"
             )
-            if recovery_channel == "Email":
-                recovery_target = st.text_input(
-                    "Email \u0111\u00e3 \u0111\u0103ng k\u00fd", placeholder="ban@example.com"
-                )
-            else:
-                recovery_target = st.text_input(
-                    "S\u1ed1 \u0111i\u1ec7n tho\u1ea1i \u0111\u00e3 \u0111\u0103ng k\u00fd",
-                    placeholder="+84901234567",
-                )
             send_code = st.form_submit_button(
-                "G\u1eedi m\u00e3 x\u00e1c minh", type="primary", use_container_width=True
+                "Gửi mã khôi phục", type="primary", use_container_width=True
             )
 
         if send_code:
-            target = recovery_target.strip()
-            if not target or (recovery_channel == "SMS" and not target.startswith("+")):
-                st.warning("H\u00e3y nh\u1eadp email ho\u1eb7c s\u1ed1 \u0111i\u1ec7n tho\u1ea1i k\u00e8m m\u00e3 qu\u1ed1c gia.")
+            target = recovery_target.strip().lower()
+            if not is_valid_email(target):
+                st.warning("Hãy nhập địa chỉ email hợp lệ.")
             else:
                 try:
-                    if recovery_channel == "Email":
-                        supabase_client.auth.sign_in_with_otp(
-                            {"email": target, "options": {"should_create_user": False}}
-                        )
-                        st.session_state.recovery_type = "email"
-                    else:
-                        supabase_client.auth.sign_in_with_otp(
-                            {"phone": target, "options": {"should_create_user": False}}
-                        )
-                        st.session_state.recovery_type = "phone"
+                    supabase_client.auth.reset_password_for_email(target)
                     st.session_state.recovery_target = target
                     st.session_state.recovery_otp_sent = True
-                    st.success("N\u1ebfu t\u00e0i kho\u1ea3n t\u1ed3n t\u1ea1i, m\u00e3 x\u00e1c minh đ\u00e3 \u0111\u01b0\u1ee3c g\u1eedi.")
-                except Exception:
-                    st.error("Ch\u01b0a g\u1eedi \u0111\u01b0\u1ee3c m\u00e3. H\u00e3y ki\u1ec3m tra k\u00eanh x\u00e1c minh.")
+                    st.session_state.recovery_type = "recovery"
+                    st.success(
+                        "Nếu email thuộc một tài khoản, hướng dẫn khôi phục đã được gửi. "
+                        "Hãy kiểm tra cả thư mục Spam."
+                    )
+                except Exception as exc:
+                    LOGGER.warning("Supabase password reset request failed: %s", type(exc).__name__)
+                    st.error("Chưa gửi được mã. Hãy kiểm tra cấu hình email Supabase rồi thử lại.")
 
         if st.session_state.recovery_otp_sent:
-            st.caption(f"Nh\u1eadp m\u00e3 \u0111\u00e3 g\u1eedi t\u1edbi {st.session_state.recovery_target}.")
+            st.caption(f"Nhập mã khôi phục đã gửi tới {st.session_state.recovery_target}.")
             with st.form("skyechat_recovery_verify_form"):
-                recovery_code = st.text_input("M\u00e3 x\u00e1c minh", max_chars=12)
+                recovery_code = st.text_input(
+                    "Mã khôi phục", max_chars=12, autocomplete="one-time-code"
+                )
                 verify_code = st.form_submit_button(
-                    "X\u00e1c minh m\u00e3", type="primary", use_container_width=True
+                    "Xác minh mã", type="primary", use_container_width=True
                 )
             if verify_code:
-                try:
-                    if st.session_state.recovery_type == "email":
-                        verification = {
-                            "email": st.session_state.recovery_target,
-                            "token": recovery_code.strip(),
-                            "type": "email",
-                        }
-                    else:
-                        verification = {
-                            "phone": st.session_state.recovery_target,
-                            "token": recovery_code.strip(),
-                            "type": "sms",
-                        }
-                    auth_response = supabase_client.auth.verify_otp(verification)
-                    if save_auth_state(auth_response):
-                        st.session_state.password_reset_pending = True
-                        st.session_state.recovery_otp_sent = False
-                        st.rerun()
-                    st.error("M\u00e3 x\u00e1c minh ch\u01b0a m\u1edf \u0111\u01b0\u1ee3c phi\u00ean. H\u00e3y g\u1eedi m\u00e3 m\u1edbi.")
-                except Exception:
-                    st.error("M\u00e3 kh\u00f4ng h\u1ee3p l\u1ec7 ho\u1eb7c \u0111\u00e3 h\u1ebft h\u1ea1n. H\u00e3y g\u1eedi m\u00e3 m\u1edbi.")
+                if not recovery_code.strip():
+                    st.warning("Hãy nhập mã trong email.")
+                else:
+                    try:
+                        auth_response = supabase_client.auth.verify_otp(
+                            {
+                                "email": st.session_state.recovery_target,
+                                "token": recovery_code.strip(),
+                                "type": "recovery",
+                            }
+                        )
+                        if save_auth_state(auth_response):
+                            st.session_state.password_reset_pending = True
+                            st.session_state.recovery_otp_sent = False
+                            st.rerun()
+                        st.error("Mã chưa mở được phiên khôi phục. Hãy gửi mã mới.")
+                    except Exception as exc:
+                        LOGGER.warning(
+                            "Supabase password reset verification failed: %s", type(exc).__name__
+                        )
+                        st.error("Mã không hợp lệ hoặc đã hết hạn. Hãy gửi mã mới.")
     st.markdown('<div class="footer">SkyeChat · By ThanhAI</div>', unsafe_allow_html=True)
     st.stop()
+
+
+class GeminiAPIError(RuntimeError):
+    """An API failure with a status code safe to classify in the interface."""
+
+    def __init__(self, message, status_code=None):
+        super().__init__(message)
+        self.status_code = status_code
 
 
 def api_error_message(response):
     try:
         data = response.json()
     except ValueError:
-        return response.text[:500] or "Không đọc được phản hồi từ máy chủ."
-    return data.get("error", {}).get("message", "Lỗi không xác định từ Gemini API.")
+        return "The server returned an unreadable response."
+    error = data.get("error", {}) if isinstance(data, dict) else {}
+    message = error.get("message") if isinstance(error, dict) else None
+    return str(message or "Unknown Gemini API error.")[:500]
+
+
+def prepare_gemini_contents(history):
+    """Return a bounded Gemini history beginning with a user turn."""
+    normalized = []
+    for message in history:
+        if not isinstance(message, dict):
+            continue
+        role = message.get("role")
+        content = message.get("content")
+        if role not in ("user", "assistant") or not isinstance(content, str) or not content.strip():
+            continue
+        normalized.append({"role": role, "content": content.strip()})
+
+    normalized = normalized[-MAX_HISTORY_MESSAGES:]
+    while normalized and normalized[0]["role"] != "user":
+        normalized.pop(0)
+    if not normalized:
+        raise ValueError("A user message is required to start a conversation.")
+
+    return [
+        {
+            "role": "user" if message["role"] == "user" else "model",
+            "parts": [{"text": message["content"]}],
+        }
+        for message in normalized
+    ]
 
 
 def generate_reply(history, system_prompt):
-    """Yield Gemini response text as it arrives for faster perceived replies."""
+    """Yield Gemini response text as it arrives, with safe retries and fallback."""
     if not GEMINI_API_KEY:
-        raise RuntimeError(
-            "GEMINI_API_KEY is missing. Add it to .streamlit/secrets.toml to enable chat."
-        )
+        raise GeminiAPIError("Gemini is not configured.")
 
-    contents = [
-        {
-            "role": "user" if msg["role"] == "user" else "model",
-            "parts": [{"text": msg["content"]}],
-        }
-        for msg in history[-MAX_HISTORY_MESSAGES:]
-    ]
+    contents = prepare_gemini_contents(history)
     payload = {
         "systemInstruction": {"parts": [{"text": system_prompt}]},
         "contents": contents,
         "generationConfig": {"maxOutputTokens": 512, "temperature": 0.7},
     }
     headers = {"Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY}
-    models = [PRIMARY_MODEL]
-    if FALLBACK_MODEL != PRIMARY_MODEL:
-        models.append(FALLBACK_MODEL)
+    models = []
+    for model in (PRIMARY_MODEL, FALLBACK_MODEL):
+        model = str(model or "").strip()
+        if model and re.fullmatch(r"[A-Za-z0-9._-]+", model) and model not in models:
+            models.append(model)
+    if not models:
+        raise GeminiAPIError("No valid Gemini model is configured.")
 
-    last_response = None
-    last_exception = None
-    last_error_message = None
+    retryable_statuses = {408, 429, 500, 502, 503, 504}
+    fallback_statuses = retryable_statuses | {404}
+    last_status = None
+    last_network_error = None
+
     for model_index, model in enumerate(models):
         for attempt in range(MAX_RETRIES):
             emitted = False
@@ -651,70 +748,93 @@ def generate_reply(history, system_prompt):
                     stream=True,
                     timeout=(5, 45),
                 ) as response:
-                    last_response = response
-                    if response.status_code == 200:
-                        response.encoding = "utf-8"
-                        for line in response.iter_lines(decode_unicode=True):
-                            if isinstance(line, bytes):
-                                line = line.decode("utf-8", errors="replace")
-                            if not line or not line.startswith("data:"):
-                                continue
-                            raw_data = line[5:].strip()
-                            if raw_data == "[DONE]":
+                    last_status = response.status_code
+                    if response.status_code != 200:
+                        message = api_error_message(response)
+                        if response.status_code not in retryable_statuses:
+                            if model_index + 1 < len(models) and response.status_code in fallback_statuses:
                                 break
+                            raise GeminiAPIError(message, response.status_code)
+                        if attempt < MAX_RETRIES - 1:
+                            retry_after = response.headers.get("Retry-After")
                             try:
-                                data = json.loads(raw_data)
-                            except ValueError:
-                                continue
-                            candidates = data.get("candidates", [])
-                            if not candidates:
-                                continue
-                            parts = candidates[0].get("content", {}).get("parts", [])
-                            for part in parts:
-                                chunk = part.get("text", "")
-                                if chunk:
-                                    emitted = True
-                                    yield chunk
-                        if not emitted:
-                            raise ValueError("Gemini did not return text. Please try again.")
-                        return
+                                delay = max(0.2, min(float(retry_after), 2.5)) if retry_after else 0.8 * (2 ** attempt)
+                            except (TypeError, ValueError):
+                                delay = 0.8 * (2 ** attempt)
+                            time.sleep(delay + random.uniform(0, 0.25))
+                        continue
 
-                    last_error_message = api_error_message(response)
-                    if response.status_code not in (408, 429, 500, 502, 503, 504):
-                        raise RuntimeError(
-                            f"Gemini API ({response.status_code}): {last_error_message}"
-                        )
-
-                    if attempt < MAX_RETRIES - 1:
-                        retry_after = response.headers.get("Retry-After")
+                    response.encoding = "utf-8"
+                    for line in response.iter_lines(decode_unicode=True):
+                        if isinstance(line, bytes):
+                            line = line.decode("utf-8", errors="replace")
+                        if not line or not line.startswith("data:"):
+                            continue
+                        raw_data = line[5:].strip()
+                        if raw_data == "[DONE]":
+                            break
                         try:
-                            delay = max(0.2, min(float(retry_after), 2.5)) if retry_after else 0.8 * (2 ** attempt)
+                            data = json.loads(raw_data)
                         except ValueError:
-                            delay = 0.8 * (2 ** attempt)
-                        time.sleep(delay + random.uniform(0, 0.25))
+                            continue
+                        if isinstance(data, dict) and data.get("error"):
+                            api_error = data["error"]
+                            message = api_error.get("message", "Gemini returned an error.") if isinstance(api_error, dict) else "Gemini returned an error."
+                            raise GeminiAPIError(str(message))
+                        prompt_feedback = data.get("promptFeedback", {}) if isinstance(data, dict) else {}
+                        if isinstance(prompt_feedback, dict) and prompt_feedback.get("blockReason"):
+                            raise GeminiAPIError("The request was blocked by Gemini safety filters.")
+                        candidates = data.get("candidates", []) if isinstance(data, dict) else []
+                        if not candidates or not isinstance(candidates[0], dict):
+                            continue
+                        candidate = candidates[0]
+                        candidate_content = candidate.get("content")
+                        if not isinstance(candidate_content, dict):
+                            continue
+                        parts = candidate_content.get("parts", [])
+                        for part in parts:
+                            chunk = part.get("text", "") if isinstance(part, dict) else ""
+                            if chunk:
+                                emitted = True
+                                yield chunk
+                    if not emitted:
+                        raise GeminiAPIError("Gemini returned no text. Please try again.")
+                    return
             except requests.RequestException as exc:
                 if emitted:
                     raise
-                last_exception = exc
+                last_network_error = exc
+                last_status = None
                 if attempt < MAX_RETRIES - 1:
                     time.sleep(min(0.8 * (2 ** attempt), 2.0) + random.uniform(0, 0.25))
-            except (ValueError, RuntimeError):
+            except GeminiAPIError as exc:
+                if exc.status_code is not None and model_index + 1 < len(models) and exc.status_code in fallback_statuses:
+                    break
                 raise
 
-        if model_index == 0 and len(models) > 1:
-            continue
+    if last_status is not None:
+        raise GeminiAPIError("Gemini is temporarily unavailable.", last_status)
+    raise GeminiAPIError("Could not connect to Gemini.") from last_network_error
 
-    if last_response is not None:
-        status = last_response.status_code
-        message = last_error_message or "Unknown API error."
-        if status in (429, 503, 504):
-            raise RuntimeError(
-                f"Gemini models are busy or rate-limited (HTTP {status}). Please try again shortly."
-            )
-        raise RuntimeError(f"Gemini API ({status}): {message}")
-    raise RuntimeError(
-        f"Could not connect to Gemini API: {last_exception or 'unknown network error'}"
-    )
+
+def friendly_chat_error(exc, is_vi):
+    """Keep technical details out of the student-facing error message."""
+    status = getattr(exc, "status_code", None)
+    if not GEMINI_API_KEY:
+        return "Trò chuyện AI đang tạm tắt vì chưa cấu hình khóa Gemini." if is_vi else "AI chat is unavailable because the Gemini key is not configured."
+    if isinstance(exc, requests.Timeout):
+        return "Phản hồi mất quá nhiều thời gian. Hãy thử gửi lại." if is_vi else "The response timed out. Please try again."
+    if isinstance(exc, requests.RequestException):
+        return "Không kết nối được với dịch vụ AI. Hãy kiểm tra mạng rồi thử lại." if is_vi else "Could not connect to the AI service. Check your connection and try again."
+    if status == 429:
+        return "SkyeChat đang quá tải. Hãy đợi một chút rồi thử lại." if is_vi else "SkyeChat is busy. Please wait a moment and try again."
+    if status in (401, 403):
+        return "Khóa Gemini chưa hợp lệ hoặc chưa được cấp quyền." if is_vi else "The Gemini key is invalid or does not have access."
+    if status == 404:
+        return "Không tìm thấy model Gemini đã cấu hình. Hãy kiểm tra GEMINI_MODEL." if is_vi else "The configured Gemini model was not found. Check GEMINI_MODEL."
+    if status and status >= 500:
+        return "Dịch vụ AI đang gặp sự cố tạm thời. Hãy thử lại sau." if is_vi else "The AI service is temporarily unavailable. Please try again later."
+    return "Chưa thể tạo phản hồi. Hãy thử lại sau ít phút." if is_vi else "I could not generate a reply. Please try again in a few minutes."
 
 # ==============================
 # Sidebar
@@ -743,18 +863,29 @@ with st.sidebar:
         st.rerun()
 
     nickname_input = st.text_input("Biệt danh", value=st.session_state.nickname, max_chars=32)
-    if nickname_input.strip():
+    if nickname_input.strip() and nickname_input.strip() != st.session_state.nickname:
         st.session_state.nickname = nickname_input.strip()
+        st.session_state.nickname_is_custom = True
 
     st.success(f"👋 Chào {st.session_state.nickname}!")
     lang = st.radio("Ngôn ngữ / Language", ["Tiếng Việt 🇻🇳", "English 🇬🇧"], label_visibility="visible")
     is_vi = lang.startswith("Tiếng Việt")
+    if st.session_state.get("page_mode") not in ("chat", "diary"):
+        previous_page_mode = str(st.session_state.get("page_mode", ""))
+        st.session_state.page_mode = (
+            "diary" if "Nhật ký" in previous_page_mode or "Journal" in previous_page_mode else "chat"
+        )
     page_mode = st.radio(
         "Mục bạn muốn mở" if is_vi else "Choose a space",
-        ["💬 Trò chuyện", "📔 Nhật ký"] if is_vi else ["💬 Chat", "📔 Journal"],
+        options=("chat", "diary"),
+        format_func=lambda value: (
+            ("💬 Trò chuyện" if value == "chat" else "📔 Nhật ký")
+            if is_vi
+            else ("💬 Chat" if value == "chat" else "📔 Journal")
+        ),
         key="page_mode",
     )
-    is_diary = "Nhật ký" in page_mode or "Journal" in page_mode
+    is_diary = page_mode == "diary"
     st.toggle(
         "Giao diện tối" if is_vi else "Dark appearance",
         key="dark_mode",
@@ -762,22 +893,51 @@ with st.sidebar:
     )
     IS_DARK_THEME = st.session_state.dark_mode
     if not GEMINI_API_KEY and not is_diary:
-        st.info("Thêm `GEMINI_API_KEY` vào `.streamlit/secrets.toml` để bật trò chuyện với AI.")
+        st.info(
+            "Thêm `GEMINI_API_KEY` vào Streamlit Secrets để bật trò chuyện với AI."
+            if is_vi
+            else "Add `GEMINI_API_KEY` to Streamlit Secrets to enable AI chat."
+        )
 
     st.divider()
     st.markdown("**Nhà phát triển:** ThanhAI")
-    if st.button("🗑️ Xóa lịch sử trò chuyện", use_container_width=True):
-        st.session_state.messages = []
-        st.rerun()
+    if st.button(
+        "🗑️ Xóa lịch sử trò chuyện" if is_vi else "🗑️ Clear chat history",
+        use_container_width=True,
+    ):
+        st.session_state.confirm_clear_chat = True
+    if st.session_state.confirm_clear_chat:
+        st.caption(
+            "Bạn muốn xóa toàn bộ hội thoại trong phiên này?" if is_vi
+            else "Clear all messages from this session?"
+        )
+        clear_col, keep_col = st.columns(2)
+        if clear_col.button("Xóa" if is_vi else "Clear", key="confirm_clear_chat_button", type="primary"):
+            st.session_state.messages = []
+            st.session_state.confirm_clear_chat = False
+            st.rerun()
+        if keep_col.button("Giữ lại" if is_vi else "Keep", key="cancel_clear_chat"):
+            st.session_state.confirm_clear_chat = False
+            st.rerun()
 
     st.divider()
-    st.warning(
+    safety_notice = (
         "**Lưu ý an toàn**\n\nSkyeChat hỗ trợ lắng nghe và sơ cứu tâm lý ban đầu; không thay thế chuyên gia. "
         "Nếu bạn hoặc ai đó đang gặp nguy hiểm, hãy báo ngay cho người lớn đáng tin. "
-        "Trẻ em tại Việt Nam có thể gọi Tổng đài Bảo vệ Trẻ em **111**.",
+        "Trẻ em tại Việt Nam có thể gọi Tổng đài Bảo vệ Trẻ em **111**."
+        if is_vi
+        else "**Safety note**\n\nSkyeChat offers supportive listening and initial wellbeing guidance; it does not replace a professional. "
+        "If you or someone else is in immediate danger, contact a trusted adult or local emergency services now."
+    )
+    st.warning(
+        safety_notice,
         icon="🫶",
     )
-    st.caption("Cuộc trò chuyện được lưu trong phiên trình duyệt hiện tại.")
+    st.caption(
+        "Cuộc trò chuyện chỉ được lưu trong phiên trình duyệt hiện tại."
+        if is_vi
+        else "Chat history is kept only in the current browser session."
+    )
 
 
 if is_diary:
@@ -980,6 +1140,10 @@ if is_diary:
         title_placeholder, entry_placeholder = "Ví dụ: Một ngày nhiều suy nghĩ", "Bạn có thể viết về điều đã xảy ra, cảm xúc của mình, hoặc điều bạn mong muốn..."
         save_label, empty_error = "Lưu trang nhật ký", "Hãy viết vài dòng trước khi lưu nhé."
         history_label, download_label, delete_label = "Những trang đã viết", "⬇️ Tải nhật ký về máy", "Xóa trang này"
+        confirm_delete_label, cancel_delete_label = "Xóa nhật ký", "Giữ lại"
+        confirm_delete_prompt = "Bạn có chắc muốn xóa trang này? Thao tác này không thể hoàn tác."
+        delete_error = "Chưa xóa được trang nhật ký. Hãy thử lại."
+        delete_success = "Đã xóa trang nhật ký."
         empty_label, privacy_label = "Bạn chưa viết trang nhật ký nào. Khi sẵn sàng, hãy bắt đầu bằng vài dòng về hôm nay.", "Nhật ký được lưu theo tài khoản Supabase để bạn có thể xem lại sau khi đăng nhập trên thiết bị khác."
         mood_options = ["😟 Rất tệ", "🙁 Không ổn", "😐 Bình thường", "🙂 Ổn", "😊 Tốt"]
     else:
@@ -1001,13 +1165,37 @@ if is_diary:
         title_placeholder, entry_placeholder = "Example: A day with a lot on my mind", "Write about what happened, how you feel, or what you hope for..."
         save_label, empty_error = "Save journal entry", "Write a few lines before saving."
         history_label, download_label, delete_label = "Your entries", "⬇️ Download journal", "Delete this entry"
+        confirm_delete_label, cancel_delete_label = "Delete entry", "Keep entry"
+        confirm_delete_prompt = "Are you sure you want to delete this entry? This cannot be undone."
+        delete_error = "Could not delete the journal entry. Please try again."
+        delete_success = "Journal entry deleted."
         empty_label, privacy_label = "You have not written any entries yet. Start with a few lines about today whenever you feel ready.", "Journal entries are saved to your Supabase account so you can view them after signing in on another device."
         mood_options = ["😟 Very low", "🙁 Not great", "😐 Okay", "🙂 Good", "😊 Great"]
 
-    with st.form("diary_entry_form", clear_on_submit=True):
-        diary_title = st.text_input(title_label, placeholder=title_placeholder, max_chars=80)
-        diary_mood = st.select_slider(mood_label, options=mood_options, value=mood_options[2])
-        diary_text = st.text_area(entry_label, placeholder=entry_placeholder, height=180, max_chars=5000)
+    if st.session_state.clear_diary_form:
+        st.session_state.diary_title_input = ""
+        st.session_state.diary_mood_input = 2
+        st.session_state.diary_text_input = ""
+        st.session_state.clear_diary_form = False
+
+    with st.form("diary_entry_form", clear_on_submit=False):
+        diary_title = st.text_input(
+            title_label, placeholder=title_placeholder, max_chars=80, key="diary_title_input"
+        )
+        diary_mood_index = st.select_slider(
+            mood_label,
+            options=(0, 1, 2, 3, 4),
+            value=2,
+            format_func=lambda value: mood_options[value],
+            key="diary_mood_input",
+        )
+        diary_text = st.text_area(
+            entry_label,
+            placeholder=entry_placeholder,
+            height=180,
+            max_chars=5000,
+            key="diary_text_input",
+        )
         save_entry = st.form_submit_button(save_label, type="primary", use_container_width=True)
 
     if save_entry:
@@ -1017,13 +1205,15 @@ if is_diary:
                     {
                         "user_id": st.session_state.auth_user_id,
                         "title": diary_title.strip(),
-                        "mood": diary_mood,
+                        "mood": mood_options[diary_mood_index],
                         "content": diary_text.strip(),
                     }
                 ).execute()
-                st.success("Đã lưu nhật ký." if is_vi else "Journal entry saved.")
+                st.session_state.clear_diary_form = True
+                st.session_state.journal_saved_recently = True
                 st.rerun()
-            except Exception:
+            except Exception as exc:
+                LOGGER.warning("Journal save failed: %s", type(exc).__name__)
                 st.error(
                     "Chưa lưu được nhật ký. Hãy kiểm tra đã chạy file `supabase_setup.sql` và bật quyền truy cập an toàn."
                     if is_vi
@@ -1032,11 +1222,15 @@ if is_diary:
         else:
             st.warning(empty_error)
 
+    if st.session_state.pop("journal_saved_recently", False):
+        st.success("Đã lưu nhật ký." if is_vi else "Journal entry saved.")
+
     st.divider()
     st.subheader(history_label)
     try:
         entries = load_diary_entries(supabase_client, st.session_state.auth_user_id)
-    except Exception:
+    except Exception as exc:
+        LOGGER.warning("Journal load failed: %s", type(exc).__name__)
         entries = []
         st.error(
             "Chưa tải được nhật ký. Hãy kiểm tra đã tạo bảng `diary_entries` trong Supabase."
@@ -1046,54 +1240,67 @@ if is_diary:
     if entries:
         export_lines = ["# Nhật ký SkyeChat" if is_vi else "# SkyeChat Journal", ""]
         for entry in reversed(entries):
-            raw_created_at = str(entry.get("created_at", ""))
-            try:
-                formatted_created_at = datetime.fromisoformat(
-                    raw_created_at.replace("Z", "+00:00")
-                ).astimezone().strftime("%d/%m/%Y %H:%M")
-            except ValueError:
-                formatted_created_at = raw_created_at
-
+            title = str(entry.get("title") or ("Trang nhật ký" if is_vi else "Journal entry"))
+            formatted_created_at = format_created_at(entry.get("created_at"))
+            mood = str(entry.get("mood") or "")
+            content = str(entry.get("content") or "")
             export_lines.extend(
-                [
-                    f"## {entry.get('title') or ('Trang nhật ký' if is_vi else 'Journal entry')}",
-                    f"{formatted_created_at} · {entry.get('mood', '')}",
-                    "",
-                    entry.get("content", ""),
-                    "",
-                    "---",
-                    "",
-                ]
+                [f"## {title}", f"{formatted_created_at} · {mood}", "", content, "", "---", ""]
             )
 
         st.download_button(
             download_label,
             data="\n".join(export_lines),
-            file_name=f"skyechat_journal_{datetime.now().strftime('%Y%m%d')}.md",
+            file_name=f"skyechat_journal_{datetime.now(get_app_timezone()).strftime('%Y%m%d')}.md",
             mime="text/markdown",
             use_container_width=True,
         )
+        if len(entries) == 100:
+            st.caption(
+                "Đang hiển thị 100 trang gần nhất." if is_vi else "Showing your 100 most recent entries."
+            )
 
-        for entry in reversed(entries):
-            label = entry.get("title") or ("Trang nhật ký" if is_vi else "Journal entry")
-            raw_created_at = str(entry.get("created_at", ""))
-            try:
-                formatted_created_at = datetime.fromisoformat(
-                    raw_created_at.replace("Z", "+00:00")
-                ).astimezone().strftime("%d/%m/%Y %H:%M")
-            except ValueError:
-                formatted_created_at = raw_created_at
-
+        for entry in entries:
+            entry_id = entry.get("id")
+            if entry_id is None:
+                continue
+            entry_id = str(entry_id)
+            label = str(entry.get("title") or ("Trang nhật ký" if is_vi else "Journal entry"))
+            formatted_created_at = format_created_at(entry.get("created_at"))
             with st.expander(f"{entry.get('mood', '')} · {label} · {formatted_created_at}"):
-                st.write(entry.get("content", ""))
-                if st.button(delete_label, key=f"delete_diary_{entry['id']}"):
-                    (
-                        supabase_client.table("diary_entries")
-                        .delete()
-                        .eq("id", entry["id"])
-                        .eq("user_id", st.session_state.auth_user_id)
-                        .execute()
-                    )
+                st.write(str(entry.get("content") or ""))
+                if st.session_state.get("confirm_delete_diary_id") == entry_id:
+                    st.caption(confirm_delete_prompt)
+                    delete_col, cancel_col = st.columns(2)
+                    if delete_col.button(
+                        confirm_delete_label,
+                        key=f"confirm_delete_diary_{entry_id}",
+                        type="primary",
+                        use_container_width=True,
+                    ):
+                        try:
+                            (
+                                supabase_client.table("diary_entries")
+                                .delete()
+                                .eq("id", entry_id)
+                                .eq("user_id", st.session_state.auth_user_id)
+                                .execute()
+                            )
+                            st.session_state.confirm_delete_diary_id = None
+                            st.success(delete_success)
+                            st.rerun()
+                        except Exception as exc:
+                            LOGGER.warning("Journal delete failed: %s", type(exc).__name__)
+                            st.error(delete_error)
+                    if cancel_col.button(
+                        cancel_delete_label,
+                        key=f"cancel_delete_diary_{entry_id}",
+                        use_container_width=True,
+                    ):
+                        st.session_state.confirm_delete_diary_id = None
+                        st.rerun()
+                elif st.button(delete_label, key=f"delete_diary_{entry_id}"):
+                    st.session_state.confirm_delete_diary_id = entry_id
                     st.rerun()
     else:
         st.info(empty_label)
@@ -1156,19 +1363,27 @@ else:
             st.markdown(message["content"])
 
     placeholder = "Hãy chia sẻ với SkyeChat..." if is_vi else "Share your thoughts with SkyeChat..."
-    if prompt := st.chat_input(placeholder, max_chars=8000):
-        st.session_state.messages.append({"role": "user", "content": prompt})
+    prompt = st.chat_input(placeholder, max_chars=8000, disabled=not bool(GEMINI_API_KEY))
+    if prompt and prompt.strip():
+        prompt = prompt.strip()
+        candidate_history = [*st.session_state.messages, {"role": "user", "content": prompt}]
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        with st.chat_message("assistant"):
-            with st.spinner("SkyeChat đang lắng nghe..." if is_vi else "SkyeChat is listening..."):
-                try:
-                    system_prompt = build_system_prompt(is_vi)
-                    bot_reply = st.write_stream(generate_reply(st.session_state.messages, system_prompt))
-                    st.session_state.messages.append({"role": "assistant", "content": bot_reply})
-                except Exception as exc:
-                    st.error(f"Không gửi được tin nhắn: {exc}")
+        try:
+            with st.chat_message("assistant"):
+                with st.spinner("SkyeChat đang lắng nghe..." if is_vi else "SkyeChat is listening..."):
+                    reply = st.write_stream(
+                        generate_reply(candidate_history, build_system_prompt(is_vi))
+                    )
+            if not isinstance(reply, str) or not reply.strip():
+                raise GeminiAPIError("Gemini returned an empty response.")
+            st.session_state.messages = (
+                candidate_history + [{"role": "assistant", "content": reply.strip()}]
+            )[-MAX_STORED_MESSAGES:]
+        except Exception as exc:
+            LOGGER.exception("SkyeChat reply generation failed (%s)", type(exc).__name__)
+            st.error(friendly_chat_error(exc, is_vi))
 
 st.markdown(
     '<div class="footer">SkyeChat · Lắng nghe bằng sự tử tế · By ThanhAI</div>',
