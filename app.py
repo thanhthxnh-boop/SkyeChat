@@ -78,18 +78,16 @@ st.markdown(
       --sky-paper: #f7f8f5;
     }
     input[type="radio"] { accent-color: #729b87; }
-    html, body, [class*="css"] { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; }
+    html, body, [class*="css"] { font-family: "Segoe UI", Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; font-size: 16px; }
+    [data-testid="stMarkdownContainer"], [data-testid="stWidgetLabel"], textarea, input, button { letter-spacing: .01em; }
     .stApp {
       color: var(--sky-ink);
-      background:
-        radial-gradient(ellipse at 8% 0%, rgba(215,233,220,.72), transparent 34%),
-        radial-gradient(ellipse at 96% 12%, rgba(218,233,237,.70), transparent 32%),
-        #f7f8f5;
+      background: #eaf2f0;
     }
-    [data-testid="stHeader"] { background: rgba(247,248,245,.86); }
+    [data-testid="stHeader"] { background: #eaf2f0; }
     [data-testid="stMainBlockContainer"] { max-width: 1120px; padding-top: 1.4rem; }
     [data-testid="stSidebar"] {
-      background: linear-gradient(180deg, #edf4ef 0%, #f4f3ed 58%, #edf3f3 100%);
+      background: #e2eeeb;
       border-right: 1px solid rgba(112,151,139,.18);
     }
     [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color: #586d66; }
@@ -100,7 +98,7 @@ st.markdown(
       padding: 1.65rem 2rem 1.55rem;
       border: 1px solid rgba(255,255,255,.9);
       border-radius: 26px;
-      background: linear-gradient(115deg, rgba(225,239,228,.98), rgba(246,239,224,.96) 55%, rgba(222,237,239,.96));
+      background: #dcebe8;
       box-shadow: 0 16px 45px rgba(74,111,101,.11);
       margin: .35rem 0 1.2rem;
       animation: hero-arrive .65s ease-out both;
@@ -132,7 +130,7 @@ st.markdown(
     .welcome-card {
       border: 1px solid rgba(137,172,157,.24); border-radius: 22px;
       padding: 1.25rem 1.4rem; margin: .8rem 0 1.25rem;
-      background: rgba(255,255,255,.84); box-shadow: 0 10px 30px rgba(75,111,101,.07);
+      background: #f8fbfa; box-shadow: 0 10px 30px rgba(75,111,101,.07);
       animation: hero-arrive .75s .08s ease-out both;
     }
     .welcome-card strong { color: #638875; }
@@ -140,12 +138,12 @@ st.markdown(
     .diary-intro {
       border: 1px solid rgba(139,174,168,.32); border-radius: 20px;
       padding: 1rem 1.2rem; margin: .7rem 0 1rem;
-      background: linear-gradient(115deg, rgba(255,255,255,.92), rgba(230,240,232,.88) 55%, rgba(224,238,240,.82));
+      background: #e4efed;
       color: #586f68;
     }
     .sidebar-brand {
       padding: 1rem; margin: .25rem 0 1.2rem; border-radius: 20px;
-      background: linear-gradient(135deg, #dfede2, #f1eadc 65%, #deebed);
+      background: #d7e7e3;
       text-align: center; color: #536d63;
     }
     .sidebar-brand .cloud { font-size: 2.2rem; }
@@ -153,22 +151,22 @@ st.markdown(
     .sidebar-brand span { font-size: .82rem; }
     div[data-testid="stChatMessage"] {
       border: 1px solid rgba(133,164,157,.23); border-radius: 20px;
-      padding: .85rem 1rem; background: rgba(255,255,255,.75);
+      padding: .85rem 1rem; background: #f8fbfa;
       box-shadow: 0 8px 24px rgba(56,99,66,.055); margin-bottom: .85rem;
       transition: box-shadow .2s ease, transform .2s ease;
     }
     div[data-testid="stChatMessage"]:hover { box-shadow: 0 11px 28px rgba(56,99,66,.09); transform: translateY(-1px); }
     div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
-      background: linear-gradient(115deg, rgba(229,240,227,.98), rgba(241,237,222,.94));
+      background: #e5efeb;
       border-color: rgba(143,174,147,.30);
     }
     div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
-      background: linear-gradient(115deg, rgba(255,255,255,.97), rgba(231,240,237,.95));
+      background: #f7fbfa;
       border-color: rgba(145,178,171,.30);
     }
     [data-testid="stChatInput"] textarea {
       border-radius: 18px !important; border: 1px solid #d4e1dc !important;
-      background: rgba(255,255,255,.92) !important;
+      background: #fbfdfc !important;
       box-shadow: 0 8px 24px rgba(62,112,78,.07);
       transition: border-color .2s ease, box-shadow .2s ease;
     }
@@ -182,7 +180,7 @@ st.markdown(
     .stButton button:focus-visible, [data-testid="stChatInput"] button:focus-visible { outline: 3px solid rgba(91,145,118,.58); outline-offset: 2px; }
     [data-testid="stChatInput"] button {
       border: 0 !important; border-radius: 13px !important; color: white !important;
-      background: linear-gradient(135deg, #719b86, #8bb5a1) !important;
+      background: #638f86 !important;
       box-shadow: 0 5px 14px rgba(83,133,111,.26);
       transition: transform .18s ease, box-shadow .18s ease;
     }
@@ -191,12 +189,27 @@ st.markdown(
     .footer { color: #7d9181; text-align: center; font-size: .82rem; padding: 1.2rem 0 .3rem; }
     .teru-bozu {
       position: fixed; top: .1rem; right: 5.1rem; z-index: 1001;
-      width: 62px; height: 122px; pointer-events: none;
+      width: 72px; height: 132px; pointer-events: none;
       transform-origin: 50% 0; animation: teru-sway 4.8s ease-in-out infinite;
-      filter: drop-shadow(0 5px 8px rgba(41, 78, 52, .16));
+      filter: drop-shadow(0 8px 9px rgba(38, 75, 72, .25));
     }
     .teru-bozu svg { display: block; width: 100%; height: 100%; overflow: visible; }
-    @keyframes teru-sway { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+    @keyframes teru-sway { 0%, 100% { transform: rotate(-5deg) translateY(0); } 50% { transform: rotate(5deg) translateY(3px); } }
+    .stButton button:active, [data-testid="stChatInput"] button:active,
+    [data-testid="stFormSubmitButton"] button:active, [data-testid="stDownloadButton"] button:active {
+      transform: scale(.96) !important; box-shadow: inset 0 2px 5px rgba(34,74,70,.2) !important;
+    }
+    [data-testid="stRadio"] label, [data-testid="stToggle"] label,
+    [data-testid="stExpander"] summary { transition: background-color .2s ease, color .2s ease, transform .2s ease; }
+    [data-testid="stRadio"] label:active, [data-testid="stToggle"] label:active,
+    [data-testid="stExpander"] summary:active { transform: scale(.985); }
+    [data-testid="stExpander"] { transition: box-shadow .2s ease, border-color .2s ease; }
+    [data-testid="stExpander"]:hover { box-shadow: 0 7px 18px rgba(49,93,87,.08); }
+    .teru-head { filter: url(#doll-shadow); }
+    .rain-drop { animation: rain-fall 2.2s ease-in infinite; transform-box: fill-box; transform-origin: center; }
+    .rain-drop:nth-of-type(2) { animation-delay: .7s; }
+    .rain-drop:nth-of-type(3) { animation-delay: 1.3s; }
+    @keyframes rain-fall { 0% { opacity: 0; transform: translateY(-3px); } 35% { opacity: .9; } 100% { opacity: 0; transform: translateY(13px); } }
     @media (prefers-reduced-motion: reduce) {
       *, *:before, *:after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
       .teru-bozu { animation: none !important; }
@@ -217,12 +230,21 @@ st.markdown(
     """
     <div class="teru-bozu" aria-hidden="true">
       <svg viewBox="0 0 64 128" xmlns="http://www.w3.org/2000/svg">
-        <path d="M32 0v27" stroke="#6d9b73" stroke-width="2" stroke-linecap="round"/>
-        <circle cx="32" cy="46" r="19" fill="#fffdf5" stroke="#dce9d8" stroke-width="2"/>
-        <path d="M18 58c-1 12-7 20-9 36-2 12 4 19 9 16 5-2 8-7 12-3 3 4 7 8 11 4 4-3 7-8 11-4 5 3 10 6 14 0 5-8-1-20-6-31-3-6-5-11-6-18-5 5-10 7-16 7s-12-2-16-7z" fill="#fffdf5" stroke="#dce9d8" stroke-width="2" stroke-linejoin="round"/>
-        <path d="M24 46h.2M40 46h.2" stroke="#405a45" stroke-width="4" stroke-linecap="round"/>
-        <path d="M29 53q3 3 6 0" fill="none" stroke="#7c9d7a" stroke-width="1.8" stroke-linecap="round"/>
-        <path d="M27 63q5 4 10 0" fill="none" stroke="#86ad83" stroke-width="2" stroke-linecap="round"/>
+        <defs>
+          <filter id="doll-shadow" x="-30%" y="-20%" width="160%" height="160%"><feDropShadow dx="1" dy="3" stdDeviation="2" flood-color="#416a66" flood-opacity=".24"/></filter>
+        </defs>
+        <path d="M32 0v27" stroke="#527d79" stroke-width="2.4" stroke-linecap="round"/>
+        <g class="teru-head">
+          <circle cx="32" cy="46" r="19" fill="#e5efec" stroke="#b8ceca" stroke-width="1.5"/>
+          <path d="M24 33q7-5 13-1" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+          <path d="M18 58c-1 12-7 20-9 36-2 12 4 19 9 16 5-2 8-7 12-3 3 4 7 8 11 4 4-3 7-8 11-4 5 3 10 6 14 0 5-8-1-20-6-31-3-6-5-11-6-18-5 5-10 7-16 7s-12-2-16-7z" fill="#d5e5e1" stroke="#b8ceca" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M24 65q8 3 16 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".8"/>
+          <path d="M24 46h.2M40 46h.2" stroke="#405a5a" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M29 53q3 3 6 0" fill="none" stroke="#7c9d9a" stroke-width="1.8" stroke-linecap="round"/>
+          <ellipse cx="22" cy="51" rx="3" ry="1.5" fill="#d89896" opacity=".42"/><ellipse cx="42" cy="51" rx="3" ry="1.5" fill="#d89896" opacity=".42"/>
+          <path d="M27 63q5 4 10 0" fill="none" stroke="#82a9a4" stroke-width="2" stroke-linecap="round"/>
+        </g>
+        <path class="rain-drop" d="M10 72l-2 7M54 83l-2 7M13 105l-2 7" stroke="#79aeb3" stroke-width="2" stroke-linecap="round"/>
       </svg>
     </div>
     """,
@@ -663,7 +685,7 @@ if not is_authenticated:
                             "Supabase password reset verification failed: %s", type(exc).__name__
                         )
                         st.error("Mã không hợp lệ hoặc đã hết hạn. Hãy gửi mã mới.")
-    st.markdown('<div class="footer">SkyeChat · By ThanhAI</div>', unsafe_allow_html=True)
+    st.markdown('<div class="footer">SkyeChat · By ThanhAI · since august 2026</div>', unsafe_allow_html=True)
     st.stop()
 
 
@@ -945,8 +967,8 @@ if is_diary:
         """
         <style>
         [data-testid="stForm"] {
-          background: linear-gradient(145deg, #f3faf2, #e8f5e9);
-          border: 1px solid #cfe5d0;
+          background: #e8f1ee;
+          border: 1px solid #cddfda;
           border-radius: 22px;
           padding: 1.1rem 1.2rem 1.2rem;
           box-shadow: 0 12px 28px rgba(57, 111, 69, .07);
@@ -971,7 +993,7 @@ if is_diary:
           color: #fff !important;
           border: 1px solid #3f8052 !important;
           border-radius: 13px !important;
-          background: linear-gradient(135deg, #438d5c, #72ad78) !important;
+          background: #477c71 !important;
           box-shadow: 0 6px 15px rgba(63, 128, 82, .18);
           transition: transform .18s ease, box-shadow .18s ease;
         }
@@ -979,7 +1001,7 @@ if is_diary:
         [data-testid="stFormSubmitButton"] button:hover {
           color: #fff !important;
           border-color: #2f7045 !important;
-          background: linear-gradient(135deg, #367c50, #5b9b66) !important;
+          background: #376a61 !important;
           transform: translateY(-1px);
           box-shadow: 0 9px 20px rgba(63, 128, 82, .24);
         }
@@ -1005,17 +1027,14 @@ if IS_DARK_THEME:
         }
         .stApp {
           color: #e4eee4 !important;
-          background:
-            radial-gradient(ellipse at 8% 0%, rgba(49, 79, 67, .42), transparent 34%),
-            radial-gradient(ellipse at 96% 12%, rgba(48, 75, 82, .34), transparent 32%),
-            #171d1b !important;
+      background: #172321 !important;
         }
         [data-testid="stAppViewContainer"],
         [data-testid="stMain"],
         [data-testid="stMainBlockContainer"] { background-color: #171d1b !important; }
         [data-testid="stHeader"] { background: rgba(23, 29, 27, .92) !important; }
         [data-testid="stSidebar"] {
-          background: linear-gradient(180deg, #1d2925 0%, #232c28 58%, #1b292a 100%) !important;
+          background: #202d2b !important;
           border-right: 1px solid rgba(137, 179, 139, .18) !important;
         }
         [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color: #c1d0c2 !important; }
@@ -1029,7 +1048,7 @@ if IS_DARK_THEME:
         [data-testid="stMain"] label { color: #e4eee4 !important; }
         [data-testid="stCaptionContainer"] { color: #afc0b0 !important; }
         .hero {
-          background: linear-gradient(115deg, #293b32, #353a32 58%, #26393b) !important;
+          background: #263b3a !important;
           border-color: rgba(171, 205, 166, .18) !important;
           box-shadow: 0 16px 45px rgba(0, 0, 0, .22) !important;
         }
@@ -1038,7 +1057,7 @@ if IS_DARK_THEME:
         .hero-tagline { color: #cfdfd6 !important; background: rgba(35, 52, 47, .82) !important; border-color: rgba(166, 193, 181, .25) !important; }
         .hero-copy { color: #c5d4c5 !important; }
         .welcome-card {
-          background: linear-gradient(135deg, #202c23, #202d27) !important;
+          background: #202e2c !important;
           border-color: #394d3c !important;
           box-shadow: 0 10px 30px rgba(0, 0, 0, .18) !important;
           color: #dce8dc !important;
@@ -1046,12 +1065,12 @@ if IS_DARK_THEME:
         .welcome-card strong { color: #a9d5ae !important; }
         .soft-note { color: #afc2b0 !important; }
         .diary-intro {
-          background: linear-gradient(115deg, #202c23, #203229) !important;
+          background: #203331 !important;
           border-color: #405b44 !important;
           color: #cfe0d0 !important;
         }
         .sidebar-brand {
-          background: linear-gradient(135deg, #2b3e2d, #34402c 65%, #243b30) !important;
+          background: #263b36 !important;
           color: #c9d9ca !important;
         }
         .sidebar-brand strong { color: #f0f6ed !important; }
@@ -1062,11 +1081,11 @@ if IS_DARK_THEME:
           color: #e4eee4 !important;
         }
         div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
-          background: linear-gradient(115deg, #293b2b, #303b29) !important;
+          background: #2b403c !important;
           border-color: #4a6046 !important;
         }
         div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
-          background: linear-gradient(115deg, #202b23, #20312a) !important;
+          background: #213532 !important;
           border-color: #3b5544 !important;
         }
         [data-testid="stChatInput"] textarea,
@@ -1086,7 +1105,7 @@ if IS_DARK_THEME:
           box-shadow: 0 0 0 3px rgba(112, 175, 122, .18) !important;
         }
         [data-testid="stForm"] {
-          background: linear-gradient(145deg, #202b22, #1e2c23) !important;
+          background: #1e302d !important;
           border-color: #3c5540 !important;
           box-shadow: 0 12px 28px rgba(0, 0, 0, .18) !important;
         }
@@ -1105,7 +1124,7 @@ if IS_DARK_THEME:
         [data-testid="stChatInput"] button,
         [data-testid="stDownloadButton"] button,
         [data-testid="stFormSubmitButton"] button {
-          background: linear-gradient(135deg, #438d5c, #72ad78) !important;
+          background: #477c71 !important;
           border-color: #75a97a !important;
           color: #fff !important;
         }
@@ -1386,6 +1405,8 @@ else:
             st.error(friendly_chat_error(exc, is_vi))
 
 st.markdown(
-    '<div class="footer">SkyeChat · Lắng nghe bằng sự tử tế · By ThanhAI</div>',
+    '<div class="footer">SkyeChat · Lắng nghe bằng sự tử tế · By ThanhAI · since august 2026</div>',
     unsafe_allow_html=True,
 )
+
+
