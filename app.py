@@ -548,18 +548,27 @@ if not is_authenticated:
         return bool(re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", value))
 
     def show_auth_error(exc, action):
-        """Show a helpful hint for common auth failures without exposing internals."""
+        """Translate common Supabase Auth errors into actionable, safe guidance."""
         message = str(exc).lower()
-        if "rate limit" in message or "too many" in message:
+        code = str(getattr(exc, "code", "") or "").lower()
+        details = f"{code} {message}"
+        LOGGER.warning("Supabase auth action failed (%s, %s)", action, type(exc).__name__)
+        if any(value in details for value in ("signup_disabled", "email_provider_disabled", "signups not allowed")):
+            st.error("Đăng ký email đang bị tắt trong Supabase. Hãy bật Email provider và quyền cho phép tạo tài khoản mới trong Authentication settings.")
+        elif "rate limit" in details or "too many" in details or "over_email_send_rate_limit" in details:
             st.warning("Bạn thử quá nhiều lần. Hãy đợi một chút rồi thử lại.")
-        elif "already registered" in message or "user already exists" in message:
+        elif "already registered" in details or "user already exists" in details or "email_exists" in details:
             st.warning("Email này đã có tài khoản. Hãy đăng nhập hoặc dùng chức năng quên mật khẩu.")
-        elif "invalid login credentials" in message or "invalid credentials" in message:
+        elif "invalid login credentials" in details or "invalid credentials" in details:
             st.error("Email hoặc mật khẩu chưa chính xác. Nếu chưa xác nhận email, hãy kiểm tra hộp thư.")
-        elif "password" in message and ("weak" in message or "short" in message):
-            st.warning("Mật khẩu chưa đủ mạnh. Hãy dùng ít nhất 8 ký tự.")
+        elif "weak_password" in details or ("password" in details and any(value in details for value in ("weak", "short", "least", "characters"))):
+            st.warning("Mật khẩu chưa đáp ứng chính sách bảo mật của dự án Supabase. Hãy thử mật khẩu dài hơn, gồm chữ và số.")
+        elif "email" in details and any(value in details for value in ("smtp", "send", "delivery", "confirmation")):
+            st.error("Chưa gửi được email xác nhận. Hãy kiểm tra cấu hình SMTP và giới hạn gửi email trong Supabase.")
+        elif "captcha" in details:
+            st.error("Xác minh chống spam chưa hoàn tất. Hãy kiểm tra cấu hình CAPTCHA trong Supabase.")
         else:
-            st.error(f"{action} chưa thành công. Hãy kiểm tra thông tin và thử lại.")
+            st.error(f"{action} chưa thành công. Hãy kiểm tra Authentication Logs trong Supabase để xem lý do cụ thể.")
 
     with login_tab:
         st.caption("Đăng nhập bằng email hoặc số điện thoại đã xác minh.")
