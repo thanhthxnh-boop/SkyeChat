@@ -331,6 +331,8 @@ if "auth_user_id" not in st.session_state:
     st.session_state.auth_user_id = None
 if "auth_email" not in st.session_state:
     st.session_state.auth_email = ""
+if "guest_mode" not in st.session_state:
+    st.session_state.guest_mode = False
 if "recovery_otp_sent" not in st.session_state:
     st.session_state.recovery_otp_sent = False
 if "recovery_target" not in st.session_state:
@@ -392,6 +394,7 @@ def clear_auth_state():
     st.session_state.confirm_delete_diary_id = None
     st.session_state.confirm_clear_chat = False
     st.session_state.clear_diary_form = False
+    st.session_state.guest_mode = False
     st.session_state.pop("journal_saved_recently", None)
     st.session_state.pop("diary_title_input", None)
     st.session_state.pop("diary_mood_input", None)
@@ -465,25 +468,19 @@ def format_created_at(value):
         return raw_value
 
 
-if not SUPABASE_URL or not SUPABASE_KEY:
-    st.error(
-        "SkyeChat cần cấu hình Supabase để bật đăng nhập. "
-        "Hãy thêm `SUPABASE_URL` và `SUPABASE_PUBLISHABLE_KEY` "
-        "(hoặc `SUPABASE_ANON_KEY`) trong phần Secrets của Streamlit."
-    )
-    st.stop()
+supabase_client = None
+supabase_init_error = None
+if SUPABASE_URL and SUPABASE_KEY:
+    try:
+        # Keep this stateful auth client private to this browser session.
+        if "_supabase_client" not in st.session_state:
+            st.session_state["_supabase_client"] = create_client(SUPABASE_URL, SUPABASE_KEY)
+        supabase_client = st.session_state["_supabase_client"]
+    except Exception as exc:
+        supabase_init_error = exc
+        LOGGER.warning("Supabase client initialization failed: %s", type(exc).__name__)
 
-try:
-    # Keep this stateful auth client private to this browser session.
-    if "_supabase_client" not in st.session_state:
-        st.session_state["_supabase_client"] = create_client(SUPABASE_URL, SUPABASE_KEY)
-    supabase_client = st.session_state["_supabase_client"]
-except Exception as exc:
-    LOGGER.warning("Supabase client initialization failed: %s", type(exc).__name__)
-    st.error("Không khởi tạo được Supabase. Hãy kiểm tra URL và publishable key trong Secrets.")
-    st.stop()
-
-is_authenticated = restore_auth_state(supabase_client)
+is_authenticated = bool(supabase_client and restore_auth_state(supabase_client))
 if is_authenticated and st.session_state.password_reset_pending:
     st.markdown(
         """
@@ -521,7 +518,13 @@ if is_authenticated and st.session_state.password_reset_pending:
     st.stop()
 if is_authenticated and st.session_state.pop("password_change_success", False):
     st.success("Đã đổi mật khẩu thành công.")
-if not is_authenticated:
+if not is_authenticated and not st.session_state.guest_mode:
+    _, guest_button_col = st.columns([4, 1.7])
+    with guest_button_col:
+        if st.button("👤 Dùng thử với tư cách khách", key="enter_guest_mode", use_container_width=True):
+            st.session_state.guest_mode = True
+            st.session_state.page_mode = "chat"
+            st.rerun()
     st.markdown(
         """
         <section class="hero">
@@ -532,6 +535,13 @@ if not is_authenticated:
         """,
         unsafe_allow_html=True,
     )
+    if supabase_client is None:
+        if supabase_init_error:
+            st.error("Chưa kết nối được Supabase. Kiểm tra Project URL và key trong Secrets để dùng tài khoản.")
+        else:
+            st.info("Đăng nhập và nhật ký cần cấu hình Supabase. Bạn vẫn có thể dùng nút khách ở phía trên để trò chuyện.")
+        st.markdown('<div class="footer">SkyeChat · By ThanhAI · since august 2026</div>', unsafe_allow_html=True)
+        st.stop()
     st.markdown(
         """
         <style>
@@ -904,15 +914,24 @@ with st.sidebar:
         """,
         unsafe_allow_html=True,
     )
-    st.subheader("Cài đặt của bạn")
-    st.caption(f"Tài khoản: {st.session_state.auth_email}")
-    if st.button("Đăng xuất", use_container_width=True):
-        try:
-            supabase_client.auth.sign_out()
-        except Exception:
-            pass
-        clear_auth_state()
-        st.rerun()
+    st.subheader("Phiên khách" if st.session_state.guest_mode else "Cài đặt của bạn")
+    if st.session_state.guest_mode:
+        st.caption("Bạn đang trò chuyện với tư cách khách. Nội dung chỉ được giữ trong phiên hiện tại.")
+        if st.button("Đăng nhập / tạo tài khoản", use_container_width=True):
+            st.session_state.guest_mode = False
+            st.session_state.messages = []
+            st.session_state.page_mode = "chat"
+            st.rerun()
+    else:
+        st.caption(f"Tài khoản: {st.session_state.auth_email}")
+        if st.button("Đăng xuất", use_container_width=True):
+            try:
+                if supabase_client:
+                    supabase_client.auth.sign_out()
+            except Exception:
+                pass
+            clear_auth_state()
+            st.rerun()
 
     nickname_input = st.text_input("Biệt danh", value=st.session_state.nickname, max_chars=32)
     if nickname_input.strip() and nickname_input.strip() != st.session_state.nickname:
@@ -922,21 +941,26 @@ with st.sidebar:
     st.success(f"👋 Chào {st.session_state.nickname}!")
     lang = st.radio("Ngôn ngữ / Language", ["Tiếng Việt 🇻🇳", "English 🇬🇧"], label_visibility="visible")
     is_vi = lang.startswith("Tiếng Việt")
-    if st.session_state.get("page_mode") not in ("chat", "diary"):
-        previous_page_mode = str(st.session_state.get("page_mode", ""))
-        st.session_state.page_mode = (
-            "diary" if "Nhật ký" in previous_page_mode or "Journal" in previous_page_mode else "chat"
+    if st.session_state.guest_mode:
+        st.session_state.page_mode = "chat"
+        page_mode = "chat"
+        st.caption("Nhật ký riêng cần tài khoản để lưu an toàn.")
+    else:
+        if st.session_state.get("page_mode") not in ("chat", "diary"):
+            previous_page_mode = str(st.session_state.get("page_mode", ""))
+            st.session_state.page_mode = (
+                "diary" if "Nhật ký" in previous_page_mode or "Journal" in previous_page_mode else "chat"
+            )
+        page_mode = st.radio(
+            "Mục bạn muốn mở" if is_vi else "Choose a space",
+            options=("chat", "diary"),
+            format_func=lambda value: (
+                ("💬 Trò chuyện" if value == "chat" else "📔 Nhật ký")
+                if is_vi
+                else ("💬 Chat" if value == "chat" else "📔 Journal")
+            ),
+            key="page_mode",
         )
-    page_mode = st.radio(
-        "Mục bạn muốn mở" if is_vi else "Choose a space",
-        options=("chat", "diary"),
-        format_func=lambda value: (
-            ("💬 Trò chuyện" if value == "chat" else "📔 Nhật ký")
-            if is_vi
-            else ("💬 Chat" if value == "chat" else "📔 Journal")
-        ),
-        key="page_mode",
-    )
     is_diary = page_mode == "diary"
     st.toggle(
         "Giao diện tối" if is_vi else "Dark appearance",
