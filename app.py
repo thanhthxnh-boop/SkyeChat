@@ -1,6 +1,7 @@
 import os
 import json
 import random
+import re
 import time
 from datetime import datetime
 from pathlib import Path
@@ -436,34 +437,79 @@ if not is_authenticated:
         """,
         unsafe_allow_html=True,
     )
-    login_tab, signup_tab, recovery_tab = st.tabs(["\u0110\u0103ng nh\u1eadp", "T\u1ea1o t\u00e0i kho\u1ea3n", "Qu\u00ean m\u1eadt kh\u1ea9u"])
+    st.markdown(
+        """
+        <style>
+        [data-testid="stForm"] { background: rgba(255,255,255,.78); border: 1px solid #dce8e1; border-radius: 20px; padding: 1.1rem; }
+        [data-testid="stTextInput"] input { border-radius: 12px; }
+        [data-testid="stFormSubmitButton"] button { min-height: 2.8rem; }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+    login_tab, signup_tab, recovery_tab = st.tabs(["Đăng nhập", "Tạo tài khoản", "Quên mật khẩu"])
+
+    def is_valid_email(value):
+        return bool(re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", value))
+
+    def show_auth_error(exc, action):
+        """Show a helpful hint for common auth failures without exposing internals."""
+        message = str(exc).lower()
+        if "rate limit" in message or "too many" in message:
+            st.warning("Bạn thử quá nhiều lần. Hãy đợi một chút rồi thử lại.")
+        elif "already registered" in message or "user already exists" in message:
+            st.warning("Email này đã có tài khoản. Hãy đăng nhập hoặc dùng chức năng quên mật khẩu.")
+        elif "invalid login credentials" in message or "invalid credentials" in message:
+            st.error("Email hoặc mật khẩu chưa chính xác. Nếu chưa xác nhận email, hãy kiểm tra hộp thư.")
+        elif "password" in message and ("weak" in message or "short" in message):
+            st.warning("Mật khẩu chưa đủ mạnh. Hãy dùng ít nhất 8 ký tự.")
+        else:
+            st.error(f"{action} chưa thành công. Hãy kiểm tra thông tin và thử lại.")
 
     with login_tab:
+        st.caption("Đăng nhập bằng email hoặc số điện thoại đã xác minh.")
         with st.form("skyechat_login_form"):
-            login_identity = st.text_input("Email ho\u1eb7c s\u1ed1 điện thoại", placeholder="ban@example.com hoặc +84901234567")
-            login_password = st.text_input("Mật khẩu", type="password")
+            login_identity = st.text_input("Email hoặc số điện thoại", placeholder="ban@example.com hoặc +84901234567")
+            login_password = st.text_input("Mật khẩu", type="password", autocomplete="current-password")
             login_submitted = st.form_submit_button("Đăng nhập", type="primary", use_container_width=True)
         if login_submitted:
-            try:
-                auth_response = supabase_client.auth.sign_in_with_password(
-                    {"email": login_identity.strip(), "password": login_password} if "@" in login_identity else {"phone": login_identity.strip(), "password": login_password}
-                )
-                if save_auth_state(auth_response):
-                    st.rerun()
-                st.info("Hãy xác nhận email đăng ký rồi thử đăng nhập lại.")
-            except Exception:
-                st.error("Đăng nhập chưa thành công. Hãy kiểm tra email, mật khẩu và trạng thái xác nhận email.")
+            identity = login_identity.strip()
+            if not identity:
+                st.warning("Hãy nhập email hoặc số điện thoại.")
+            elif not login_password:
+                st.warning("Hãy nhập mật khẩu.")
+            elif "@" in identity and not is_valid_email(identity):
+                st.warning("Hãy kiểm tra lại địa chỉ email.")
+            elif "@" not in identity and (not identity.startswith("+") or not identity[1:].isdigit() or not 8 <= len(identity[1:]) <= 15):
+                st.warning("Số điện thoại cần có mã quốc gia, ví dụ +84901234567.")
+            else:
+                try:
+                    auth_credentials = (
+                        {"email": identity.lower(), "password": login_password}
+                        if "@" in identity
+                        else {"phone": identity, "password": login_password}
+                    )
+                    auth_response = supabase_client.auth.sign_in_with_password(auth_credentials)
+                    if save_auth_state(auth_response):
+                        st.rerun()
+                    st.info("Hãy xác nhận email đăng ký rồi thử đăng nhập lại.")
+                except Exception as exc:
+                    show_auth_error(exc, "Đăng nhập")
 
     with signup_tab:
+        st.caption("Tạo tài khoản miễn phí để lưu nhật ký và tiếp tục sử dụng trên thiết bị khác.")
         with st.form("skyechat_signup_form"):
-            signup_nickname = st.text_input("Biệt danh", max_chars=32)
-            signup_email = st.text_input("Email", placeholder="ban@example.com")
-            signup_password = st.text_input("Tạo mật khẩu", type="password", help="Nên dùng ít nhất 8 ký tự.")
-            signup_password_confirm = st.text_input("Nhập lại mật khẩu", type="password")
+            signup_nickname = st.text_input("Tên hiển thị", placeholder="Tên bạn muốn dùng", max_chars=32, autocomplete="nickname")
+            signup_email = st.text_input("Email", placeholder="ban@example.com", autocomplete="email")
+            signup_password = st.text_input("Tạo mật khẩu", type="password", autocomplete="new-password", help="Dùng ít nhất 8 ký tự.")
+            signup_password_confirm = st.text_input("Nhập lại mật khẩu", type="password", autocomplete="new-password")
             signup_submitted = st.form_submit_button("Tạo tài khoản", type="primary", use_container_width=True)
         if signup_submitted:
-            if not signup_email.strip() or not signup_nickname.strip():
-                st.warning("Hãy nhập email và biệt danh.")
+            normalized_email = signup_email.strip().lower()
+            if not signup_nickname.strip():
+                st.warning("Hãy nhập tên hiển thị.")
+            elif not is_valid_email(normalized_email):
+                st.warning("Hãy nhập địa chỉ email hợp lệ.")
             elif len(signup_password) < 8:
                 st.warning("Mật khẩu cần có ít nhất 8 ký tự.")
             elif signup_password != signup_password_confirm:
@@ -472,17 +518,16 @@ if not is_authenticated:
                 try:
                     auth_response = supabase_client.auth.sign_up(
                         {
-                            "email": signup_email.strip(),
+                            "email": normalized_email,
                             "password": signup_password,
                             "options": {"data": {"nickname": signup_nickname.strip()}},
                         }
                     )
                     if save_auth_state(auth_response):
                         st.rerun()
-                    st.success("Tài khoản đã được tạo. Nếu Supabase yêu cầu xác nhận email, hãy mở email rồi đăng nhập.")
-                except Exception:
-                    st.error("Chưa tạo được tài khoản. Hãy kiểm tra email hoặc thử một địa chỉ email khác.")
-
+                    st.success("Đã tạo tài khoản. Hãy mở email để xác nhận, sau đó quay lại đăng nhập.")
+                except Exception as exc:
+                    show_auth_error(exc, "Tạo tài khoản")
     with recovery_tab:
         st.caption(
             "M\u00e3 OTP email c\u1ea7n email template Supabase c\u00f3 {{ .Token }}. "
@@ -1129,7 +1174,3 @@ st.markdown(
     '<div class="footer">SkyeChat · Lắng nghe bằng sự tử tế · By ThanhAI</div>',
     unsafe_allow_html=True,
 )
-import streamlit as st
-
-url = st.secrets["https://hsccmkfjkwmmimhyoeos.supabase.co/rest/v1/"]
-key = st.secrets["sb_publishable_66ZJpPcGEDsG-4LbWNKyOg_2DZuQC-y"]
