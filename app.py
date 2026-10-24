@@ -575,11 +575,21 @@ if not is_authenticated:
         elif "captcha" in details:
             st.error("Xác minh chống spam chưa hoàn tất. Hãy kiểm tra cấu hình CAPTCHA trong Supabase.")
         else:
-            error_id = code or type(exc).__name__
-            st.error(
-                f"{action} chưa thành công (mã lỗi: {error_id}). "
-                "Mở Logs → Auth trong Supabase, lọc theo thời điểm vừa thử và xem chi tiết sự kiện."
+            error_id = code or "không được Supabase cung cấp"
+            diagnostic = str(getattr(exc, "message", "") or str(exc)).strip()
+            diagnostic = re.sub(
+                r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}",
+                "[email đã ẩn]",
+                diagnostic,
+                flags=re.IGNORECASE,
             )
+            diagnostic = re.sub(
+                r"(?i)(access[_ -]?token|refresh[_ -]?token|api[_ -]?key)\s*[:=]\s*\S+",
+                r"\1=[đã ẩn]",
+                diagnostic,
+            )[:240]
+            detail_text = f" Chi tiết: {diagnostic}" if diagnostic else ""
+            st.error(f"{action} chưa thành công (mã lỗi: {error_id}).{detail_text}")
 
     with login_tab:
         st.caption("Đăng nhập bằng email hoặc số điện thoại đã xác minh.")
