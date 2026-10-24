@@ -1129,3 +1129,7 @@ st.markdown(
     '<div class="footer">SkyeChat · Lắng nghe bằng sự tử tế · By ThanhAI</div>',
     unsafe_allow_html=True,
 )
+import streamlit as st
+
+url = st.secrets["https://hsccmkfjkwmmimhyoeos.supabase.co/rest/v1/"]
+key = st.secrets["sb_publishable_66ZJpPcGEDsG-4LbWNKyOg_2DZuQC-y"]
