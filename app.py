@@ -33,11 +33,11 @@ API_BASE = "https://generativelanguage.googleapis.com/v1/interactions"
 DEFAULT_MODEL = "gemini-3.8-flash"
 DEFAULT_FALLBACK_MODEL = "gemini-3.6-flash"
 FREE_GEMINI_MODELS = frozenset({"gemini-3.8-flash", "gemini-3.6-flash"})
-DEFAULT_THINKING_LEVEL = "high"
-DEFAULT_MAX_OUTPUT_TOKENS = 8192
+DEFAULT_THINKING_LEVEL = "medium"
+DEFAULT_MAX_OUTPUT_TOKENS = 2048
 GEMINI_SERVICE_TIER = "standard"
-# Preserve up to eight recent exchanges for better continuity and personalization.
-MAX_HISTORY_MESSAGES = 16
+# Keep four recent exchanges in the model request to reduce prompt processing time.
+MAX_HISTORY_MESSAGES = 8
 MAX_STORED_MESSAGES = 64
 MAX_RETRIES = 2
 GEMINI_READ_TIMEOUT_SECONDS = 240
@@ -75,7 +75,7 @@ if GEMINI_THINKING_LEVEL not in {"low", "medium", "high"}:
 try:
     GEMINI_MAX_OUTPUT_TOKENS = max(
         1024,
-        min(8192, int(get_secret("GEMINI_MAX_OUTPUT_TOKENS", DEFAULT_MAX_OUTPUT_TOKENS))),
+        min(4096, int(get_secret("GEMINI_MAX_OUTPUT_TOKENS", DEFAULT_MAX_OUTPUT_TOKENS))),
     )
 except (TypeError, ValueError):
     GEMINI_MAX_OUTPUT_TOKENS = DEFAULT_MAX_OUTPUT_TOKENS
