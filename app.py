@@ -6,6 +6,7 @@ import re
 import time
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import requests
@@ -54,10 +55,24 @@ def get_secret(name, default=None):
 
 GEMINI_API_KEY = get_secret("GEMINI_API_KEY")
 PRIMARY_MODEL = get_secret("GEMINI_MODEL", DEFAULT_MODEL)
+AI_PROVIDER = str(get_secret("AI_PROVIDER", "gemini") or "gemini").strip().lower()
+if AI_PROVIDER in ("hf", "huggingface", "hugging_face"):
+    AI_PROVIDER = "huggingface"
+HF_ENDPOINT_URL = str(get_secret("HF_ENDPOINT_URL", "") or "").strip()
+HF_ENDPOINT_NAME = str(get_secret("HF_ENDPOINT_NAME", "") or "").strip()
+HF_TOKEN = str(get_secret("HF_TOKEN", "") or "").strip()
 SUPABASE_URL = get_secret("SUPABASE_URL")
 SUPABASE_KEY = get_secret("SUPABASE_PUBLISHABLE_KEY") or get_secret("SUPABASE_ANON_KEY")
 APP_TIMEZONE = get_secret("APP_TIMEZONE", "Asia/Ho_Chi_Minh")
 LOGGER = logging.getLogger("skyechat")
+
+
+def ai_is_configured():
+    if AI_PROVIDER == "huggingface":
+        return bool(HF_ENDPOINT_URL and HF_ENDPOINT_NAME and HF_TOKEN)
+    if AI_PROVIDER == "gemini":
+        return bool(GEMINI_API_KEY)
+    return False
 
 
 # ==============================
@@ -774,8 +789,87 @@ def prepare_gemini_contents(history):
     ]
 
 
+def prepare_openai_messages(history, system_prompt):
+    """Build provider-neutral messages for OpenAI-compatible chat endpoints."""
+    normalized = []
+    for message in history:
+        if not isinstance(message, dict):
+            continue
+        role = message.get("role")
+        content = message.get("content")
+        if role not in ("user", "assistant") or not isinstance(content, str) or not content.strip():
+            continue
+        normalized.append({"role": role, "content": content.strip()})
+
+    normalized = normalized[-MAX_HISTORY_MESSAGES:]
+    while normalized and normalized[0]["role"] != "user":
+        normalized.pop(0)
+    if not normalized:
+        raise ValueError("A user message is required to start a conversation.")
+
+    return [{"role": "system", "content": system_prompt}, *normalized]
+
+
+def normalize_hf_endpoint_url():
+    """Validate the copied endpoint origin and add the OpenAI-compatible route."""
+    parsed = urlsplit(HF_ENDPOINT_URL)
+    if parsed.scheme != "https" or not parsed.netloc or parsed.query or parsed.fragment:
+        raise GeminiAPIError("Invalid Hugging Face endpoint URL.")
+    path = parsed.path.rstrip("/")
+    if path.endswith("/v1"):
+        path = path[:-3]
+    if path not in ("", "/"):
+        raise GeminiAPIError("Use the Hugging Face endpoint base URL without an API path.")
+    return f"https://{parsed.netloc}/v1/"
+
+
+def generate_huggingface_reply(history, system_prompt):
+    """Yield response text from a private Hugging Face Inference Endpoint."""
+    if not ai_is_configured():
+        raise GeminiAPIError("Hugging Face endpoint is not configured.")
+    try:
+        from huggingface_hub import InferenceClient
+    except ImportError as exc:
+        raise GeminiAPIError("Install the huggingface_hub package to use this provider.") from exc
+
+    try:
+        client = InferenceClient(
+            base_url=normalize_hf_endpoint_url(), token=HF_TOKEN, timeout=45
+        )
+        completion = client.chat.completions.create(
+            model=HF_ENDPOINT_NAME,
+            messages=prepare_openai_messages(history, system_prompt),
+            max_tokens=512,
+            temperature=0.7,
+            stream=True,
+        )
+        emitted = False
+        for chunk in completion:
+            choices = getattr(chunk, "choices", None) or []
+            if not choices:
+                continue
+            delta = getattr(choices[0], "delta", None)
+            text = getattr(delta, "content", None) if delta else None
+            if isinstance(text, str) and text:
+                emitted = True
+                yield text
+        if not emitted:
+            raise GeminiAPIError("Hugging Face returned no text. Please try again.")
+    except GeminiAPIError:
+        raise
+    except Exception as exc:
+        response = getattr(exc, "response", None)
+        status = getattr(response, "status_code", None)
+        raise GeminiAPIError("Hugging Face endpoint request failed.", status) from exc
+
+
 def generate_reply(history, system_prompt):
-    """Yield Gemini response text as it arrives, with safe retries and fallback."""
+    """Yield response text from the configured provider."""
+    if AI_PROVIDER == "huggingface":
+        yield from generate_huggingface_reply(history, system_prompt)
+        return
+    if AI_PROVIDER != "gemini":
+        raise GeminiAPIError("Unsupported AI_PROVIDER. Choose gemini or huggingface.")
     if not GEMINI_API_KEY:
         raise GeminiAPIError("Gemini is not configured.")
 
@@ -882,7 +976,24 @@ def generate_reply(history, system_prompt):
 def friendly_chat_error(exc, is_vi):
     """Keep technical details out of the student-facing error message."""
     status = getattr(exc, "status_code", None)
-    if not GEMINI_API_KEY:
+    if AI_PROVIDER == "huggingface" and isinstance(exc, GeminiAPIError):
+        message = str(exc)
+        if "Invalid Hugging Face endpoint URL" in message or "without an API path" in message:
+            return (
+                "URL endpoint Hugging Face chưa đúng. Hãy dán URL gốc, không kèm đường dẫn API ngoài `/v1/`."
+                if is_vi
+                else "The Hugging Face endpoint URL is malformed. Paste the base URL without an API path; the app adds `/v1/`."
+            )
+        cause_name = type(exc.__cause__).__name__ if exc.__cause__ else ""
+        if "Timeout" in cause_name:
+            return "Endpoint phản hồi quá lâu. Hãy kiểm tra endpoint đang ở trạng thái Running rồi thử lại." if is_vi else "The endpoint timed out. Check that it is Running, then try again."
+    if not ai_is_configured():
+        if AI_PROVIDER == "huggingface":
+            return (
+                "AI chưa được cấu hình. Hãy thêm `HF_ENDPOINT_URL`, `HF_ENDPOINT_NAME` và `HF_TOKEN` vào Streamlit Secrets."
+                if is_vi
+                else "AI is not configured. Add `HF_ENDPOINT_URL`, `HF_ENDPOINT_NAME`, and `HF_TOKEN` to Streamlit Secrets."
+            )
         return "Trò chuyện AI đang tạm tắt vì chưa cấu hình khóa Gemini." if is_vi else "AI chat is unavailable because the Gemini key is not configured."
     if isinstance(exc, requests.Timeout):
         return "Phản hồi mất quá nhiều thời gian. Hãy thử gửi lại." if is_vi else "The response timed out. Please try again."
@@ -890,9 +1001,37 @@ def friendly_chat_error(exc, is_vi):
         return "Không kết nối được với dịch vụ AI. Hãy kiểm tra mạng rồi thử lại." if is_vi else "Could not connect to the AI service. Check your connection and try again."
     if status == 429:
         return "SkyeChat đang quá tải. Hãy đợi một chút rồi thử lại." if is_vi else "SkyeChat is busy. Please wait a moment and try again."
-    if status in (401, 403):
-        return "Khóa Gemini chưa hợp lệ hoặc chưa được cấp quyền." if is_vi else "The Gemini key is invalid or does not have access."
+    if status == 401:
+        if AI_PROVIDER == "huggingface":
+            return (
+                "Hugging Face từ chối xác thực. Hãy kiểm tra `HF_TOKEN` trong Streamlit Secrets."
+                if is_vi
+                else "Hugging Face authentication failed. Check `HF_TOKEN` in Streamlit Secrets."
+            )
+        return (
+            "Gemini trả lỗi 401: khóa API bị thiếu, sai hoặc đã hết hạn. Hãy tạo khóa mới trong Google AI Studio và cập nhật `GEMINI_API_KEY` trong Streamlit Secrets."
+            if is_vi
+            else "Gemini returned 401: the API key is missing, invalid, or expired. Create a new key in Google AI Studio and update `GEMINI_API_KEY` in Streamlit Secrets."
+        )
+    if status == 403:
+        if AI_PROVIDER == "huggingface":
+            return (
+                "Hugging Face không cho phép truy cập endpoint. Hãy kiểm tra quyền của token và endpoint."
+                if is_vi
+                else "Hugging Face denied access to the endpoint. Check the token permissions and endpoint access."
+            )
+        return (
+            "Gemini trả lỗi 403: khóa hoặc project chưa được cấp quyền. Kiểm tra quyền Gemini API, trạng thái project và hạn chế của khóa trong Google AI Studio/Cloud."
+            if is_vi
+            else "Gemini returned 403: the key or project is not authorized. Check Gemini API access, project status, and key restrictions in Google AI Studio/Cloud."
+        )
     if status == 404:
+        if AI_PROVIDER == "huggingface":
+            return (
+                "Không tìm thấy endpoint hoặc tên endpoint không đúng. Hãy kiểm tra `HF_ENDPOINT_URL` và `HF_ENDPOINT_NAME`."
+                if is_vi
+                else "Endpoint not found. Check `HF_ENDPOINT_URL` and `HF_ENDPOINT_NAME`."
+            )
         return "Không tìm thấy model Gemini đã cấu hình. Hãy kiểm tra GEMINI_MODEL." if is_vi else "The configured Gemini model was not found. Check GEMINI_MODEL."
     if status and status >= 500:
         return "Dịch vụ AI đang gặp sự cố tạm thời. Hãy thử lại sau." if is_vi else "The AI service is temporarily unavailable. Please try again later."
@@ -968,12 +1107,19 @@ with st.sidebar:
         help="Bật giao diện xanh lá tối, dễ nhìn khi dùng ban đêm." if is_vi else "Use the dark green appearance.",
     )
     IS_DARK_THEME = st.session_state.dark_mode
-    if not GEMINI_API_KEY and not is_diary:
-        st.info(
-            "Thêm `GEMINI_API_KEY` vào Streamlit Secrets để bật trò chuyện với AI."
-            if is_vi
-            else "Add `GEMINI_API_KEY` to Streamlit Secrets to enable AI chat."
-        )
+    if not ai_is_configured() and not is_diary:
+        if AI_PROVIDER == "huggingface":
+            st.info(
+                "Thêm `HF_ENDPOINT_URL`, `HF_ENDPOINT_NAME` và `HF_TOKEN` vào Streamlit Secrets để bật model Hugging Face."
+                if is_vi
+                else "Add `HF_ENDPOINT_URL`, `HF_ENDPOINT_NAME`, and `HF_TOKEN` to Streamlit Secrets to enable the Hugging Face model."
+            )
+        else:
+            st.info(
+                "Thêm `GEMINI_API_KEY` vào Streamlit Secrets để bật trò chuyện với AI."
+                if is_vi
+                else "Add `GEMINI_API_KEY` to Streamlit Secrets to enable AI chat."
+            )
 
     st.divider()
     st.markdown("**Nhà phát triển:** ThanhAI")
@@ -1436,7 +1582,7 @@ else:
             st.markdown(message["content"])
 
     placeholder = "Hãy chia sẻ với SkyeChat..." if is_vi else "Share your thoughts with SkyeChat..."
-    prompt = st.chat_input(placeholder, max_chars=8000, disabled=not bool(GEMINI_API_KEY))
+    prompt = st.chat_input(placeholder, max_chars=8000, disabled=not ai_is_configured())
     if prompt and prompt.strip():
         prompt = prompt.strip()
         candidate_history = [*st.session_state.messages, {"role": "user", "content": prompt}]
@@ -1450,7 +1596,7 @@ else:
                         generate_reply(candidate_history, build_system_prompt(is_vi))
                     )
             if not isinstance(reply, str) or not reply.strip():
-                raise GeminiAPIError("Gemini returned an empty response.")
+                raise GeminiAPIError("The configured AI provider returned an empty response.")
             st.session_state.messages = (
                 candidate_history + [{"role": "assistant", "content": reply.strip()}]
             )[-MAX_STORED_MESSAGES:]
