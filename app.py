@@ -58,9 +58,13 @@ PRIMARY_MODEL = get_secret("GEMINI_MODEL", DEFAULT_MODEL)
 AI_PROVIDER = str(get_secret("AI_PROVIDER", "gemini") or "gemini").strip().lower()
 if AI_PROVIDER in ("hf", "huggingface", "hugging_face"):
     AI_PROVIDER = "huggingface"
+if AI_PROVIDER in ("hf-inference", "inference-providers", "hf-providers", "serverless"):
+    AI_PROVIDER = "hf-inference"
 HF_ENDPOINT_URL = str(get_secret("HF_ENDPOINT_URL", "") or "").strip()
 HF_ENDPOINT_NAME = str(get_secret("HF_ENDPOINT_NAME", "") or "").strip()
 HF_TOKEN = str(get_secret("HF_TOKEN", "") or "").strip()
+HF_MODEL_ID = str(get_secret("HF_MODEL_ID", "") or "").strip()
+HF_INFERENCE_PROVIDER = str(get_secret("HF_INFERENCE_PROVIDER", "auto") or "auto").strip()
 SUPABASE_URL = get_secret("SUPABASE_URL")
 SUPABASE_KEY = get_secret("SUPABASE_PUBLISHABLE_KEY") or get_secret("SUPABASE_ANON_KEY")
 APP_TIMEZONE = get_secret("APP_TIMEZONE", "Asia/Ho_Chi_Minh")
@@ -70,6 +74,8 @@ LOGGER = logging.getLogger("skyechat")
 def ai_is_configured():
     if AI_PROVIDER == "huggingface":
         return bool(HF_ENDPOINT_URL and HF_ENDPOINT_NAME and HF_TOKEN)
+    if AI_PROVIDER == "hf-inference":
+        return bool(HF_MODEL_ID and HF_TOKEN)
     if AI_PROVIDER == "gemini":
         return bool(GEMINI_API_KEY)
     return False
@@ -863,10 +869,56 @@ def generate_huggingface_reply(history, system_prompt):
         raise GeminiAPIError("Hugging Face endpoint request failed.", status) from exc
 
 
+def generate_hf_provider_reply(history, system_prompt):
+    """Yield text from a Hugging Face Inference Provider using account credits."""
+    if not ai_is_configured():
+        raise GeminiAPIError("Hugging Face Inference Provider is not configured.")
+    try:
+        from huggingface_hub import InferenceClient
+    except ImportError as exc:
+        raise GeminiAPIError("Install the huggingface_hub package to use this provider.") from exc
+
+    try:
+        client = InferenceClient(
+            model=HF_MODEL_ID,
+            provider=HF_INFERENCE_PROVIDER,
+            token=HF_TOKEN,
+            timeout=45,
+        )
+        completion = client.chat.completions.create(
+            model=HF_MODEL_ID,
+            messages=prepare_openai_messages(history, system_prompt),
+            max_tokens=512,
+            temperature=0.7,
+            stream=True,
+        )
+        emitted = False
+        for chunk in completion:
+            choices = getattr(chunk, "choices", None) or []
+            if not choices:
+                continue
+            delta = getattr(choices[0], "delta", None)
+            text = getattr(delta, "content", None) if delta else None
+            if isinstance(text, str) and text:
+                emitted = True
+                yield text
+        if not emitted:
+            raise GeminiAPIError("Hugging Face Inference Provider returned no text.")
+    except GeminiAPIError:
+        raise
+    except Exception as exc:
+        response = getattr(exc, "response", None)
+        status = getattr(response, "status_code", None)
+        raise GeminiAPIError("Hugging Face Inference Provider request failed.", status) from exc
+
+
 def generate_reply(history, system_prompt):
     """Yield response text from the configured provider."""
     if AI_PROVIDER == "huggingface":
         yield from generate_huggingface_reply(history, system_prompt)
+        return
+    if AI_PROVIDER == "hf-inference":
+        yield from generate_hf_provider_reply(history, system_prompt)
         return
     if AI_PROVIDER != "gemini":
         raise GeminiAPIError("Unsupported AI_PROVIDER. Choose gemini or huggingface.")
@@ -987,12 +1039,22 @@ def friendly_chat_error(exc, is_vi):
         cause_name = type(exc.__cause__).__name__ if exc.__cause__ else ""
         if "Timeout" in cause_name:
             return "Endpoint phản hồi quá lâu. Hãy kiểm tra endpoint đang ở trạng thái Running rồi thử lại." if is_vi else "The endpoint timed out. Check that it is Running, then try again."
+    if AI_PROVIDER == "hf-inference" and isinstance(exc, GeminiAPIError):
+        cause_name = type(exc.__cause__).__name__ if exc.__cause__ else ""
+        if "Timeout" in cause_name:
+            return "Model phản hồi quá lâu. Hãy thử lại sau." if is_vi else "The model timed out. Please try again later."
     if not ai_is_configured():
         if AI_PROVIDER == "huggingface":
             return (
                 "AI chưa được cấu hình. Hãy thêm `HF_ENDPOINT_URL`, `HF_ENDPOINT_NAME` và `HF_TOKEN` vào Streamlit Secrets."
                 if is_vi
                 else "AI is not configured. Add `HF_ENDPOINT_URL`, `HF_ENDPOINT_NAME`, and `HF_TOKEN` to Streamlit Secrets."
+            )
+        if AI_PROVIDER == "hf-inference":
+            return (
+                "AI chưa được cấu hình. Hãy thêm `HF_MODEL_ID` và `HF_TOKEN` vào Streamlit Secrets."
+                if is_vi
+                else "AI is not configured. Add `HF_MODEL_ID` and `HF_TOKEN` to Streamlit Secrets."
             )
         return "Trò chuyện AI đang tạm tắt vì chưa cấu hình khóa Gemini." if is_vi else "AI chat is unavailable because the Gemini key is not configured."
     if isinstance(exc, requests.Timeout):
@@ -1002,7 +1064,7 @@ def friendly_chat_error(exc, is_vi):
     if status == 429:
         return "SkyeChat đang quá tải. Hãy đợi một chút rồi thử lại." if is_vi else "SkyeChat is busy. Please wait a moment and try again."
     if status == 401:
-        if AI_PROVIDER == "huggingface":
+        if AI_PROVIDER in ("huggingface", "hf-inference"):
             return (
                 "Hugging Face từ chối xác thực. Hãy kiểm tra `HF_TOKEN` trong Streamlit Secrets."
                 if is_vi
@@ -1014,7 +1076,7 @@ def friendly_chat_error(exc, is_vi):
             else "Gemini returned 401: the API key is missing, invalid, or expired. Create a new key in Google AI Studio and update `GEMINI_API_KEY` in Streamlit Secrets."
         )
     if status == 403:
-        if AI_PROVIDER == "huggingface":
+        if AI_PROVIDER in ("huggingface", "hf-inference"):
             return (
                 "Hugging Face không cho phép truy cập endpoint. Hãy kiểm tra quyền của token và endpoint."
                 if is_vi
@@ -1032,7 +1094,19 @@ def friendly_chat_error(exc, is_vi):
                 if is_vi
                 else "Endpoint not found. Check `HF_ENDPOINT_URL` and `HF_ENDPOINT_NAME`."
             )
+        if AI_PROVIDER == "hf-inference":
+            return (
+                "Không tìm thấy model hoặc model chưa được nhà cung cấp hỗ trợ. Hãy kiểm tra `HF_MODEL_ID` trong trang Inference Providers."
+                if is_vi
+                else "Model not found or not supported by the selected provider. Check `HF_MODEL_ID` on the Inference Providers page."
+            )
         return "Không tìm thấy model Gemini đã cấu hình. Hãy kiểm tra GEMINI_MODEL." if is_vi else "The configured Gemini model was not found. Check GEMINI_MODEL."
+    if status == 402 and AI_PROVIDER == "hf-inference":
+        return (
+            "Hugging Face đã hết credit miễn phí. Có thể chờ kỳ cấp credit mới hoặc chủ động nạp credit; app không tự nạp tiền."
+            if is_vi
+            else "Hugging Face free credits are exhausted. Wait for the next credit period or manually add credits; the app does not purchase credits automatically."
+        )
     if status and status >= 500:
         return "Dịch vụ AI đang gặp sự cố tạm thời. Hãy thử lại sau." if is_vi else "The AI service is temporarily unavailable. Please try again later."
     return "Chưa thể tạo phản hồi. Hãy thử lại sau ít phút." if is_vi else "I could not generate a reply. Please try again in a few minutes."
@@ -1113,6 +1187,12 @@ with st.sidebar:
                 "Thêm `HF_ENDPOINT_URL`, `HF_ENDPOINT_NAME` và `HF_TOKEN` vào Streamlit Secrets để bật model Hugging Face."
                 if is_vi
                 else "Add `HF_ENDPOINT_URL`, `HF_ENDPOINT_NAME`, and `HF_TOKEN` to Streamlit Secrets to enable the Hugging Face model."
+            )
+        elif AI_PROVIDER == "hf-inference":
+            st.info(
+                "Thêm `HF_MODEL_ID` và `HF_TOKEN` vào Streamlit Secrets để dùng Hugging Face Inference Providers."
+                if is_vi
+                else "Add `HF_MODEL_ID` and `HF_TOKEN` to Streamlit Secrets to use Hugging Face Inference Providers."
             )
         else:
             st.info(
