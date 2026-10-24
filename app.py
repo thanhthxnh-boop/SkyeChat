@@ -552,13 +552,20 @@ if not is_authenticated:
         message = str(exc).lower()
         code = str(getattr(exc, "code", "") or "").lower()
         details = f"{code} {message}"
-        LOGGER.warning("Supabase auth action failed (%s, %s)", action, type(exc).__name__)
+        LOGGER.warning(
+            "Supabase auth action failed (%s, type=%s, code=%s)",
+            action,
+            type(exc).__name__,
+            code or "unavailable",
+        )
         if any(value in details for value in ("signup_disabled", "email_provider_disabled", "signups not allowed")):
             st.error("Đăng ký email đang bị tắt trong Supabase. Hãy bật Email provider và quyền cho phép tạo tài khoản mới trong Authentication settings.")
-        elif "rate limit" in details or "too many" in details or "over_email_send_rate_limit" in details:
+        elif any(value in details for value in ("rate limit", "too many", "over_email_send_rate_limit", "over_request_rate_limit")):
             st.warning("Bạn thử quá nhiều lần. Hãy đợi một chút rồi thử lại.")
         elif "already registered" in details or "user already exists" in details or "email_exists" in details:
             st.warning("Email này đã có tài khoản. Hãy đăng nhập hoặc dùng chức năng quên mật khẩu.")
+        elif "email_address_not_authorized" in details:
+            st.error("Máy chủ email mặc định của Supabase không gửi đến địa chỉ này. Hãy cấu hình SMTP riêng trong Supabase để gửi email xác nhận cho người dùng.")
         elif "invalid login credentials" in details or "invalid credentials" in details:
             st.error("Email hoặc mật khẩu chưa chính xác. Nếu chưa xác nhận email, hãy kiểm tra hộp thư.")
         elif "weak_password" in details or ("password" in details and any(value in details for value in ("weak", "short", "least", "characters"))):
@@ -568,7 +575,11 @@ if not is_authenticated:
         elif "captcha" in details:
             st.error("Xác minh chống spam chưa hoàn tất. Hãy kiểm tra cấu hình CAPTCHA trong Supabase.")
         else:
-            st.error(f"{action} chưa thành công. Hãy kiểm tra Authentication Logs trong Supabase để xem lý do cụ thể.")
+            error_id = code or type(exc).__name__
+            st.error(
+                f"{action} chưa thành công (mã lỗi: {error_id}). "
+                "Mở Logs → Auth trong Supabase, lọc theo thời điểm vừa thử và xem chi tiết sự kiện."
+            )
 
     with login_tab:
         st.caption("Đăng nhập bằng email hoặc số điện thoại đã xác minh.")
