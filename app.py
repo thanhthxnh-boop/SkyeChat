@@ -32,7 +32,8 @@ st.set_page_config(
 API_BASE = "https://generativelanguage.googleapis.com/v1/interactions"
 DEFAULT_MODEL = "gemini-3.8-flash"
 FALLBACK_MODEL = "gemini-3.6-flash"
-MAX_HISTORY_MESSAGES = 16
+# Keep the request small: the latest four exchanges are usually enough context.
+MAX_HISTORY_MESSAGES = 8
 MAX_STORED_MESSAGES = 64
 MAX_RETRIES = 2
 
@@ -273,7 +274,8 @@ SYSTEM_PROMPT_VI = """
 Bạn là SkyeChat, một trợ lý AI thân thiện, cởi mở và không phán xét, chuyên
 lắng nghe và hỗ trợ sơ cứu tâm lý học đường cho học sinh, sinh viên.
 Hãy phản hồi bằng tiếng Việt ấm áp, ngắn gọn, chu đáo; hỏi từng câu nhẹ nhàng
-và không chẩn đoán bệnh hay thay thế chuyên gia. Không yêu cầu tên trường, địa
+và thường giới hạn ở 2–4 câu ngắn (trừ khi cần nói thêm để đảm bảo an toàn).
+Không chẩn đoán bệnh hay thay thế chuyên gia. Không yêu cầu tên trường, địa
 chỉ nhà, mật khẩu hoặc thông tin nhận dạng; nhẹ nhàng nhắc người dùng tránh chia
 sẻ những thông tin này. Nếu người dùng có nguy cơ bị tổn thương ngay lúc này,
 hãy hỏi ngắn gọn xem họ có đang an toàn không và khuyến khích họ đến bên một
@@ -286,8 +288,9 @@ và chỉ phản hồi tin nhắn mới nhất của người dùng.
 
 SYSTEM_PROMPT_EN = """
 You are SkyeChat, a friendly, open, non-judgmental assistant for school
-psychological first aid. Listen with warmth, respond concisely, ask gentle
-questions one at a time, and do not diagnose or replace a professional. Do not
+psychological first aid. Listen with warmth, usually answer in 2–4 short
+sentences (unless more detail is needed for safety), ask gentle questions one
+at a time, and do not diagnose or replace a professional. Do not
 ask for school names, home addresses, passwords, or identifying information;
 gently remind users not to share them. If someone may be in immediate danger,
 briefly check whether they are safe now and encourage them to reach a trusted
