@@ -1,4 +1,8 @@
-streamlit>=1.51.0
-requests>=2.31.0
-supabase>=2.0.0,<3.0.0
+streamlit>=1.39,<2.0
+requests>=2.31,<3.0
+supabase>=2.0,<3.0
 supabase
+npm install @supabase/server
+pnpm add @supabase/server
+bun add @supabase/server
+import { withSupabase } from "npm:@supabase/server"
