@@ -4,6 +4,7 @@ import logging
 import random
 import re
 import time
+from html import escape
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -112,6 +113,11 @@ def load_css_sections():
 
 CSS_SECTIONS = load_css_sections()
 
+# Optional background video URL, configured in Streamlit Secrets.
+BACKGROUND_VIDEO_URL = str(get_secret("BACKGROUND_VIDEO_URL", "") or "").strip()
+if urlsplit(BACKGROUND_VIDEO_URL).scheme.lower() != "https":
+    BACKGROUND_VIDEO_URL = ""
+
 
 def inject_css(section):
     css = CSS_SECTIONS.get(section)
@@ -127,6 +133,17 @@ def ai_is_configured():
 # Nhận diện thương hiệu SkyeChat
 # ==============================
 inject_css("base")
+if BACKGROUND_VIDEO_URL:
+    st.markdown(
+        f"""
+        <div class=\"bg-video-layer\" aria-hidden=\"true\">
+          <video autoplay muted loop playsinline preload=\"metadata\">
+            <source src=\"{escape(BACKGROUND_VIDEO_URL, quote=True)}\" type=\"video/mp4\">
+          </video>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 st.markdown(
     """
@@ -1503,9 +1520,9 @@ else:
         )
 
     st.caption(
-        "Tin nhắn được gửi tới Google Gemini để tạo phản hồi. Đừng gửi mật khẩu, địa chỉ hoặc thông tin nhận dạng nhạy cảm."
+        "Vì quyền riêng tư của bạn, đừng chia sẻ mật khẩu, địa chỉ nhà hoặc thông tin nhận dạng nhạy cảm."
         if is_vi
-        else "Messages are sent to Google Gemini for replies. Do not send passwords, home addresses, or sensitive identifying information."
+        else "For your privacy, do not share passwords, home addresses, or sensitive identifying information."
     )
 
     if not st.session_state.messages:
@@ -1602,5 +1619,4 @@ st.markdown(
     f'<div class="footer">{footer_text}</div>',
     unsafe_allow_html=True,
 )
-
 
