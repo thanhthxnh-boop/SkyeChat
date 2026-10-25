@@ -337,6 +337,10 @@ if "recovery_otp_sent" not in st.session_state:
     st.session_state.recovery_otp_sent = False
 if "recovery_target" not in st.session_state:
     st.session_state.recovery_target = ""
+if "signup_otp_sent" not in st.session_state:
+    st.session_state.signup_otp_sent = False
+if "signup_target" not in st.session_state:
+    st.session_state.signup_target = ""
 if "recovery_type" not in st.session_state:
     st.session_state.recovery_type = ""
 if "password_reset_pending" not in st.session_state:
@@ -395,6 +399,8 @@ def clear_auth_state():
     st.session_state.recovery_otp_sent = False
     st.session_state.recovery_target = ""
     st.session_state.recovery_type = ""
+    st.session_state.signup_otp_sent = False
+    st.session_state.signup_target = ""
     st.session_state.password_reset_pending = False
     st.session_state.confirm_delete_diary_id = None
     st.session_state.confirm_clear_chat = False
@@ -692,10 +698,74 @@ if not is_authenticated and not st.session_state.guest_mode:
                         }
                     )
                     if save_auth_state(auth_response):
+                        st.session_state.signup_otp_sent = False
+                        st.session_state.signup_target = ""
                         st.rerun()
-                    st.success("Đã tạo tài khoản. Hãy mở email để xác nhận, sau đó quay lại đăng nhập.")
+                    st.session_state.signup_target = normalized_email
+                    st.session_state.signup_otp_sent = True
+                    st.success("Mã xác thực đã được gửi tới email. Nhập mã ngay bên dưới để hoàn tất và đăng nhập.")
                 except Exception as exc:
-                    show_auth_error(exc, "Tạo tài khoản")
+                    signup_error = str(exc).lower()
+                    if any(
+                        marker in signup_error
+                        for marker in ("already registered", "user already exists", "email_exists")
+                    ):
+                        st.session_state.signup_target = normalized_email
+                        st.session_state.signup_otp_sent = True
+                        st.info(
+                            "Email này đã có tài khoản. Nếu chưa xác minh, bấm 'Gửi lại mã' bên dưới; "
+                            "nếu đã xác minh, hãy đăng nhập hoặc dùng chức năng quên mật khẩu."
+                        )
+                    else:
+                        show_auth_error(exc, "Tạo tài khoản")
+
+        if st.session_state.signup_otp_sent:
+            st.caption(f"Mã xác thực đã gửi tới {st.session_state.signup_target}.")
+            with st.form("skyechat_signup_verify_form"):
+                signup_code = st.text_input(
+                    "Mã xác thực email", max_chars=12, autocomplete="one-time-code"
+                )
+                verify_signup_col, resend_signup_col = st.columns(2)
+                with verify_signup_col:
+                    verify_signup = st.form_submit_button(
+                        "Xác minh và đăng nhập", type="primary", use_container_width=True
+                    )
+                with resend_signup_col:
+                    resend_signup = st.form_submit_button(
+                        "Gửi lại mã", use_container_width=True
+                    )
+
+            if resend_signup:
+                try:
+                    supabase_client.auth.resend(
+                        {"type": "signup", "email": st.session_state.signup_target}
+                    )
+                    st.success("Đã gửi lại mã xác thực. Hãy kiểm tra cả thư mục Spam.")
+                except Exception as exc:
+                    show_auth_error(exc, "Gửi lại mã xác thực")
+
+            if verify_signup:
+                if not signup_code.strip():
+                    st.warning("Hãy nhập mã trong email.")
+                else:
+                    try:
+                        auth_response = supabase_client.auth.verify_otp(
+                            {
+                                "email": st.session_state.signup_target,
+                                "token": signup_code.strip(),
+                                "type": "email",
+                            }
+                        )
+                        if save_auth_state(auth_response):
+                            st.session_state.signup_otp_sent = False
+                            st.session_state.signup_target = ""
+                            st.rerun()
+                        st.error("Email đã được xác minh nhưng chưa mở được phiên đăng nhập. Hãy đăng nhập bằng email và mật khẩu.")
+                    except Exception as exc:
+                        LOGGER.warning(
+                            "Supabase signup OTP verification failed: %s", type(exc).__name__
+                        )
+                        st.error("Mã không hợp lệ hoặc đã hết hạn. Hãy kiểm tra lại hoặc gửi mã mới.")
     with recovery_tab:
         st.caption(
             "Khôi phục qua email. Mẫu email khôi phục của Supabase cần hiển thị mã {{ .Token }} "
