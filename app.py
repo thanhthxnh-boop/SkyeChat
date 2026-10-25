@@ -33,11 +33,11 @@ API_BASE = "https://generativelanguage.googleapis.com/v1/interactions"
 DEFAULT_MODEL = "gemini-3.8-flash"
 DEFAULT_FALLBACK_MODEL = "gemini-3.6-flash"
 FREE_GEMINI_MODELS = frozenset({"gemini-3.8-flash", "gemini-3.6-flash"})
-DEFAULT_THINKING_LEVEL = "medium"
-DEFAULT_MAX_OUTPUT_TOKENS = 2048
+DEFAULT_THINKING_LEVEL = "low"
+DEFAULT_MAX_OUTPUT_TOKENS = 1024
 GEMINI_SERVICE_TIER = "standard"
-# Keep four recent exchanges in the model request to reduce prompt processing time.
-MAX_HISTORY_MESSAGES = 8
+# Keep three recent exchanges in the model request to reduce prompt processing time.
+MAX_HISTORY_MESSAGES = 6
 MAX_STORED_MESSAGES = 64
 MAX_RETRIES = 2
 GEMINI_READ_TIMEOUT_SECONDS = 240
@@ -75,7 +75,7 @@ if GEMINI_THINKING_LEVEL not in {"low", "medium", "high"}:
 try:
     GEMINI_MAX_OUTPUT_TOKENS = max(
         1024,
-        min(4096, int(get_secret("GEMINI_MAX_OUTPUT_TOKENS", DEFAULT_MAX_OUTPUT_TOKENS))),
+        min(2048, int(get_secret("GEMINI_MAX_OUTPUT_TOKENS", DEFAULT_MAX_OUTPUT_TOKENS))),
     )
 except (TypeError, ValueError):
     GEMINI_MAX_OUTPUT_TOKENS = DEFAULT_MAX_OUTPUT_TOKENS
@@ -972,7 +972,9 @@ def generate_reply(history, system_prompt):
 
                         response.encoding = "utf-8"
                         interaction_status = None
-                        for line in response.iter_lines(decode_unicode=True):
+                        # Requests defaults to a 512-byte line buffer, which can
+                        # delay small SSE chunks before Streamlit can display them.
+                        for line in response.iter_lines(chunk_size=1, decode_unicode=True):
                             if isinstance(line, bytes):
                                 line = line.decode("utf-8", errors="replace")
                             if not line or not line.startswith("data:"):
