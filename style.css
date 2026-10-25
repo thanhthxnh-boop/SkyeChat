@@ -395,6 +395,114 @@ div[data-testid="stChatMessage"], [data-testid="stExpander"], [data-testid="stFo
   border-color: #846854 !important;
 }
 
+
+
+/* Blue primary palette, brown frames, dark readable text */
+
+:root {
+  --primary-color: #4B8FB1;
+  --sky-ink: #23475D;
+  --sky-muted: #526B7A;
+  --sky-blue: #99D4FA;
+  --sky-lilac: #C7EAFA;
+  --sky-mint: #EAF6FC;
+  --sky-peach: #F2EADF;
+  --sky-paper: #F6FBFE;
+  --frame-brown: #846854;
+  --frame-brown-deep: #735A45;
+}
+.stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"],
+[data-testid="stMainBlockContainer"] {
+  color: #23475D !important;
+  background: #EAF6FC !important;
+}
+[data-testid="stHeader"] { background: #EAF6FC !important; }
+[data-testid="stBottom"], [data-testid="stBottomBlockContainer"] { background: #EAF6FC !important; }
+[data-testid="stBottom"]::before { background: linear-gradient(transparent, #EAF6FC 85%) !important; }
+[data-testid="stSidebar"] {
+  color: #23475D !important;
+  background: #DCEEF8 !important;
+  border-right: 2px solid #846854 !important;
+}
+.stApp p, .stApp li, .stApp label, .stApp button, .stApp input, .stApp textarea,
+.stApp small, .stApp summary, .stApp [data-testid="stMarkdownContainer"],
+.stApp [data-testid="stMarkdownContainer"] p,
+.stApp [data-testid="stWidgetLabel"], .stApp [data-testid="stWidgetLabel"] p,
+.stApp [data-testid="stCaptionContainer"], .stApp [data-testid="stCaptionContainer"] p,
+.stApp [data-testid="stText"], .stApp [data-testid="stText"] div {
+  color: #23475D !important;
+}
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"],
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+[data-testid="stSidebar"] [data-testid="stWidgetLabel"],
+[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p,
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"],
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p,
+[data-testid="stSidebar"] label { color: #23475D !important; }
+.hero {
+  background: linear-gradient(125deg, #C7EAFA 0%, #99D4FA 100%) !important;
+  border: 3px solid #846854 !important;
+  color: #23475D !important;
+  box-shadow: 0 16px 42px rgba(68,112,139,.17) !important;
+}
+.hero .hero-eyebrow { color: #735A45 !important; }
+.hero .hero-title, .hero .hero-copy { color: #23475D !important; }
+.hero .hero-tagline {
+  color: #5C4938 !important;
+  background: #F2EADF !important;
+  border-color: #846854 !important;
+}
+.welcome-card, .diary-intro, .support-tool-card,
+div[data-testid="stChatMessage"], [data-testid="stExpander"], [data-testid="stForm"] {
+  color: #23475D !important;
+  background: #E2F2FA !important;
+  border: 2px solid #846854 !important;
+}
+.welcome-card strong { color: #315F78 !important; }
+.soft-note, .footer { color: #526B7A !important; }
+.sidebar-brand {
+  color: #23475D !important;
+  background: #C7EAFA !important;
+  border: 2px solid #846854 !important;
+}
+.sidebar-brand strong { color: #23475D !important; }
+div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
+  color: #23475D !important;
+  background: #C7EAFA !important;
+  border-color: #846854 !important;
+}
+div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
+  color: #23475D !important;
+  background: #E2F2FA !important;
+}
+[data-testid="stChatInput"] { background: transparent !important; }
+[data-testid="stChatInput"] textarea,
+[data-testid="stTextInput"] input,
+[data-testid="stTextArea"] textarea {
+  color: #23475D !important;
+  background: #F6FBFE !important;
+  border: 2px solid #846854 !important;
+}
+[data-testid="stChatInput"] textarea::placeholder,
+[data-testid="stTextInput"] input::placeholder,
+[data-testid="stTextArea"] textarea::placeholder { color: #526B7A !important; opacity: 1 !important; }
+.stButton button {
+  color: #23475D !important;
+  background: #C7EAFA !important;
+  border: 2px solid #846854 !important;
+}
+.stButton button:hover { color: #23475D !important; background: #99D4FA !important; border-color: #735A45 !important; }
+[data-testid="stChatInput"] button,
+[data-testid="stDownloadButton"] button,
+[data-testid="stFormSubmitButton"] button {
+  color: #23475D !important;
+  background: #99D4FA !important;
+  border: 2px solid #846854 !important;
+}
+[data-testid="stHeader"] button, [data-testid="stHeader"] a, [data-testid="stToolbar"] button { color: #23475D !important; }
+[data-testid="stHeader"] button svg, [data-testid="stToolbar"] button svg { color: #23475D !important; fill: #23475D !important; }
+[data-testid="stMarkdownContainer"] a { color: #315F78 !important; }
+
 /* ENDSECTION */
 
 /* SECTION:auth */
@@ -425,6 +533,15 @@ div[data-testid="stChatMessage"], [data-testid="stExpander"], [data-testid="stFo
 /* Thicker brown frames */
 [data-testid="stForm"] { border: 2px solid #846854 !important; }
 [data-testid="stTextInput"] input, [data-testid="stFormSubmitButton"] button { border-width: 2px !important; border-color: #846854 !important; }
+
+
+/* Blue primary palette, brown frames, dark readable text */
+
+[data-testid="stForm"] { color: #23475D !important; background: #E2F2FA !important; border: 2px solid #846854 !important; }
+[data-testid="stForm"] label, [data-testid="stForm"] [data-testid="stWidgetLabel"] { color: #23475D !important; }
+[data-testid="stTextInput"] input { color: #23475D !important; background: #F6FBFE !important; border: 2px solid #846854 !important; }
+[data-testid="stFormSubmitButton"] button { color: #23475D !important; background: #99D4FA !important; border: 2px solid #846854 !important; }
+
 /* ENDSECTION */
 
 /* SECTION:journal */
@@ -511,6 +628,18 @@ div[data-testid="stChatMessage"], [data-testid="stExpander"], [data-testid="stFo
 /* Thicker brown frames */
 [data-testid="stForm"], [data-testid="stExpander"] { border: 2px solid #846854 !important; }
 [data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea, [data-testid="stDownloadButton"] button, [data-testid="stFormSubmitButton"] button { border-width: 2px !important; border-color: #846854 !important; }
+
+
+/* Blue primary palette, brown frames, dark readable text */
+
+[data-testid="stForm"] { color: #23475D !important; background: #E2F2FA !important; border: 2px solid #846854 !important; }
+[data-testid="stForm"] label, [data-testid="stForm"] [data-testid="stWidgetLabel"] { color: #23475D !important; }
+[data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea { color: #23475D !important; background: #F6FBFE !important; border: 2px solid #846854 !important; }
+[data-testid="stTextInput"] input::placeholder, [data-testid="stTextArea"] textarea::placeholder { color: #526B7A !important; opacity: 1 !important; }
+[data-testid="stExpander"] { color: #23475D !important; background: #E2F2FA !important; border: 2px solid #846854 !important; }
+[data-testid="stExpander"] summary:hover { background: #C7EAFA !important; }
+[data-testid="stDownloadButton"] button, [data-testid="stFormSubmitButton"] button { color: #23475D !important; background: #99D4FA !important; border: 2px solid #846854 !important; }
+
 /* ENDSECTION */
 
 /* SECTION:dark */
@@ -740,5 +869,46 @@ div[data-testid="stChatMessage"], [data-testid="stExpander"], [data-testid="stFo
   border-width: 2px !important;
   border-color: #C1B7AA !important;
 }
+
+
+
+/* Blue primary palette, brown frames, dark readable text */
+
+:root { --sky-ink: #E2F0F7; --sky-muted: #BDD0DA; --sky-paper: #142531; }
+.stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"],
+[data-testid="stMainBlockContainer"], [data-testid="stBottom"], [data-testid="stBottomBlockContainer"] {
+  color: #D9EAF3 !important; background: #172B37 !important;
+}
+[data-testid="stHeader"] { background: rgba(23,43,55,.96) !important; }
+[data-testid="stBottom"]::before { background: linear-gradient(transparent, #172B37 85%) !important; }
+[data-testid="stSidebar"] { color: #D9EAF3 !important; background: #1D3949 !important; border-right: 2px solid #C1B7AA !important; }
+.stApp p, .stApp li, .stApp label, .stApp button, .stApp input, .stApp textarea,
+.stApp small, .stApp summary, .stApp [data-testid="stMarkdownContainer"],
+.stApp [data-testid="stMarkdownContainer"] p, .stApp [data-testid="stWidgetLabel"],
+.stApp [data-testid="stWidgetLabel"] p, .stApp [data-testid="stCaptionContainer"],
+.stApp [data-testid="stCaptionContainer"] p, .stApp [data-testid="stText"], .stApp [data-testid="stText"] div,
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"], [data-testid="stSidebar"] [data-testid="stCaptionContainer"],
+[data-testid="stSidebar"] label { color: #D9EAF3 !important; }
+.hero { background: linear-gradient(125deg, #315A70 0%, #24485B 100%) !important; border: 3px solid #C1B7AA !important; color: #EAF6FC !important; }
+.hero .hero-eyebrow { color: #E0CBB2 !important; }
+.hero .hero-title, .hero .hero-copy { color: #EAF6FC !important; }
+.hero .hero-tagline { color: #EAF6FC !important; background: #244252 !important; border-color: #C1B7AA !important; }
+.welcome-card, .diary-intro, .support-tool-card, div[data-testid="stChatMessage"], [data-testid="stExpander"], [data-testid="stForm"] {
+  color: #D9EAF3 !important; background: #203B49 !important; border: 2px solid #C1B7AA !important;
+}
+.sidebar-brand { color: #EAF6FC !important; background: #315A70 !important; border: 2px solid #C1B7AA !important; }
+.sidebar-brand strong, .welcome-card strong { color: #EAF6FC !important; }
+div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) { background: #315A70 !important; }
+[data-testid="stChatInput"] { background: transparent !important; }
+[data-testid="stChatInput"] textarea, [data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea {
+  color: #EAF6FC !important; background: #1D3340 !important; border: 2px solid #C1B7AA !important;
+}
+[data-testid="stChatInput"] textarea::placeholder, [data-testid="stTextInput"] input::placeholder, [data-testid="stTextArea"] textarea::placeholder { color: #BDD0DA !important; opacity: 1 !important; }
+.stButton button { color: #EAF6FC !important; background: #315A70 !important; border: 2px solid #C1B7AA !important; }
+[data-testid="stChatInput"] button, [data-testid="stDownloadButton"] button, [data-testid="stFormSubmitButton"] button { color: #EAF6FC !important; background: #315A70 !important; border: 2px solid #C1B7AA !important; }
+[data-testid="stHeader"] button, [data-testid="stHeader"] a, [data-testid="stToolbar"] button { color: #D9EAF3 !important; }
+[data-testid="stHeader"] button svg, [data-testid="stToolbar"] button svg { color: #D9EAF3 !important; fill: #D9EAF3 !important; }
+[data-testid="stMarkdownContainer"] a { color: #B8DBEF !important; }
+.footer { color: #BDD0DA !important; }
 
 /* ENDSECTION */
