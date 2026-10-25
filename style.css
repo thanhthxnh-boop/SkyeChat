@@ -151,14 +151,14 @@ div[data-testid="stAlert"] { border-radius: 15px; }
 .teru-bozu { display: none !important; }
 .stButton button:active, [data-testid="stChatInput"] button:active,
 [data-testid="stFormSubmitButton"] button:active, [data-testid="stDownloadButton"] button:active {
-  transform: scale(.96) !important; box-shadow: inset 0 2px 5px rgba(34,74,70,.2) !important;
+  transform: scale(.96) !important; box-shadow: inset 0 2px 5px rgba(54,93,120,.2) !important;
 }
 [data-testid="stRadio"] label, [data-testid="stToggle"] label,
 [data-testid="stExpander"] summary { transition: background-color .2s ease, color .2s ease, transform .2s ease; }
 [data-testid="stRadio"] label:active, [data-testid="stToggle"] label:active,
 [data-testid="stExpander"] summary:active { transform: scale(.985); }
 [data-testid="stExpander"] { transition: box-shadow .2s ease, border-color .2s ease; }
-[data-testid="stExpander"]:hover { box-shadow: 0 7px 18px rgba(49,93,87,.08); }
+[data-testid="stExpander"]:hover { box-shadow: 0 7px 18px rgba(54,93,120,.08); }
 [data-testid="stTabs"] button[role="tab"] { transition: color .2s ease, transform .2s ease; }
 [data-testid="stTabs"] button[role="tab"]:active { transform: scale(.97); }
 [data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea { transition: border-color .2s ease, box-shadow .2s ease; }
@@ -222,7 +222,7 @@ body:has(.bg-video-layer) [data-testid="stMainBlockContainer"] {
 }
 
 
-/* Brown frames with green surfaces */
+/* Blue frames with blue surfaces */
 
 :root {
   --primary-color: #486579;
@@ -233,75 +233,75 @@ body:has(.bg-video-layer) [data-testid="stMainBlockContainer"] {
   --sky-mint: #E6ECF1;
   --sky-peach: #E5EBF0;
   --sky-paper: #F1F5F8;
-  --frame-brown: #D8D0C3;
-  --frame-brown-deep: #B7A38E;
+  --frame-blue: #A9C9DD;
+  --frame-blue-deep: #6F9FC0;
 }
 .stApp { color: #2A3944 !important; background: #E6ECF1 !important; }
 [data-testid="stHeader"] { background: #E6ECF1 !important; }
 [data-testid="stSidebar"] {
   background: #DDE5EB !important;
-  border-right: 1px solid rgba(183,163,142,.50) !important;
+  border-right: 1px solid rgba(111,159,192,.50) !important;
 }
 .hero {
   color: #2A3944;
   background: linear-gradient(125deg, #DCE5EB 0%, #D0DBE3 100%) !important;
-  border: 1px solid #D8D0C3 !important;
+  border: 1px solid #A9C9DD !important;
   box-shadow: 0 16px 42px rgba(54,72,85,.12) !important;
 }
 .welcome-card, .diary-intro, .sidebar-brand, .support-tool-card,
 div[data-testid="stChatMessage"], [data-testid="stExpander"] {
-  border-color: rgba(183,163,142,.62) !important;
+  border-color: rgba(111,159,192,.62) !important;
 }
 .welcome-card, .support-tool-card, div[data-testid="stChatMessage"],
 [data-testid="stExpander"] { background-color: #F1F5F8 !important; }
 .diary-intro, [data-testid="stSidebar"] .sidebar-brand { background-color: #E3EAEF !important; }
 div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
   background-color: #E1E9EE !important;
-  border-color: rgba(183,163,142,.62) !important;
+  border-color: rgba(111,159,192,.62) !important;
 }
 div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
   background-color: #F1F5F8 !important;
-  border-color: rgba(183,163,142,.48) !important;
+  border-color: rgba(111,159,192,.48) !important;
 }
 [data-testid="stChatInput"] textarea,
 [data-testid="stTextInput"] input,
 [data-testid="stTextArea"] textarea {
   background: #F5F8FA !important;
-  border-color: #D8D0C3 !important;
+  border-color: #A9C9DD !important;
   color: #2A3944 !important;
 }
 [data-testid="stChatInput"] textarea:focus,
 [data-testid="stTextInput"] input:focus,
 [data-testid="stTextArea"] textarea:focus {
-  border-color: #B7A38E !important;
-  box-shadow: 0 0 0 3px rgba(183,163,142,.18) !important;
+  border-color: #6F9FC0 !important;
+  box-shadow: 0 0 0 3px rgba(111,159,192,.18) !important;
 }
 .stButton button {
   color: #40525F !important;
   background: #E8EEF2 !important;
-  border-color: #D8D0C3 !important;
+  border-color: #A9C9DD !important;
 }
 .stButton button:hover {
   color: #2A3944 !important;
   background: #DDE5EB !important;
-  border-color: #B7A38E !important;
+  border-color: #6F9FC0 !important;
 }
 [data-testid="stChatInput"] button {
   color: #fff !important;
   background: #486579 !important;
-  border: 1px solid #B7A38E !important;
+  border: 1px solid #6F9FC0 !important;
 }
 [data-testid="stDownloadButton"] button,
 [data-testid="stFormSubmitButton"] button {
   color: #fff !important;
   background: #486579 !important;
-  border-color: #B7A38E !important;
+  border-color: #6F9FC0 !important;
 }
 .stButton button:focus-visible, [data-testid="stChatInput"] button:focus-visible,
 [data-testid="stMarkdownContainer"] a:focus-visible,
 [data-testid="stTextInput"] input:focus-visible,
 [data-testid="stTextArea"] textarea:focus-visible {
-  outline: 3px solid rgba(183,163,142,.55) !important;
+  outline: 3px solid rgba(111,159,192,.55) !important;
   outline-offset: 2px;
 }
 [data-testid="stMarkdownContainer"] a { color: #465D6E !important; }
@@ -309,9 +309,9 @@ div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
 
 
 
-/* Stronger brown panels over the green page background */
+/* Blue panels over the blue page background */
 
-:root { --frame-brown: #B7A38E; --panel-brown: #D8D0C3; --panel-brown-light: #D8D0C3; }
+:root { --frame-blue: #6F9FC0; --panel-blue: #A9C9DD; --panel-blue-light: #A9C9DD; }
 [data-testid="stBottom"], [data-testid="stBottomBlockContainer"] {
   background: #E6ECF1 !important;
 }
@@ -319,71 +319,71 @@ div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
   background: linear-gradient(transparent, #E6ECF1 85%) !important;
 }
 .hero {
-  background: linear-gradient(125deg, #D8D0C3 0%, #D0C3B3 100%) !important;
-  border: 1px solid #B7A38E !important;
-  box-shadow: 0 16px 42px rgba(132,104,84,.18) !important;
+  background: linear-gradient(125deg, #A9C9DD 0%, #DCEEF8 100%) !important;
+  border: 1px solid #6F9FC0 !important;
+  box-shadow: 0 16px 42px rgba(111,159,192,.18) !important;
 }
 .hero .hero-eyebrow, .hero .hero-title, .hero .hero-copy { color: #2A3944 !important; }
 .hero .hero-tagline {
   color: #354855 !important;
   background: #E6ECF1 !important;
-  border-color: #B7A38E !important;
+  border-color: #6F9FC0 !important;
 }
 .welcome-card, .diary-intro, .support-tool-card,
 div[data-testid="stChatMessage"], [data-testid="stExpander"] {
-  background: #D8D0C3 !important;
-  border-color: #B7A38E !important;
+  background: #A9C9DD !important;
+  border-color: #6F9FC0 !important;
   color: #2A3944 !important;
 }
 .sidebar-brand {
-  background: #D8D0C3 !important;
-  border: 1px solid #B7A38E !important;
+  background: #A9C9DD !important;
+  border: 1px solid #6F9FC0 !important;
   color: #2A3944 !important;
 }
 .sidebar-brand strong { color: #2A3944 !important; }
 div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
-  background: #D8D0C3 !important;
-  border-color: #B7A38E !important;
+  background: #A9C9DD !important;
+  border-color: #6F9FC0 !important;
 }
 div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
-  background: #D8D0C3 !important;
-  border-color: #B7A38E !important;
+  background: #A9C9DD !important;
+  border-color: #6F9FC0 !important;
 }
 [data-testid="stChatInput"] { background: transparent !important; }
 [data-testid="stChatInput"] textarea,
 [data-testid="stTextInput"] input,
 [data-testid="stTextArea"] textarea {
-  background: #F3F0EA !important;
-  border-color: #B7A38E !important;
+  background: #F6FBFE !important;
+  border-color: #6F9FC0 !important;
   color: #2A3944 !important;
 }
 .stButton button {
-  background: #D8D0C3 !important;
-  border-color: #B7A38E !important;
+  background: #A9C9DD !important;
+  border-color: #6F9FC0 !important;
   color: #2A3944 !important;
 }
 .stButton button:hover {
-  background: #D0C3B3 !important;
-  border-color: #A18D76 !important;
+  background: #DCEEF8 !important;
+  border-color: #6F9FC0 !important;
   color: #24323C !important;
 }
 [data-testid="stChatInput"] button,
 [data-testid="stDownloadButton"] button,
 [data-testid="stFormSubmitButton"] button {
   background: #486579 !important;
-  border-color: #B7A38E !important;
+  border-color: #6F9FC0 !important;
   color: #fff !important;
 }
 
 
 
-/* Thicker brown frames */
+/* Thicker pastel-blue frames */
 
-[data-testid="stSidebar"] { border-right: 2px solid #B7A38E !important; }
-.hero { border: 3px solid #B7A38E !important; }
+[data-testid="stSidebar"] { border-right: 2px solid #6F9FC0 !important; }
+.hero { border: 3px solid #6F9FC0 !important; }
 .welcome-card, .diary-intro, .sidebar-brand, .support-tool-card,
 div[data-testid="stChatMessage"], [data-testid="stExpander"], [data-testid="stForm"] {
-  border: 2px solid #B7A38E !important;
+  border: 2px solid #6F9FC0 !important;
 }
 [data-testid="stChatInput"] textarea,
 [data-testid="stTextInput"] input,
@@ -392,12 +392,12 @@ div[data-testid="stChatMessage"], [data-testid="stExpander"], [data-testid="stFo
 [data-testid="stDownloadButton"] button,
 [data-testid="stFormSubmitButton"] button {
   border-width: 2px !important;
-  border-color: #B7A38E !important;
+  border-color: #6F9FC0 !important;
 }
 
 
 
-/* Blue primary palette, brown frames, dark readable text */
+/* Blue palette, pastel-blue frames, dark readable text */
 
 :root {
   --primary-color: #4B8FB1;
@@ -406,10 +406,10 @@ div[data-testid="stChatMessage"], [data-testid="stExpander"], [data-testid="stFo
   --sky-blue: #99D4FA;
   --sky-lilac: #C7EAFA;
   --sky-mint: #EAF6FC;
-  --sky-peach: #F2EADF;
+  --sky-peach: #F6FBFE;
   --sky-paper: #F6FBFE;
-  --frame-brown: #B7A38E;
-  --frame-brown-deep: #A18D76;
+  --frame-blue: #6F9FC0;
+  --frame-blue-deep: #6F9FC0;
 }
 .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"],
 [data-testid="stMainBlockContainer"] {
@@ -422,7 +422,7 @@ div[data-testid="stChatMessage"], [data-testid="stExpander"], [data-testid="stFo
 [data-testid="stSidebar"] {
   color: #23475D !important;
   background: #DCEEF8 !important;
-  border-right: 2px solid #B7A38E !important;
+  border-right: 2px solid #6F9FC0 !important;
 }
 .stApp p, .stApp li, .stApp label, .stApp button, .stApp input, .stApp textarea,
 .stApp small, .stApp summary, .stApp [data-testid="stMarkdownContainer"],
@@ -441,35 +441,35 @@ div[data-testid="stChatMessage"], [data-testid="stExpander"], [data-testid="stFo
 [data-testid="stSidebar"] label { color: #23475D !important; }
 .hero {
   background: linear-gradient(125deg, #C7EAFA 0%, #99D4FA 100%) !important;
-  border: 3px solid #B7A38E !important;
+  border: 3px solid #6F9FC0 !important;
   color: #23475D !important;
   box-shadow: 0 16px 42px rgba(68,112,139,.17) !important;
 }
-.hero .hero-eyebrow { color: #A18D76 !important; }
+.hero .hero-eyebrow { color: #6F9FC0 !important; }
 .hero .hero-title, .hero .hero-copy { color: #23475D !important; }
 .hero .hero-tagline {
   color: #315A70 !important;
-  background: #F2EADF !important;
-  border-color: #B7A38E !important;
+  background: #F6FBFE !important;
+  border-color: #6F9FC0 !important;
 }
 .welcome-card, .diary-intro, .support-tool-card,
 div[data-testid="stChatMessage"], [data-testid="stExpander"], [data-testid="stForm"] {
   color: #23475D !important;
   background: #E2F2FA !important;
-  border: 2px solid #B7A38E !important;
+  border: 2px solid #6F9FC0 !important;
 }
 .welcome-card strong { color: #315F78 !important; }
 .soft-note, .footer { color: #526B7A !important; }
 .sidebar-brand {
   color: #23475D !important;
   background: #C7EAFA !important;
-  border: 2px solid #B7A38E !important;
+  border: 2px solid #6F9FC0 !important;
 }
 .sidebar-brand strong { color: #23475D !important; }
 div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
   color: #23475D !important;
   background: #C7EAFA !important;
-  border-color: #B7A38E !important;
+  border-color: #6F9FC0 !important;
 }
 div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
   color: #23475D !important;
@@ -481,7 +481,7 @@ div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
 [data-testid="stTextArea"] textarea {
   color: #23475D !important;
   background: #F6FBFE !important;
-  border: 2px solid #B7A38E !important;
+  border: 2px solid #6F9FC0 !important;
 }
 [data-testid="stChatInput"] textarea::placeholder,
 [data-testid="stTextInput"] input::placeholder,
@@ -489,15 +489,15 @@ div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
 .stButton button {
   color: #23475D !important;
   background: #C7EAFA !important;
-  border: 2px solid #B7A38E !important;
+  border: 2px solid #6F9FC0 !important;
 }
-.stButton button:hover { color: #23475D !important; background: #99D4FA !important; border-color: #A18D76 !important; }
+.stButton button:hover { color: #23475D !important; background: #99D4FA !important; border-color: #6F9FC0 !important; }
 [data-testid="stChatInput"] button,
 [data-testid="stDownloadButton"] button,
 [data-testid="stFormSubmitButton"] button {
   color: #23475D !important;
   background: #99D4FA !important;
-  border: 2px solid #B7A38E !important;
+  border: 2px solid #6F9FC0 !important;
 }
 [data-testid="stHeader"] button, [data-testid="stHeader"] a, [data-testid="stToolbar"] button { color: #23475D !important; }
 [data-testid="stHeader"] button svg, [data-testid="stToolbar"] button svg { color: #23475D !important; fill: #23475D !important; }
@@ -510,14 +510,14 @@ div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
 [data-testid="stSidebar"] .sidebar-brand {
   color: #23475D !important;
   background: #C7EAFA !important;
-  border: 2px solid #B7A38E !important;
+  border: 2px solid #6F9FC0 !important;
 }
 [data-testid="stSidebar"] .sidebar-brand strong,
 [data-testid="stSidebar"] .sidebar-brand span { color: #23475D !important; }
 [data-testid="stAlert"], [data-testid="stAlert"] [data-baseweb="notification"] {
   color: #23475D !important;
   background: #C7EAFA !important;
-  border: 2px solid #B7A38E !important;
+  border: 2px solid #6F9FC0 !important;
 }
 [data-testid="stAlert"] p, [data-testid="stAlert"] span,
 [data-testid="stAlert"] [data-testid] { color: #23475D !important; }
@@ -527,15 +527,15 @@ input[type="radio"] { accent-color: #4B8FB1 !important; }
 
 
 
-/* Pastel-brown frames with stronger borders */
+/* Pastel-blue frames with stronger borders */
 
-[data-testid="stSidebar"] { border-right: 3px solid #C1B7AA !important; }
-.hero { border: 4px solid #C1B7AA !important; }
+[data-testid="stSidebar"] { border-right: 3px solid #6F9FC0 !important; }
+.hero { border: 4px solid #6F9FC0 !important; }
 .welcome-card, .diary-intro, .support-tool-card,
 [data-testid="stExpander"], [data-testid="stForm"],
 div[data-testid="stChatMessage"], [data-testid="stSidebar"] .sidebar-brand,
 [data-testid="stAlert"] {
-  border: 3px solid #C1B7AA !important;
+  border: 3px solid #6F9FC0 !important;
 }
 [data-testid="stChatInput"] textarea,
 [data-testid="stTextInput"] input,
@@ -543,10 +543,40 @@ div[data-testid="stChatMessage"], [data-testid="stSidebar"] .sidebar-brand,
 .stButton button,
 [data-testid="stDownloadButton"] button,
 [data-testid="stFormSubmitButton"] button {
-  border: 2px solid #B7A38E !important;
+  border: 2px solid #6F9FC0 !important;
 }
 .hero .hero-eyebrow, .hero .hero-title, .hero .hero-copy,
 .hero .hero-tagline { color: #23475D !important; }
+
+
+
+/* Pastel-blue frames and green greeting card */
+
+:root { --frame-blue: #6F9FC0; --frame-blue-deep: #5E8CAB; }
+[data-testid="stSidebar"] { border-right: 3px solid #6F9FC0 !important; }
+.hero { border: 4px solid #6F9FC0 !important; }
+.welcome-card, .diary-intro, .support-tool-card, [data-testid="stExpander"],
+[data-testid="stForm"], div[data-testid="stChatMessage"],
+[data-testid="stSidebar"] .sidebar-brand, [data-testid="stAlert"] {
+  border: 3px solid #6F9FC0 !important;
+}
+[data-testid="stChatInput"] textarea, [data-testid="stTextInput"] input,
+[data-testid="stTextArea"] textarea, .stButton button,
+[data-testid="stDownloadButton"] button, [data-testid="stFormSubmitButton"] button {
+  border: 2px solid #6F9FC0 !important;
+}
+[data-testid="stSidebar"] .sidebar-brand { background: #C7EAFA !important; color: #23475D !important; }
+[data-testid="stSidebar"] .sidebar-brand strong, [data-testid="stSidebar"] .sidebar-brand span { color: #23475D !important; }
+[data-testid="stSidebar"] [data-testid="stAlert"],
+[data-testid="stSidebar"] [data-testid="stAlert"] [data-baseweb="notification"],
+[data-testid="stSidebar"] [data-testid="stAlert"] > div {
+  background: #8FBE9E !important;
+  border-color: #5E8D6D !important;
+  color: #1F4330 !important;
+}
+[data-testid="stSidebar"] [data-testid="stAlert"] p,
+[data-testid="stSidebar"] [data-testid="stAlert"] span,
+[data-testid="stSidebar"] [data-testid="stAlert"] svg { color: #1F4330 !important; fill: #1F4330 !important; }
 
 /* ENDSECTION */
 
@@ -556,48 +586,54 @@ div[data-testid="stChatMessage"], [data-testid="stSidebar"] .sidebar-brand,
 [data-testid="stFormSubmitButton"] button { min-height: 2.8rem; }
 
 
-/* Brown frames with green surfaces */
+/* Blue frames with blue surfaces */
 
 [data-testid="stForm"] {
   background: #E6ECF1 !important;
-  border-color: #D8D0C3 !important;
+  border-color: #A9C9DD !important;
 }
-[data-testid="stTextInput"] input { background: #F5F8FA !important; border-color: #D8D0C3 !important; }
-[data-testid="stFormSubmitButton"] button { background: #486579 !important; border-color: #B7A38E !important; }
+[data-testid="stTextInput"] input { background: #F5F8FA !important; border-color: #A9C9DD !important; }
+[data-testid="stFormSubmitButton"] button { background: #486579 !important; border-color: #6F9FC0 !important; }
 
 
 
-/* Stronger brown panels over the green page background */
+/* Blue panels over the blue page background */
 
-[data-testid="stForm"] { background: #D8D0C3 !important; border-color: #B7A38E !important; }
-[data-testid="stTextInput"] input { background: #F3F0EA !important; border-color: #B7A38E !important; }
-[data-testid="stFormSubmitButton"] button { background: #486579 !important; border-color: #B7A38E !important; }
-
-
-
-/* Thicker brown frames */
-[data-testid="stForm"] { border: 2px solid #B7A38E !important; }
-[data-testid="stTextInput"] input, [data-testid="stFormSubmitButton"] button { border-width: 2px !important; border-color: #B7A38E !important; }
+[data-testid="stForm"] { background: #A9C9DD !important; border-color: #6F9FC0 !important; }
+[data-testid="stTextInput"] input { background: #F6FBFE !important; border-color: #6F9FC0 !important; }
+[data-testid="stFormSubmitButton"] button { background: #486579 !important; border-color: #6F9FC0 !important; }
 
 
-/* Blue primary palette, brown frames, dark readable text */
 
-[data-testid="stForm"] { color: #23475D !important; background: #E2F2FA !important; border: 2px solid #B7A38E !important; }
+/* Thicker pastel-blue frames */
+[data-testid="stForm"] { border: 2px solid #6F9FC0 !important; }
+[data-testid="stTextInput"] input, [data-testid="stFormSubmitButton"] button { border-width: 2px !important; border-color: #6F9FC0 !important; }
+
+
+/* Blue palette, pastel-blue frames, dark readable text */
+
+[data-testid="stForm"] { color: #23475D !important; background: #E2F2FA !important; border: 2px solid #6F9FC0 !important; }
 [data-testid="stForm"] label, [data-testid="stForm"] [data-testid="stWidgetLabel"] { color: #23475D !important; }
-[data-testid="stTextInput"] input { color: #23475D !important; background: #F6FBFE !important; border: 2px solid #B7A38E !important; }
-[data-testid="stFormSubmitButton"] button { color: #23475D !important; background: #99D4FA !important; border: 2px solid #B7A38E !important; }
+[data-testid="stTextInput"] input { color: #23475D !important; background: #F6FBFE !important; border: 2px solid #6F9FC0 !important; }
+[data-testid="stFormSubmitButton"] button { color: #23475D !important; background: #99D4FA !important; border: 2px solid #6F9FC0 !important; }
 
 
 
 /* Remove remaining green component accents */
-[data-testid="stAlert"], [data-testid="stAlert"] [data-baseweb="notification"] { color: #23475D !important; background: #C7EAFA !important; border: 2px solid #B7A38E !important; }
+[data-testid="stAlert"], [data-testid="stAlert"] [data-baseweb="notification"] { color: #23475D !important; background: #C7EAFA !important; border: 2px solid #6F9FC0 !important; }
 [data-testid="stAlert"] p, [data-testid="stAlert"] span { color: #23475D !important; }
 
 
-/* Pastel-brown frames with stronger borders */
-[data-testid="stForm"] { border: 3px solid #C1B7AA !important; }
-[data-testid="stTextInput"] input, [data-testid="stFormSubmitButton"] button { border: 2px solid #B7A38E !important; }
-[data-testid="stAlert"] { border: 3px solid #C1B7AA !important; }
+/* Pastel-blue frames with stronger borders */
+[data-testid="stForm"] { border: 3px solid #6F9FC0 !important; }
+[data-testid="stTextInput"] input, [data-testid="stFormSubmitButton"] button { border: 2px solid #6F9FC0 !important; }
+[data-testid="stAlert"] { border: 3px solid #6F9FC0 !important; }
+
+
+/* Pastel-blue frames and green greeting card */
+[data-testid="stForm"] { border: 3px solid #6F9FC0 !important; }
+[data-testid="stTextInput"] input, [data-testid="stFormSubmitButton"] button { border: 2px solid #6F9FC0 !important; }
+[data-testid="stAlert"] { border: 3px solid #6F9FC0 !important; }
 /* ENDSECTION */
 
 /* SECTION:journal */
@@ -648,64 +684,69 @@ div[data-testid="stChatMessage"], [data-testid="stSidebar"] .sidebar-brand,
 [data-testid="stExpander"] summary:hover { background: #EBF1F5 !important; }
 
 
-/* Brown frames with green surfaces */
+/* Blue frames with blue surfaces */
 
 [data-testid="stForm"] {
   background: #E3EAEF !important;
-  border-color: #D8D0C3 !important;
+  border-color: #A9C9DD !important;
 }
 [data-testid="stTextInput"] input,
-[data-testid="stTextArea"] textarea { background: #F5F8FA !important; border-color: #D8D0C3 !important; }
+[data-testid="stTextArea"] textarea { background: #F5F8FA !important; border-color: #A9C9DD !important; }
 [data-testid="stTextInput"] input:focus,
 [data-testid="stTextArea"] textarea:focus {
-  border-color: #B7A38E !important;
-  box-shadow: 0 0 0 3px rgba(183,163,142,.18) !important;
+  border-color: #6F9FC0 !important;
+  box-shadow: 0 0 0 3px rgba(111,159,192,.18) !important;
 }
-[data-testid="stExpander"] { background: #F1F5F8 !important; border-color: #D8D0C3 !important; }
+[data-testid="stExpander"] { background: #F1F5F8 !important; border-color: #A9C9DD !important; }
 [data-testid="stExpander"] summary:hover { background: #E1E9EE !important; }
 [data-testid="stDownloadButton"] button,
-[data-testid="stFormSubmitButton"] button { background: #486579 !important; border-color: #B7A38E !important; }
+[data-testid="stFormSubmitButton"] button { background: #486579 !important; border-color: #6F9FC0 !important; }
 
 
 
-/* Stronger brown panels over the green page background */
+/* Blue panels over the blue page background */
 
-[data-testid="stForm"] { background: #D8D0C3 !important; border-color: #B7A38E !important; }
-[data-testid="stExpander"] { background: #D8D0C3 !important; border-color: #B7A38E !important; }
+[data-testid="stForm"] { background: #A9C9DD !important; border-color: #6F9FC0 !important; }
+[data-testid="stExpander"] { background: #A9C9DD !important; border-color: #6F9FC0 !important; }
 [data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea {
-  background: #F3F0EA !important; border-color: #B7A38E !important;
+  background: #F6FBFE !important; border-color: #6F9FC0 !important;
 }
 [data-testid="stDownloadButton"] button, [data-testid="stFormSubmitButton"] button {
-  background: #486579 !important; border-color: #B7A38E !important;
+  background: #486579 !important; border-color: #6F9FC0 !important;
 }
 
 
 
-/* Thicker brown frames */
-[data-testid="stForm"], [data-testid="stExpander"] { border: 2px solid #B7A38E !important; }
-[data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea, [data-testid="stDownloadButton"] button, [data-testid="stFormSubmitButton"] button { border-width: 2px !important; border-color: #B7A38E !important; }
+/* Thicker pastel-blue frames */
+[data-testid="stForm"], [data-testid="stExpander"] { border: 2px solid #6F9FC0 !important; }
+[data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea, [data-testid="stDownloadButton"] button, [data-testid="stFormSubmitButton"] button { border-width: 2px !important; border-color: #6F9FC0 !important; }
 
 
-/* Blue primary palette, brown frames, dark readable text */
+/* Blue palette, pastel-blue frames, dark readable text */
 
-[data-testid="stForm"] { color: #23475D !important; background: #E2F2FA !important; border: 2px solid #B7A38E !important; }
+[data-testid="stForm"] { color: #23475D !important; background: #E2F2FA !important; border: 2px solid #6F9FC0 !important; }
 [data-testid="stForm"] label, [data-testid="stForm"] [data-testid="stWidgetLabel"] { color: #23475D !important; }
-[data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea { color: #23475D !important; background: #F6FBFE !important; border: 2px solid #B7A38E !important; }
+[data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea { color: #23475D !important; background: #F6FBFE !important; border: 2px solid #6F9FC0 !important; }
 [data-testid="stTextInput"] input::placeholder, [data-testid="stTextArea"] textarea::placeholder { color: #526B7A !important; opacity: 1 !important; }
-[data-testid="stExpander"] { color: #23475D !important; background: #E2F2FA !important; border: 2px solid #B7A38E !important; }
+[data-testid="stExpander"] { color: #23475D !important; background: #E2F2FA !important; border: 2px solid #6F9FC0 !important; }
 [data-testid="stExpander"] summary:hover { background: #C7EAFA !important; }
-[data-testid="stDownloadButton"] button, [data-testid="stFormSubmitButton"] button { color: #23475D !important; background: #99D4FA !important; border: 2px solid #B7A38E !important; }
+[data-testid="stDownloadButton"] button, [data-testid="stFormSubmitButton"] button { color: #23475D !important; background: #99D4FA !important; border: 2px solid #6F9FC0 !important; }
 
 
 
 /* Remove remaining green component accents */
-[data-testid="stAlert"], [data-testid="stAlert"] [data-baseweb="notification"] { color: #23475D !important; background: #C7EAFA !important; border: 2px solid #B7A38E !important; }
+[data-testid="stAlert"], [data-testid="stAlert"] [data-baseweb="notification"] { color: #23475D !important; background: #C7EAFA !important; border: 2px solid #6F9FC0 !important; }
 [data-testid="stAlert"] p, [data-testid="stAlert"] span { color: #23475D !important; }
 
 
-/* Pastel-brown frames with stronger borders */
-[data-testid="stForm"], [data-testid="stExpander"], [data-testid="stAlert"] { border: 3px solid #C1B7AA !important; }
-[data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea, [data-testid="stDownloadButton"] button, [data-testid="stFormSubmitButton"] button { border: 2px solid #B7A38E !important; }
+/* Pastel-blue frames with stronger borders */
+[data-testid="stForm"], [data-testid="stExpander"], [data-testid="stAlert"] { border: 3px solid #6F9FC0 !important; }
+[data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea, [data-testid="stDownloadButton"] button, [data-testid="stFormSubmitButton"] button { border: 2px solid #6F9FC0 !important; }
+
+
+/* Pastel-blue frames and green greeting card */
+[data-testid="stForm"], [data-testid="stExpander"], [data-testid="stAlert"] { border: 3px solid #6F9FC0 !important; }
+[data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea, [data-testid="stDownloadButton"] button, [data-testid="stFormSubmitButton"] button { border: 2px solid #6F9FC0 !important; }
 /* ENDSECTION */
 
 /* SECTION:dark */
@@ -826,7 +867,7 @@ background: #141E25 !important;
   [data-testid="stMarkdownContainer"] a { color: #B4C9D8; }
 
 
-/* Brown frames with green surfaces */
+/* Blue frames with blue surfaces */
 
 :root {
   --sky-ink: #E2EAEF;
@@ -838,93 +879,93 @@ background: #141E25 !important;
 [data-testid="stHeader"] { background: rgba(23,32,39,.94) !important; }
 [data-testid="stSidebar"] {
   background: #1D2830 !important;
-  border-right-color: rgba(193,183,170,.62) !important;
+  border-right-color: rgba(111,159,192,.62) !important;
 }
 .hero {
   background: linear-gradient(125deg, #27323A 0%, #212C34 100%) !important;
-  border-color: #D8D0C3 !important;
+  border-color: #A9C9DD !important;
 }
 .welcome-card, .support-tool-card, div[data-testid="stChatMessage"],
 [data-testid="stExpander"], [data-testid="stForm"] {
   background: #202A31 !important;
-  border-color: rgba(193,183,170,.64) !important;
+  border-color: rgba(111,159,192,.64) !important;
 }
 .diary-intro, [data-testid="stSidebar"] .sidebar-brand,
 div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
   background: #273239 !important;
-  border-color: rgba(193,183,170,.64) !important;
+  border-color: rgba(111,159,192,.64) !important;
 }
 div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
   background: #202A31 !important;
-  border-color: rgba(193,183,170,.50) !important;
+  border-color: rgba(111,159,192,.50) !important;
 }
 [data-testid="stChatInput"] textarea,
 [data-testid="stTextInput"] input,
 [data-testid="stTextArea"] textarea {
   background: #1D262C !important;
-  border-color: #D8D0C3 !important;
+  border-color: #A9C9DD !important;
   color: #E5EBF0 !important;
 }
 [data-testid="stChatInput"] textarea:focus,
 [data-testid="stTextInput"] input:focus,
 [data-testid="stTextArea"] textarea:focus {
-  border-color: #D8D0C3 !important;
-  box-shadow: 0 0 0 3px rgba(193,183,170,.20) !important;
+  border-color: #A9C9DD !important;
+  box-shadow: 0 0 0 3px rgba(111,159,192,.20) !important;
 }
-.stButton button { background: #263038 !important; border-color: #D8D0C3 !important; color: #E2EAEF !important; }
-.stButton button:hover { background: #313D45 !important; border-color: #D8D0C3 !important; }
+.stButton button { background: #263038 !important; border-color: #A9C9DD !important; color: #E2EAEF !important; }
+.stButton button:hover { background: #313D45 !important; border-color: #A9C9DD !important; }
 [data-testid="stChatInput"] button,
 [data-testid="stDownloadButton"] button,
 [data-testid="stFormSubmitButton"] button {
   background: #486579 !important;
-  border-color: #D8D0C3 !important;
+  border-color: #A9C9DD !important;
 }
-[data-testid="stExpander"] { background: #1B242B !important; border-color: #D8D0C3 !important; }
+[data-testid="stExpander"] { background: #1B242B !important; border-color: #A9C9DD !important; }
 [data-testid="stExpander"] summary:hover { background: #2C373F !important; }
 [data-testid="stMarkdownContainer"] a { color: #B8C7D1 !important; }
 .footer { color: #B0BBC3 !important; }
 
 
 
-/* Stronger brown panels over the green page background */
+/* Blue panels over the blue page background */
 
 [data-testid="stBottom"], [data-testid="stBottomBlockContainer"] { background: #172027 !important; }
 [data-testid="stBottom"]::before { background: linear-gradient(transparent, #172027 85%) !important; }
 .hero {
-  background: linear-gradient(125deg, #B7A38E 0%, #315A70 100%) !important;
-  border-color: #D8D0C3 !important;
+  background: linear-gradient(125deg, #6F9FC0 0%, #315A70 100%) !important;
+  border-color: #A9C9DD !important;
 }
-.hero .hero-eyebrow, .hero .hero-title, .hero .hero-copy { color: #F3F0EA !important; }
-.hero .hero-tagline { background: #242E35 !important; border-color: #D8D0C3 !important; color: #E6ECF1 !important; }
+.hero .hero-eyebrow, .hero .hero-title, .hero .hero-copy { color: #F6FBFE !important; }
+.hero .hero-tagline { background: #242E35 !important; border-color: #A9C9DD !important; color: #E6ECF1 !important; }
 .welcome-card, .diary-intro, .support-tool-card,
 div[data-testid="stChatMessage"], [data-testid="stExpander"], [data-testid="stForm"] {
   background: #24485B !important;
-  border-color: #D8D0C3 !important;
+  border-color: #A9C9DD !important;
   color: #E6ECF1 !important;
 }
-.sidebar-brand { background: #B7A38E !important; border-color: #D8D0C3 !important; color: #F3F0EA !important; }
-.sidebar-brand strong { color: #F3F0EA !important; }
+.sidebar-brand { background: #6F9FC0 !important; border-color: #A9C9DD !important; color: #F6FBFE !important; }
+.sidebar-brand strong { color: #F6FBFE !important; }
 div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) { background: #315A70 !important; }
 div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) { background: #203B49 !important; }
 [data-testid="stChatInput"] { background: transparent !important; }
 [data-testid="stChatInput"] textarea,
 [data-testid="stTextInput"] input,
-[data-testid="stTextArea"] textarea { background: #203B49 !important; border-color: #D8D0C3 !important; }
-.stButton button { background: #B7A38E !important; border-color: #D8D0C3 !important; color: #F3F0EA !important; }
-.stButton button:hover { background: #D8D0C3 !important; border-color: #E0D7CA !important; }
+[data-testid="stTextArea"] textarea { background: #203B49 !important; border-color: #A9C9DD !important; }
+.stButton button { background: #6F9FC0 !important; border-color: #A9C9DD !important; color: #F6FBFE !important; }
+.stButton button:hover { background: #A9C9DD !important; border-color: #E2F2FA !important; }
 [data-testid="stChatInput"] button,
 [data-testid="stDownloadButton"] button,
-[data-testid="stFormSubmitButton"] button { background: #486579 !important; border-color: #D8D0C3 !important; }
+[data-testid="stFormSubmitButton"] button { background: #486579 !important; border-color: #A9C9DD !important; }
 
 
 
-/* Thicker brown frames */
+/* Thicker pastel-blue frames */
 
-[data-testid="stSidebar"] { border-right: 2px solid #D8D0C3 !important; }
-.hero { border: 3px solid #D8D0C3 !important; }
+[data-testid="stSidebar"] { border-right: 2px solid #A9C9DD !important; }
+.hero { border: 3px solid #A9C9DD !important; }
 .welcome-card, .diary-intro, .sidebar-brand, .support-tool-card,
 div[data-testid="stChatMessage"], [data-testid="stExpander"], [data-testid="stForm"] {
-  border: 2px solid #D8D0C3 !important;
+  border: 2px solid #A9C9DD !important;
 }
 [data-testid="stChatInput"] textarea,
 [data-testid="stTextInput"] input,
@@ -933,12 +974,12 @@ div[data-testid="stChatMessage"], [data-testid="stExpander"], [data-testid="stFo
 [data-testid="stDownloadButton"] button,
 [data-testid="stFormSubmitButton"] button {
   border-width: 2px !important;
-  border-color: #D8D0C3 !important;
+  border-color: #A9C9DD !important;
 }
 
 
 
-/* Blue primary palette, brown frames, dark readable text */
+/* Blue palette, pastel-blue frames, dark readable text */
 
 :root { --sky-ink: #E2F0F7; --sky-muted: #BDD0DA; --sky-paper: #142531; }
 .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"],
@@ -947,7 +988,7 @@ div[data-testid="stChatMessage"], [data-testid="stExpander"], [data-testid="stFo
 }
 [data-testid="stHeader"] { background: rgba(23,43,55,.96) !important; }
 [data-testid="stBottom"]::before { background: linear-gradient(transparent, #172B37 85%) !important; }
-[data-testid="stSidebar"] { color: #D9EAF3 !important; background: #1D3949 !important; border-right: 2px solid #D8D0C3 !important; }
+[data-testid="stSidebar"] { color: #D9EAF3 !important; background: #1D3949 !important; border-right: 2px solid #A9C9DD !important; }
 .stApp p, .stApp li, .stApp label, .stApp button, .stApp input, .stApp textarea,
 .stApp small, .stApp summary, .stApp [data-testid="stMarkdownContainer"],
 .stApp [data-testid="stMarkdownContainer"] p, .stApp [data-testid="stWidgetLabel"],
@@ -955,23 +996,23 @@ div[data-testid="stChatMessage"], [data-testid="stExpander"], [data-testid="stFo
 .stApp [data-testid="stCaptionContainer"] p, .stApp [data-testid="stText"], .stApp [data-testid="stText"] div,
 [data-testid="stSidebar"] [data-testid="stMarkdownContainer"], [data-testid="stSidebar"] [data-testid="stCaptionContainer"],
 [data-testid="stSidebar"] label { color: #D9EAF3 !important; }
-.hero { background: linear-gradient(125deg, #315A70 0%, #24485B 100%) !important; border: 3px solid #D8D0C3 !important; color: #EAF6FC !important; }
-.hero .hero-eyebrow { color: #E0CBB2 !important; }
+.hero { background: linear-gradient(125deg, #315A70 0%, #24485B 100%) !important; border: 3px solid #A9C9DD !important; color: #EAF6FC !important; }
+.hero .hero-eyebrow { color: #DCEEF8 !important; }
 .hero .hero-title, .hero .hero-copy { color: #EAF6FC !important; }
-.hero .hero-tagline { color: #EAF6FC !important; background: #244252 !important; border-color: #D8D0C3 !important; }
+.hero .hero-tagline { color: #EAF6FC !important; background: #244252 !important; border-color: #A9C9DD !important; }
 .welcome-card, .diary-intro, .support-tool-card, div[data-testid="stChatMessage"], [data-testid="stExpander"], [data-testid="stForm"] {
-  color: #D9EAF3 !important; background: #203B49 !important; border: 2px solid #D8D0C3 !important;
+  color: #D9EAF3 !important; background: #203B49 !important; border: 2px solid #A9C9DD !important;
 }
-.sidebar-brand { color: #EAF6FC !important; background: #315A70 !important; border: 2px solid #D8D0C3 !important; }
+.sidebar-brand { color: #EAF6FC !important; background: #315A70 !important; border: 2px solid #A9C9DD !important; }
 .sidebar-brand strong, .welcome-card strong { color: #EAF6FC !important; }
 div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) { background: #315A70 !important; }
 [data-testid="stChatInput"] { background: transparent !important; }
 [data-testid="stChatInput"] textarea, [data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea {
-  color: #EAF6FC !important; background: #1D3340 !important; border: 2px solid #D8D0C3 !important;
+  color: #EAF6FC !important; background: #1D3340 !important; border: 2px solid #A9C9DD !important;
 }
 [data-testid="stChatInput"] textarea::placeholder, [data-testid="stTextInput"] input::placeholder, [data-testid="stTextArea"] textarea::placeholder { color: #BDD0DA !important; opacity: 1 !important; }
-.stButton button { color: #EAF6FC !important; background: #315A70 !important; border: 2px solid #D8D0C3 !important; }
-[data-testid="stChatInput"] button, [data-testid="stDownloadButton"] button, [data-testid="stFormSubmitButton"] button { color: #EAF6FC !important; background: #315A70 !important; border: 2px solid #D8D0C3 !important; }
+.stButton button { color: #EAF6FC !important; background: #315A70 !important; border: 2px solid #A9C9DD !important; }
+[data-testid="stChatInput"] button, [data-testid="stDownloadButton"] button, [data-testid="stFormSubmitButton"] button { color: #EAF6FC !important; background: #315A70 !important; border: 2px solid #A9C9DD !important; }
 [data-testid="stHeader"] button, [data-testid="stHeader"] a, [data-testid="stToolbar"] button { color: #D9EAF3 !important; }
 [data-testid="stHeader"] button svg, [data-testid="stToolbar"] button svg { color: #D9EAF3 !important; fill: #D9EAF3 !important; }
 [data-testid="stMarkdownContainer"] a { color: #B8DBEF !important; }
@@ -981,9 +1022,9 @@ div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) { back
 
 /* Remove remaining green component accents */
 
-[data-testid="stSidebar"] .sidebar-brand { color: #EAF6FC !important; background: #315A70 !important; border: 2px solid #D8D0C3 !important; }
+[data-testid="stSidebar"] .sidebar-brand { color: #EAF6FC !important; background: #315A70 !important; border: 2px solid #A9C9DD !important; }
 [data-testid="stSidebar"] .sidebar-brand strong, [data-testid="stSidebar"] .sidebar-brand span { color: #EAF6FC !important; }
-[data-testid="stAlert"], [data-testid="stAlert"] [data-baseweb="notification"] { color: #EAF6FC !important; background: #315A70 !important; border: 2px solid #D8D0C3 !important; }
+[data-testid="stAlert"], [data-testid="stAlert"] [data-baseweb="notification"] { color: #EAF6FC !important; background: #315A70 !important; border: 2px solid #A9C9DD !important; }
 [data-testid="stAlert"] p, [data-testid="stAlert"] span, [data-testid="stAlert"] [data-testid] { color: #EAF6FC !important; }
 [data-testid="stAlert"] svg { color: #99D4FA !important; fill: #99D4FA !important; }
 input[type="radio"] { accent-color: #99D4FA !important; }
@@ -991,18 +1032,47 @@ input[type="radio"] { accent-color: #99D4FA !important; }
 
 
 
-/* Pastel-brown frames with stronger borders */
+/* Pastel-blue frames with stronger borders */
 
-[data-testid="stSidebar"] { border-right: 3px solid #D8D0C3 !important; }
-.hero { border: 4px solid #D8D0C3 !important; }
+[data-testid="stSidebar"] { border-right: 3px solid #A9C9DD !important; }
+.hero { border: 4px solid #A9C9DD !important; }
 .welcome-card, .diary-intro, .support-tool-card,
 [data-testid="stExpander"], [data-testid="stForm"],
 div[data-testid="stChatMessage"], [data-testid="stSidebar"] .sidebar-brand,
-[data-testid="stAlert"] { border: 3px solid #D8D0C3 !important; }
+[data-testid="stAlert"] { border: 3px solid #A9C9DD !important; }
 [data-testid="stChatInput"] textarea, [data-testid="stTextInput"] input,
 [data-testid="stTextArea"] textarea, .stButton button,
 [data-testid="stDownloadButton"] button, [data-testid="stFormSubmitButton"] button {
-  border: 2px solid #D8D0C3 !important;
+  border: 2px solid #A9C9DD !important;
 }
+
+
+
+/* Pastel-blue frames and green greeting card */
+
+:root { --frame-blue: #A9C9DD; --frame-blue-deep: #C7EAFA; }
+[data-testid="stSidebar"] { border-right: 3px solid #A9C9DD !important; }
+.hero { border: 4px solid #A9C9DD !important; }
+.welcome-card, .diary-intro, .support-tool-card, [data-testid="stExpander"],
+[data-testid="stForm"], div[data-testid="stChatMessage"],
+[data-testid="stSidebar"] .sidebar-brand, [data-testid="stAlert"] {
+  border: 3px solid #A9C9DD !important;
+}
+[data-testid="stChatInput"] textarea, [data-testid="stTextInput"] input,
+[data-testid="stTextArea"] textarea, .stButton button,
+[data-testid="stDownloadButton"] button, [data-testid="stFormSubmitButton"] button {
+  border: 2px solid #A9C9DD !important;
+}
+[data-testid="stSidebar"] .sidebar-brand { background: #315A70 !important; color: #EAF6FC !important; }
+[data-testid="stSidebar"] [data-testid="stAlert"],
+[data-testid="stSidebar"] [data-testid="stAlert"] [data-baseweb="notification"],
+[data-testid="stSidebar"] [data-testid="stAlert"] > div {
+  background: #527A61 !important;
+  border-color: #A9C9AD !important;
+  color: #EAF6E9 !important;
+}
+[data-testid="stSidebar"] [data-testid="stAlert"] p,
+[data-testid="stSidebar"] [data-testid="stAlert"] span,
+[data-testid="stSidebar"] [data-testid="stAlert"] svg { color: #EAF6E9 !important; fill: #EAF6E9 !important; }
 
 /* ENDSECTION */
