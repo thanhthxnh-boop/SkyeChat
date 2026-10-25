@@ -1024,32 +1024,64 @@ def friendly_chat_error(exc, is_vi):
 # ==============================
 # Sidebar
 # ==============================
+if "language" not in st.session_state:
+    st.session_state.language = "Tiếng Việt 🇻🇳"
+is_vi = str(st.session_state.language).startswith("Tiếng Việt")
+
 with st.sidebar:
     if logo_file:
         st.image(str(logo_file), width=132)
+    brand_tagline = "Một góc nhỏ để sẻ chia" if is_vi else "A little space to share"
     st.markdown(
-        """
+        f"""
         <div class="sidebar-brand">
           <div class="cloud">☁️</div>
           <strong>SkyeChat</strong>
-          <span>Một góc nhỏ để sẻ chia</span>
+          <span>{brand_tagline}</span>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    st.subheader("Phiên khách" if st.session_state.guest_mode else "Cài đặt của bạn")
+    st.subheader(
+        ("Phiên khách" if st.session_state.guest_mode else "Cài đặt của bạn")
+        if is_vi
+        else ("Guest session" if st.session_state.guest_mode else "Your settings")
+    )
     if st.session_state.guest_mode:
-        st.caption("Bạn đang trò chuyện với tư cách khách. Nội dung chỉ được giữ trong phiên hiện tại.")
+        st.caption(
+            "Bạn đang trò chuyện với tư cách khách. Nội dung chỉ được giữ trong phiên hiện tại."
+            if is_vi
+            else "You are chatting as a guest. Your conversation is kept only for this session."
+        )
     else:
-        st.caption(f"Tài khoản: {st.session_state.auth_email}")
+        st.caption(
+            f"Tài khoản: {st.session_state.auth_email}"
+            if is_vi
+            else f"Account: {st.session_state.auth_email}"
+        )
 
-    nickname_input = st.text_input("Biệt danh", value=st.session_state.nickname, max_chars=32)
-    if nickname_input.strip() and nickname_input.strip() != st.session_state.nickname:
+    nickname_display = st.session_state.nickname
+    if not st.session_state.nickname_is_custom and nickname_display in {"Bạn", "You"}:
+        nickname_display = "Bạn" if is_vi else "You"
+    nickname_input = st.text_input(
+        "Biệt danh" if is_vi else "Nickname",
+        value=nickname_display,
+        max_chars=32,
+    )
+    if nickname_input.strip() and nickname_input.strip() != nickname_display:
         st.session_state.nickname = nickname_input.strip()
         st.session_state.nickname_is_custom = True
 
-    st.success(f"👋 Chào {st.session_state.nickname}!")
-    lang = st.radio("Ngôn ngữ / Language", ["Tiếng Việt 🇻🇳", "English 🇬🇧"], label_visibility="visible")
+    displayed_nickname = nickname_input.strip() or nickname_display
+    st.success(
+        f"👋 Chào {displayed_nickname}!" if is_vi else f"👋 Hello {displayed_nickname}!"
+    )
+    lang = st.radio(
+        "Ngôn ngữ" if is_vi else "Language",
+        ["Tiếng Việt 🇻🇳", "English 🇬🇧"],
+        key="language",
+        label_visibility="visible",
+    )
     is_vi = lang.startswith("Tiếng Việt")
     queued_support_style = st.session_state.pop("queued_support_style", None)
     if queued_support_style in {"listen", "untangle", "next_step"}:
@@ -1120,7 +1152,11 @@ with st.sidebar:
     if st.session_state.guest_mode:
         st.session_state.page_mode = "chat"
         page_mode = "chat"
-        st.caption("Nhật ký riêng cần tài khoản để lưu an toàn.")
+        st.caption(
+            "Nhật ký riêng cần tài khoản để lưu an toàn."
+            if is_vi
+            else "A private journal requires an account to save entries securely."
+        )
     else:
         if st.session_state.get("page_mode") not in ("chat", "diary"):
             previous_page_mode = str(st.session_state.get("page_mode", ""))
@@ -1152,7 +1188,7 @@ with st.sidebar:
         )
 
     st.divider()
-    st.markdown("**Nhà phát triển:** ThanhAI")
+    st.markdown("**Nhà phát triển:** ThanhAI" if is_vi else "**Developer:** ThanhAI")
     if st.button(
         "🗑️ Xóa lịch sử trò chuyện" if is_vi else "🗑️ Clear chat history",
         use_container_width=True,
@@ -1434,12 +1470,20 @@ if is_diary:
     st.caption(privacy_label)
 
 else:
+    hero_eyebrow = "Không gian an toàn để sẻ chia" if is_vi else "A safe space to share"
+    hero_greeting = "Chào bạn, mình là SkyeChat" if is_vi else "Hi, I’m SkyeChat"
+    hero_tagline = "Mọi chuyện rồi sẽ ổn thôi." if is_vi else "Everything is gonna be alright."
+    hero_copy = (
+        "Bạn có thể bắt đầu từ bất cứ điều gì đang ở trong lòng. Mình sẽ lắng nghe, không phán xét."
+        if is_vi
+        else "You can start with anything on your mind. I’ll listen without judgment."
+    )
     st.markdown(
-        """
+        f"""
         <section class="hero">
-          <div class="hero-eyebrow">Không gian an toàn để sẻ chia</div>
-          <div class="hero-title">Chào bạn, mình là SkyeChat <span class="hero-tagline">Everything is gonna be alright.</span> ☁️</div>
-          <p class="hero-copy">Bạn có thể bắt đầu từ bất cứ điều gì đang ở trong lòng. Mình sẽ lắng nghe, không phán xét.</p>
+          <div class="hero-eyebrow">{hero_eyebrow}</div>
+          <div class="hero-title">{hero_greeting} <span class="hero-tagline">{hero_tagline}</span> ☁️</div>
+          <p class="hero-copy">{hero_copy}</p>
         </section>
         """,
         unsafe_allow_html=True,
@@ -1549,8 +1593,13 @@ else:
             LOGGER.exception("SkyeChat reply generation failed (%s)", type(exc).__name__)
             st.error(friendly_chat_error(exc, is_vi))
 
+footer_text = (
+    "SkyeChat · Lắng nghe bằng sự tử tế · By ThanhAI · từ tháng 8 năm 2026"
+    if is_vi
+    else "SkyeChat · Listening with kindness · By ThanhAI · since August 2026"
+)
 st.markdown(
-    '<div class="footer">SkyeChat · Lắng nghe bằng sự tử tế · By ThanhAI · since august 2026</div>',
+    f'<div class="footer">{footer_text}</div>',
     unsafe_allow_html=True,
 )
 
