@@ -18,6 +18,10 @@ from supabase import create_client
 # SkyeChat — cấu hình
 # ==============================
 APP_DIR = Path(__file__).resolve().parent
+CHAT_AVATAR_PATH = APP_DIR / "assets" / "skye.png"
+CHAT_AVATAR = str(CHAT_AVATAR_PATH) if CHAT_AVATAR_PATH.is_file() else "🌿"
+USER_AVATAR_PATH = APP_DIR / "assets" / "user.png"
+USER_AVATAR = str(USER_AVATAR_PATH) if USER_AVATAR_PATH.is_file() else "🙂"
 logo_file = next(
     (APP_DIR / name for name in ("logo.png", "logo.jpg", "Logo.png", "Logo.jpg") if (APP_DIR / name).is_file()),
     None,
@@ -89,6 +93,31 @@ SUPABASE_KEY = str(
 APP_TIMEZONE = get_secret("APP_TIMEZONE", "Asia/Ho_Chi_Minh")
 LOGGER = logging.getLogger("skyechat")
 
+# Load the app stylesheet from the same folder as this file. If it is missing,
+# the app still starts with Streamlit's default styles instead of crashing.
+STYLE_FILE = APP_DIR / "style.css"
+CSS_SECTION_PATTERN = re.compile(
+    r"/\* SECTION:([a-z_-]+) \*/(.*?)/\* ENDSECTION \*/", re.DOTALL
+)
+
+
+def load_css_sections():
+    try:
+        contents = STYLE_FILE.read_text(encoding="utf-8")
+    except OSError as exc:
+        LOGGER.warning("Stylesheet unavailable (%s)", type(exc).__name__)
+        return {}
+    return {name: css.strip() for name, css in CSS_SECTION_PATTERN.findall(contents)}
+
+
+CSS_SECTIONS = load_css_sections()
+
+
+def inject_css(section):
+    css = CSS_SECTIONS.get(section)
+    if css:
+        st.markdown(f"<style>\n{css}\n</style>", unsafe_allow_html=True)
+
 
 def ai_is_configured():
     return bool(GEMINI_API_KEY)
@@ -97,172 +126,7 @@ def ai_is_configured():
 # ==============================
 # Nhận diện thương hiệu SkyeChat
 # ==============================
-st.markdown(
-    """
-    <style>
-
-    :root {
-      --primary-color: #729b87;
-      --sky-ink: #354b45;
-      --sky-muted: #788b84;
-      --sky-blue: #82aeb3;
-      --sky-lilac: #aaaec5;
-      --sky-mint: #e5f0e9;
-      --sky-peach: #f6eee2;
-      --sky-paper: #f7f8f5;
-    }
-    input[type="radio"] { accent-color: #729b87; }
-    html, body, [class*="css"] { font-family: Inter, "Segoe UI", ui-sans-serif, system-ui, -apple-system, sans-serif; font-size: 16px; line-height: 1.6; }
-    [data-testid="stMarkdownContainer"], [data-testid="stWidgetLabel"], textarea, input, button { letter-spacing: .01em; }
-    .stApp {
-      color: var(--sky-ink);
-      background: #eaf2f0;
-    }
-    [data-testid="stHeader"] { background: #eaf2f0; }
-    [data-testid="stMainBlockContainer"] { max-width: 1120px; padding-top: 1.4rem; }
-    [data-testid="stSidebar"] {
-      background: #e2eeeb;
-      border-right: 1px solid rgba(112,151,139,.18);
-    }
-    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color: #586d66; }
-    h1, h2, h3 { font-family: Inter, ui-sans-serif, system-ui, sans-serif !important; color: var(--sky-ink); }
-    h1 { letter-spacing: -1.2px; }
-    .hero {
-      position: relative; overflow: hidden;
-      padding: 1.65rem 2rem 1.55rem;
-      border: 1px solid rgba(255,255,255,.9);
-      border-radius: 26px;
-      background: #dcebe8;
-      box-shadow: 0 16px 45px rgba(74,111,101,.11);
-      margin: .35rem 0 1.2rem;
-      animation: hero-arrive .65s ease-out both;
-    }
-    .hero:after {
-      content: '☁'; position: absolute; right: 7%; top: -33px;
-      color: rgba(255,255,255,.58); font-size: 150px; line-height: 1;
-      transform: rotate(-9deg); pointer-events: none;
-      filter: drop-shadow(0 10px 18px rgba(255,255,255,.28));
-      animation: cloud-drift 7s ease-in-out infinite;
-    }
-    .hero:before {
-      content: ''; position: absolute; width: 210px; height: 210px; right: 4%; top: -118px;
-      border-radius: 50%; background: rgba(255,255,255,.24); filter: blur(2px);
-      pointer-events: none;
-    }
-    @keyframes hero-arrive { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes cloud-drift { 0%, 100% { translate: 0 0; } 50% { translate: 0 8px; } }
-    .hero-eyebrow { color: #668c79; font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
-    .hero-title { color: #354b45; font: 900 2.25rem/1.22 Inter, ui-sans-serif, system-ui, sans-serif; margin: .25rem 0 .45rem; }
-    .hero-tagline {
-      display: inline-block; vertical-align: .22em; margin-left: .4rem;
-      padding: .33rem .72rem; border: 1px solid rgba(112,151,139,.22);
-      border-radius: 999px; background: rgba(255,255,255,.62);
-      color: #628274; font: 700 .82rem/1.25 Inter, ui-sans-serif, system-ui, sans-serif;
-      letter-spacing: .01em; white-space: normal;
-    }
-    .hero-copy { color: #60766e; max-width: 660px; font-size: 1rem; margin: 0; }
-    .welcome-card {
-      border: 1px solid rgba(137,172,157,.24); border-radius: 22px;
-      padding: 1.25rem 1.4rem; margin: .8rem 0 1.25rem;
-      background: #f8fbfa; box-shadow: 0 10px 30px rgba(75,111,101,.07);
-      animation: hero-arrive .75s .08s ease-out both;
-    }
-    .welcome-card strong { color: #638875; }
-    .soft-note { color: #62776f; font-size: .9rem; }
-    .diary-intro {
-      border: 1px solid rgba(139,174,168,.32); border-radius: 20px;
-      padding: 1rem 1.2rem; margin: .7rem 0 1rem;
-      background: #e4efed;
-      color: #586f68;
-    }
-    .sidebar-brand {
-      padding: 1rem; margin: .25rem 0 1.2rem; border-radius: 20px;
-      background: #d7e7e3;
-      text-align: center; color: #536d63;
-    }
-    .sidebar-brand .cloud { font-size: 2.2rem; }
-    .sidebar-brand strong { display: block; font: 900 1.25rem Inter, ui-sans-serif, system-ui, sans-serif; color: #354b45; }
-    .sidebar-brand span { font-size: .82rem; }
-    div[data-testid="stChatMessage"] {
-      border: 1px solid rgba(133,164,157,.23); border-radius: 20px;
-      padding: .85rem 1rem; background: #f8fbfa;
-      box-shadow: 0 8px 24px rgba(56,99,66,.055); margin-bottom: .85rem;
-      transition: box-shadow .2s ease, transform .2s ease;
-    }
-    div[data-testid="stChatMessage"]:hover { box-shadow: 0 11px 28px rgba(56,99,66,.09); transform: translateY(-1px); }
-    div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
-      background: #e5efeb;
-      border-color: rgba(143,174,147,.30);
-    }
-    div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
-      background: #f7fbfa;
-      border-color: rgba(145,178,171,.30);
-    }
-    [data-testid="stChatInput"] textarea {
-      border-radius: 18px !important; border: 1px solid #d4e1dc !important;
-      background: #fbfdfc !important;
-      box-shadow: 0 8px 24px rgba(62,112,78,.07);
-      transition: border-color .2s ease, box-shadow .2s ease;
-    }
-    [data-testid="stChatInput"] textarea:focus { border-color: #8caf9f !important; box-shadow: 0 0 0 3px rgba(112,151,139,.16) !important; }
-    .stButton button {
-      border-radius: 13px; border: 1px solid #d4e1dc; color: #536f63;
-      background: rgba(255,255,255,.76); font-weight: 700;
-      transition: all .18s ease;
-    }
-    .stButton button:hover { border-color: #98b8a8; color: #3d6255; background: #edf4ef; transform: translateY(-1px); box-shadow: 0 7px 16px rgba(77,119,103,.14); }
-    .stButton button:focus-visible, [data-testid="stChatInput"] button:focus-visible { outline: 3px solid rgba(91,145,118,.58); outline-offset: 2px; }
-    [data-testid="stChatInput"] button {
-      border: 0 !important; border-radius: 13px !important; color: white !important;
-      background: #638f86 !important;
-      box-shadow: 0 5px 14px rgba(83,133,111,.26);
-      transition: transform .18s ease, box-shadow .18s ease;
-    }
-    [data-testid="stChatInput"] button:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(83,133,111,.34); }
-    div[data-testid="stAlert"] { border-radius: 15px; }
-    .footer { color: #637a70; text-align: center; font-size: .82rem; padding: 1.2rem 0 .3rem; }
-    .teru-bozu {
-      position: fixed; top: .1rem; right: 5.1rem; z-index: 1001;
-      width: 72px; height: 132px; pointer-events: none;
-      transform-origin: 50% 0; animation: teru-sway 4.8s ease-in-out infinite;
-      filter: drop-shadow(0 8px 9px rgba(38, 75, 72, .25));
-    }
-    .teru-bozu svg { display: block; width: 100%; height: 100%; overflow: visible; }
-    @keyframes teru-sway { 0%, 100% { transform: rotate(-5deg) translateY(0); } 50% { transform: rotate(5deg) translateY(3px); } }
-    .stButton button:active, [data-testid="stChatInput"] button:active,
-    [data-testid="stFormSubmitButton"] button:active, [data-testid="stDownloadButton"] button:active {
-      transform: scale(.96) !important; box-shadow: inset 0 2px 5px rgba(34,74,70,.2) !important;
-    }
-    [data-testid="stRadio"] label, [data-testid="stToggle"] label,
-    [data-testid="stExpander"] summary { transition: background-color .2s ease, color .2s ease, transform .2s ease; }
-    [data-testid="stRadio"] label:active, [data-testid="stToggle"] label:active,
-    [data-testid="stExpander"] summary:active { transform: scale(.985); }
-    [data-testid="stExpander"] { transition: box-shadow .2s ease, border-color .2s ease; }
-    [data-testid="stExpander"]:hover { box-shadow: 0 7px 18px rgba(49,93,87,.08); }
-    [data-testid="stTabs"] button[role="tab"] { transition: color .2s ease, transform .2s ease; }
-    [data-testid="stTabs"] button[role="tab"]:active { transform: scale(.97); }
-    [data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea { transition: border-color .2s ease, box-shadow .2s ease; }
-    [data-testid="stTextInput"] input:focus-visible, [data-testid="stTextArea"] textarea:focus-visible { outline: 3px solid rgba(91,145,118,.25); outline-offset: 1px; }
-    .teru-head { filter: url(#doll-shadow); }
-    .rain-drop { animation: rain-fall 2.2s ease-in infinite; transform-box: fill-box; transform-origin: center; }
-    .rain-drop:nth-of-type(2) { animation-delay: .7s; }
-    .rain-drop:nth-of-type(3) { animation-delay: 1.3s; }
-    @keyframes rain-fall { 0% { opacity: 0; transform: translateY(-3px); } 35% { opacity: .9; } 100% { opacity: 0; transform: translateY(13px); } }
-    @media (prefers-reduced-motion: reduce) {
-      *, *:before, *:after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
-      .teru-bozu { animation: none !important; }
-    }
-    @media (max-width: 700px) {
-      .hero { padding: 1.3rem; border-radius: 20px; }
-      .hero-title { font-size: 1.9rem; }
-      .hero-tagline { margin-left: .1rem; font-size: .72rem; padding: .3rem .58rem; }
-      .hero:after { right: -5%; font-size: 110px; }
-      .teru-bozu { right: 4.2rem; width: 48px; height: 96px; }
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+inject_css("base")
 
 st.markdown(
     """
@@ -317,8 +181,12 @@ Chất lượng trả lời:
 An toàn:
 - Không chẩn đoán, kê đơn, đưa hướng dẫn điều trị hoặc thay thế chuyên gia.
 - Nếu người dùng có nguy cơ bị tổn thương ngay lúc này, ưu tiên hỏi họ có đang
-  an toàn không, khuyến khích gọi dịch vụ khẩn cấp tại địa phương và liên hệ ngay
-  một người tin cậy đang ở gần. Không tranh luận, phán xét hay làm nhẹ nguy cơ.
+  an toàn không; khuyên họ đến nơi có người, tránh xa phương tiện gây hại, liên hệ
+  dịch vụ khẩn cấp tại địa phương và nhờ một người tin cậy ở bên. Không cung cấp
+  cách tự làm hại, không tranh luận, phán xét hay làm nhẹ nguy cơ. Không chờ chatbot
+  xử lý thay hỗ trợ trực tiếp.
+- Không khuyến khích lệ thuộc vào AI, không tuyên bố là người duy nhất hiểu họ,
+  luôn ở bên, hoặc có thể giữ bí mật tuyệt đối.
 - Tự kiểm tra câu trả lời có bám câu hỏi, có suy diễn quá mức và có an toàn không.
   Chỉ đưa câu trả lời cuối; không tiết lộ suy luận nội bộ.
 
@@ -347,9 +215,13 @@ Quality:
 Safety:
 - Do not diagnose, prescribe, provide treatment instructions, or replace a
   qualified professional.
-- If the user may be in immediate danger, first check whether they are safe,
-  encourage local emergency services, and help them contact a trusted person
-  nearby. Do not argue, judge, or minimize the risk.
+- If the user may be in immediate danger, first check whether they are safe;
+  encourage moving to a place with other people, creating distance from means of
+  harm, contacting local emergency services, and asking someone trusted to stay.
+  Never provide self-harm instructions or minimize the risk. Do not make a chatbot
+  conversation a substitute for immediate human help.
+- Do not encourage dependence on AI or claim to be the only one who understands,
+  always available, or able to keep absolute confidentiality.
 - Silently check relevance, assumptions, and safety before answering. Show only
   the final answer, never private internal reasoning.
 
@@ -390,12 +262,31 @@ SkyeChat conversation guide:
 """.strip()
 
 
-def build_system_prompt(is_vi):
-    """Combine SkyeChat's role with its editable conversation guide."""
+def build_system_prompt(is_vi, support_style="listen"):
+    """Build a short, user-led support prompt for the selected conversation style."""
     base_prompt = SYSTEM_PROMPT_VI if is_vi else SYSTEM_PROMPT_EN
     guide = SKYECHAT_GUIDE_VI if is_vi else SKYECHAT_GUIDE_EN
     guide_title = "HƯỚNG DẪN RIÊNG" if is_vi else "CUSTOM GUIDE"
-    return f"{base_prompt}\n\n{guide_title}:\n{guide}"
+    support_styles = {
+        "listen": (
+            "Ưu tiên lắng nghe và phản ánh ngắn điều người dùng vừa chia sẻ; không vội đưa lời khuyên trừ khi họ muốn."
+            if is_vi
+            else "Prioritize listening and briefly reflecting what the user shared; do not rush into advice unless they ask."
+        ),
+        "untangle": (
+            "Giúp người dùng tách sự việc, suy nghĩ và cảm xúc; mỗi lượt chỉ đưa một câu hỏi gợi mở khi hữu ích."
+            if is_vi
+            else "Help the user separate events, thoughts, and feelings; ask at most one useful, gentle question per turn."
+        ),
+        "next_step": (
+            "Khi phù hợp, cùng người dùng tìm một bước nhỏ, cụ thể và do họ tự chọn; không áp đặt kế hoạch."
+            if is_vi
+            else "When useful, help the user choose one small, concrete next step; never impose a plan."
+        ),
+    }
+    style_instruction = support_styles.get(support_style, support_styles["listen"])
+    preference_title = "CÁCH ĐỒNG HÀNH NGƯỜI DÙNG CHỌN" if is_vi else "USER'S CHOSEN SUPPORT STYLE"
+    return f"{base_prompt}\n\n{guide_title}:\n{guide}\n\n{preference_title}:\n{style_instruction}"
 
 
 # ==============================
@@ -403,6 +294,14 @@ def build_system_prompt(is_vi):
 # ==============================
 if "messages" not in st.session_state:
     st.session_state.messages = []
+if "support_style" not in st.session_state:
+    st.session_state.support_style = "listen"
+if "mood_checkin" not in st.session_state:
+    st.session_state.mood_checkin = 3
+if "queued_chat_prompt" not in st.session_state:
+    st.session_state.queued_chat_prompt = None
+if "queued_support_style" not in st.session_state:
+    st.session_state.queued_support_style = None
 if "nickname" not in st.session_state:
     st.session_state.nickname = "Bạn"
 if "nickname_is_custom" not in st.session_state:
@@ -464,6 +363,9 @@ def save_auth_state(auth_response):
 
 
 def clear_auth_state():
+    gemini_http = st.session_state.pop("_gemini_http_session", None)
+    if isinstance(gemini_http, requests.Session):
+        gemini_http.close()
     st.session_state.auth_access_token = None
     st.session_state.auth_refresh_token = None
     st.session_state.auth_user_id = None
@@ -471,6 +373,8 @@ def clear_auth_state():
     st.session_state.nickname = "Bạn"
     st.session_state.nickname_is_custom = False
     st.session_state.messages = []
+    st.session_state.queued_chat_prompt = None
+    st.session_state.queued_support_style = None
     st.session_state.recovery_otp_sent = False
     st.session_state.recovery_target = ""
     st.session_state.recovery_type = ""
@@ -487,24 +391,41 @@ def clear_auth_state():
 
 
 def restore_auth_state(client):
-    """Restore and refresh this user's Supabase session after a Streamlit rerun."""
+    """Reuse the in-memory session and refresh it only when Supabase requires it."""
     access_token = st.session_state.auth_access_token
     refresh_token = st.session_state.auth_refresh_token
-    if not access_token or not refresh_token:
-        if access_token or refresh_token or st.session_state.auth_user_id:
-            clear_auth_state()
-        return False
     try:
-        auth_response = client.auth.set_session(access_token, refresh_token)
-        if not save_auth_state(auth_response):
+        auth_result = client.auth.get_session()
+        auth_session = getattr(auth_result, "session", None) or auth_result
+
+        # A new Streamlit client may not yet have the session held in app state.
+        # Restore it once; subsequent reruns use get_session() from local memory.
+        if not getattr(auth_session, "access_token", None):
+            if not access_token or not refresh_token:
+                if access_token or refresh_token or st.session_state.auth_user_id:
+                    clear_auth_state()
+                return False
+            auth_response = client.auth.set_session(access_token, refresh_token)
+            auth_session = getattr(auth_response, "session", None)
+
+        if not getattr(auth_session, "access_token", None):
+            clear_auth_state()
+            return False
+
+        # get_session refreshes an expired access token. Keep our session-state
+        # copy current so RLS requests use the refreshed credentials.
+        st.session_state.auth_access_token = auth_session.access_token
+        st.session_state.auth_refresh_token = auth_session.refresh_token
+        auth_user = getattr(auth_session, "user", None)
+        if not auth_user:
             user_response = client.auth.get_user()
             auth_user = getattr(user_response, "user", None)
-            if auth_user:
-                st.session_state.auth_user_id = auth_user.id
-                st.session_state.auth_email = auth_user.email or ""
-                metadata = getattr(auth_user, "user_metadata", {}) or {}
-                if not st.session_state.nickname_is_custom:
-                    st.session_state.nickname = metadata.get("nickname") or auth_user.email or "Bạn"
+        if auth_user:
+            st.session_state.auth_user_id = auth_user.id
+            st.session_state.auth_email = auth_user.email or ""
+            metadata = getattr(auth_user, "user_metadata", {}) or {}
+            if not st.session_state.nickname_is_custom:
+                st.session_state.nickname = metadata.get("nickname") or auth_user.email or "Bạn"
         return bool(st.session_state.auth_user_id)
     except Exception:
         try:
@@ -646,16 +567,7 @@ if not is_authenticated and not st.session_state.guest_mode:
             st.info("Đăng nhập và nhật ký cần cấu hình Supabase. Bạn vẫn có thể dùng nút khách ở phía trên để trò chuyện.")
         st.markdown('<div class="footer">SkyeChat · By ThanhAI · since august 2026</div>', unsafe_allow_html=True)
         st.stop()
-    st.markdown(
-        """
-        <style>
-        [data-testid="stForm"] { background: rgba(255,255,255,.78); border: 1px solid #dce8e1; border-radius: 20px; padding: 1.1rem; }
-        [data-testid="stTextInput"] input { border-radius: 12px; }
-        [data-testid="stFormSubmitButton"] button { min-height: 2.8rem; }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    inject_css("auth")
     login_tab, signup_tab, recovery_tab = st.tabs(["Đăng nhập", "Tạo tài khoản", "Quên mật khẩu"])
 
     def is_valid_email(value):
@@ -899,6 +811,15 @@ def prepare_gemini_input(history):
     )
 
 
+def get_gemini_http_session():
+    """Reuse a private HTTP connection pool for this browser session only."""
+    http = st.session_state.get("_gemini_http_session")
+    if http is None:
+        http = requests.Session()
+        st.session_state["_gemini_http_session"] = http
+    return http
+
+
 def generate_reply(history, system_prompt):
     """Stream a reply from Gemini, retrying transient failures with backoff."""
     if not GEMINI_API_KEY:
@@ -923,130 +844,129 @@ def generate_reply(history, system_prompt):
     last_status = None
     last_network_error = None
 
-    with requests.Session() as http:
-        for model_index, model in enumerate(models):
-            request_payload = {
-                "model": model,
-                "system_instruction": system_prompt,
-                "input": interaction_input,
-                "stream": True,
-                "store": False,
-                "service_tier": "standard",
-            }
-            generation_config = {"max_output_tokens": GEMINI_MAX_OUTPUT_TOKENS}
-            if model.startswith(("gemini-3.", "gemini-4.")):
-                generation_config["thinking_level"] = GEMINI_THINKING_LEVEL
-            request_payload["generation_config"] = generation_config
-            for attempt in range(MAX_RETRIES):
-                emitted = False
-                request_started_at = time.perf_counter()
-                first_token_seconds = None
-                generated_characters = 0
-                actual_service_tier = GEMINI_SERVICE_TIER
-                try:
-                    with http.post(
-                        f"{API_BASE}?alt=sse",
-                        json=request_payload,
-                        headers=headers,
-                        stream=True,
-                        timeout=(5, GEMINI_READ_TIMEOUT_SECONDS),
-                    ) as response:
-                        last_status = response.status_code
-                        actual_service_tier = response.headers.get(
-                            "x-gemini-service-tier", GEMINI_SERVICE_TIER
-                        )
-                        if response.status_code != 200:
-                            message, api_code = api_error_details(response)
-                            if response.status_code not in retryable_statuses:
-                                if model_index + 1 < len(models) and response.status_code in fallback_statuses:
-                                    break
-                                raise GeminiAPIError(message, response.status_code, api_code)
-                            if attempt < MAX_RETRIES - 1:
-                                retry_after = response.headers.get("Retry-After")
-                                try:
-                                    delay = max(0.2, min(float(retry_after), 2.5)) if retry_after else 0.8 * (2 ** attempt)
-                                except (TypeError, ValueError):
-                                    delay = 0.8 * (2 ** attempt)
-                                time.sleep(delay + random.uniform(0, 0.25))
-                            continue
-
-                        response.encoding = "utf-8"
-                        interaction_status = None
-                        # Requests defaults to a 512-byte line buffer, which can
-                        # delay small SSE chunks before Streamlit can display them.
-                        for line in response.iter_lines(chunk_size=1, decode_unicode=True):
-                            if isinstance(line, bytes):
-                                line = line.decode("utf-8", errors="replace")
-                            if not line or not line.startswith("data:"):
-                                continue
-                            raw_data = line[5:].strip()
-                            if raw_data == "[DONE]":
+    http = get_gemini_http_session()
+    for model_index, model in enumerate(models):
+        request_payload = {
+            "model": model,
+            "system_instruction": system_prompt,
+            "input": interaction_input,
+            "stream": True,
+            "store": False,
+            "service_tier": "standard",
+        }
+        generation_config = {"max_output_tokens": GEMINI_MAX_OUTPUT_TOKENS}
+        if model.startswith(("gemini-3.", "gemini-4.")):
+            generation_config["thinking_level"] = GEMINI_THINKING_LEVEL
+        request_payload["generation_config"] = generation_config
+        for attempt in range(MAX_RETRIES):
+            emitted = False
+            request_started_at = time.perf_counter()
+            first_token_seconds = None
+            generated_characters = 0
+            actual_service_tier = GEMINI_SERVICE_TIER
+            try:
+                with http.post(
+                    f"{API_BASE}?alt=sse",
+                    json=request_payload,
+                    headers=headers,
+                    stream=True,
+                    timeout=(5, GEMINI_READ_TIMEOUT_SECONDS),
+                ) as response:
+                    last_status = response.status_code
+                    actual_service_tier = response.headers.get(
+                        "x-gemini-service-tier", GEMINI_SERVICE_TIER
+                    )
+                    if response.status_code != 200:
+                        message, api_code = api_error_details(response)
+                        if response.status_code not in retryable_statuses:
+                            if model_index + 1 < len(models) and response.status_code in fallback_statuses:
                                 break
+                            raise GeminiAPIError(message, response.status_code, api_code)
+                        if attempt < MAX_RETRIES - 1:
+                            retry_after = response.headers.get("Retry-After")
                             try:
-                                data = json.loads(raw_data)
-                            except ValueError:
-                                continue
-                            if isinstance(data, dict) and data.get("error"):
-                                api_error = data["error"]
-                                message = api_error.get("message", "Gemini returned an error.") if isinstance(api_error, dict) else "Gemini returned an error."
-                                api_code = ""
-                                if isinstance(api_error, dict):
-                                    api_code = api_error.get("status") or ""
-                                api_http_code = api_error.get("code") if isinstance(api_error, dict) else None
-                                try:
-                                    api_http_code = int(api_http_code) if api_http_code is not None else None
-                                except (TypeError, ValueError):
-                                    api_http_code = None
-                                raise GeminiAPIError(str(message), api_http_code, str(api_code)[:80])
-                            event_type = data.get("event_type") if isinstance(data, dict) else None
-                            if event_type == "interaction.completed":
-                                interaction = data.get("interaction", {})
-                                interaction_status = interaction.get("status") if isinstance(interaction, dict) else None
-                                if interaction_status in ("failed", "cancelled", "requires_action"):
-                                    raise GeminiAPIError("Gemini could not complete this interaction.")
-                            if event_type == "step.delta":
-                                delta = data.get("delta", {})
-                                chunk = delta.get("text", "") if isinstance(delta, dict) and delta.get("type") == "text" else ""
-                                if chunk:
-                                    if first_token_seconds is None:
-                                        first_token_seconds = time.perf_counter() - request_started_at
-                                    emitted = True
-                                    generated_characters += len(chunk)
-                                    yield chunk
-                        if not emitted:
-                            raise GeminiAPIError("Gemini returned no text. Please try again.")
-                        LOGGER.info(
-                            "Gemini reply completed model=%s thinking=%s tier=%s first_token_ms=%s total_ms=%s chars=%s",
-                            model,
-                            GEMINI_THINKING_LEVEL,
-                            actual_service_tier,
-                            round(first_token_seconds * 1000) if first_token_seconds is not None else None,
-                            round((time.perf_counter() - request_started_at) * 1000),
-                            generated_characters,
-                        )
-                        return
-                except requests.RequestException as exc:
-                    if emitted:
-                        raise
-                    last_network_error = exc
-                    last_status = None
-                    if attempt < MAX_RETRIES - 1:
-                        time.sleep(min(0.8 * (2 ** attempt), 2.0) + random.uniform(0, 0.25))
-                except GeminiAPIError as exc:
-                    if exc.status_code is not None:
-                        last_status = exc.status_code
-                    if exc.status_code in retryable_statuses and not emitted and attempt < MAX_RETRIES - 1:
-                        time.sleep(min(0.8 * (2 ** attempt), 2.0) + random.uniform(0, 0.25))
+                                delay = max(0.2, min(float(retry_after), 2.5)) if retry_after else 0.8 * (2 ** attempt)
+                            except (TypeError, ValueError):
+                                delay = 0.8 * (2 ** attempt)
+                            time.sleep(delay + random.uniform(0, 0.25))
                         continue
-                    if (
-                        not emitted
-                        and exc.status_code is not None
-                        and model_index + 1 < len(models)
-                        and exc.status_code in fallback_statuses
-                    ):
-                        break
-                    raise
 
+                    response.encoding = "utf-8"
+                    interaction_status = None
+                    # Requests defaults to a 512-byte line buffer, which can
+                    # delay small SSE chunks before Streamlit can display them.
+                    for line in response.iter_lines(chunk_size=1, decode_unicode=True):
+                        if isinstance(line, bytes):
+                            line = line.decode("utf-8", errors="replace")
+                        if not line or not line.startswith("data:"):
+                            continue
+                        raw_data = line[5:].strip()
+                        if raw_data == "[DONE]":
+                            break
+                        try:
+                            data = json.loads(raw_data)
+                        except ValueError:
+                            continue
+                        if isinstance(data, dict) and data.get("error"):
+                            api_error = data["error"]
+                            message = api_error.get("message", "Gemini returned an error.") if isinstance(api_error, dict) else "Gemini returned an error."
+                            api_code = ""
+                            if isinstance(api_error, dict):
+                                api_code = api_error.get("status") or ""
+                            api_http_code = api_error.get("code") if isinstance(api_error, dict) else None
+                            try:
+                                api_http_code = int(api_http_code) if api_http_code is not None else None
+                            except (TypeError, ValueError):
+                                api_http_code = None
+                            raise GeminiAPIError(str(message), api_http_code, str(api_code)[:80])
+                        event_type = data.get("event_type") if isinstance(data, dict) else None
+                        if event_type == "interaction.completed":
+                            interaction = data.get("interaction", {})
+                            interaction_status = interaction.get("status") if isinstance(interaction, dict) else None
+                            if interaction_status in ("failed", "cancelled", "requires_action"):
+                                raise GeminiAPIError("Gemini could not complete this interaction.")
+                        if event_type == "step.delta":
+                            delta = data.get("delta", {})
+                            chunk = delta.get("text", "") if isinstance(delta, dict) and delta.get("type") == "text" else ""
+                            if chunk:
+                                if first_token_seconds is None:
+                                    first_token_seconds = time.perf_counter() - request_started_at
+                                emitted = True
+                                generated_characters += len(chunk)
+                                yield chunk
+                    if not emitted:
+                        raise GeminiAPIError("Gemini returned no text. Please try again.")
+                    LOGGER.info(
+                        "Gemini reply completed model=%s thinking=%s tier=%s first_token_ms=%s total_ms=%s chars=%s",
+                        model,
+                        GEMINI_THINKING_LEVEL,
+                        actual_service_tier,
+                        round(first_token_seconds * 1000) if first_token_seconds is not None else None,
+                        round((time.perf_counter() - request_started_at) * 1000),
+                        generated_characters,
+                    )
+                    return
+            except requests.RequestException as exc:
+                if emitted:
+                    raise
+                last_network_error = exc
+                last_status = None
+                if attempt < MAX_RETRIES - 1:
+                    time.sleep(min(0.8 * (2 ** attempt), 2.0) + random.uniform(0, 0.25))
+            except GeminiAPIError as exc:
+                if exc.status_code is not None:
+                    last_status = exc.status_code
+                if exc.status_code in retryable_statuses and not emitted and attempt < MAX_RETRIES - 1:
+                    time.sleep(min(0.8 * (2 ** attempt), 2.0) + random.uniform(0, 0.25))
+                    continue
+                if (
+                    not emitted
+                    and exc.status_code is not None
+                    and model_index + 1 < len(models)
+                    and exc.status_code in fallback_statuses
+                ):
+                    break
+                raise
     if last_status is not None:
         raise GeminiAPIError("Gemini is temporarily unavailable.", last_status)
     raise GeminiAPIError("Could not connect to Gemini.") from last_network_error
@@ -1131,6 +1051,72 @@ with st.sidebar:
     st.success(f"👋 Chào {st.session_state.nickname}!")
     lang = st.radio("Ngôn ngữ / Language", ["Tiếng Việt 🇻🇳", "English 🇬🇧"], label_visibility="visible")
     is_vi = lang.startswith("Tiếng Việt")
+    queued_support_style = st.session_state.pop("queued_support_style", None)
+    if queued_support_style in {"listen", "untangle", "next_step"}:
+        st.session_state.support_style = queued_support_style
+
+    support_style_labels = (
+        {"listen": "🫶 Chỉ lắng nghe", "untangle": "🧭 Cùng gỡ rối", "next_step": "🌱 Tìm bước nhỏ"}
+        if is_vi
+        else {"listen": "🫶 Just listen", "untangle": "🧭 Help me untangle it", "next_step": "🌱 Find a small step"}
+    )
+    st.radio(
+        "Bạn muốn SkyeChat hỗ trợ thế nào?" if is_vi else "How would you like SkyeChat to help?",
+        options=("listen", "untangle", "next_step"),
+        format_func=lambda value: support_style_labels[value],
+        key="support_style",
+        help=("Bạn có thể đổi lựa chọn bất cứ lúc nào." if is_vi else "You can change this any time."),
+    )
+
+    with st.expander("🌬️ Khoảng thở 1 phút" if is_vi else "🌬️ One-minute breathing space"):
+        st.caption(
+            "Nhịp thở nhẹ nhàng tùy chọn: hít vào 4 giây, thở ra 6 giây. Hãy dừng nếu thấy khó chịu."
+            if is_vi
+            else "An optional gentle pace: breathe in for 4 seconds and out for 6. Stop if it feels uncomfortable."
+        )
+        breathing_active = st.toggle(
+            "Bắt đầu nhịp thở" if is_vi else "Start breathing pace",
+            key="breathing_active",
+        )
+        if breathing_active:
+            breathing_aria = "Hít vào rồi thở ra" if is_vi else "Breathe in, then out"
+            st.markdown(
+                f'<div class="breathing-orb" role="img" aria-label="{breathing_aria}"></div>',
+                unsafe_allow_html=True,
+            )
+            st.caption(
+                "Hít vào 4 giây · Thở ra 6 giây · 6 nhịp" if is_vi
+                else "Breathe in 4 seconds · Breathe out 6 seconds · 6 rounds"
+            )
+
+    mood_labels = (
+        {1: "😔 Nặng nề", 2: "🙁 Hơi khó", 3: "😐 Bình thường", 4: "🙂 Khá ổn", 5: "😊 Dễ chịu"}
+        if is_vi
+        else {1: "😔 Very hard", 2: "🙁 A bit difficult", 3: "😐 Okay", 4: "🙂 Pretty good", 5: "😊 At ease"}
+    )
+    mood_value = st.select_slider(
+        "Check-in cảm xúc · chỉ lưu trong phiên" if is_vi else "Mood check-in · session only",
+        options=(1, 2, 3, 4, 5),
+        format_func=lambda value: mood_labels[value],
+        key="mood_checkin",
+    )
+    if st.button(
+        "Chia sẻ cảm xúc này" if is_vi else "Share this check-in",
+        key="share_mood_checkin",
+        use_container_width=True,
+        disabled=not ai_is_configured(),
+    ):
+        st.session_state.queued_support_style = "listen"
+        st.session_state.queued_chat_prompt = (
+            f"Check-in cảm xúc của mình hôm nay là: {mood_labels[mood_value]}. "
+            "Hãy lắng nghe nhẹ nhàng, không suy đoán hay chẩn đoán, và hỏi mình muốn được hỗ trợ thế nào."
+            if is_vi
+            else f"My mood check-in today is: {mood_labels[mood_value]}. "
+            "Please respond gently without making assumptions or diagnosing, and ask how I would like support."
+        )
+        st.session_state.page_mode = "chat"
+        st.rerun()
+
     if st.session_state.guest_mode:
         st.session_state.page_mode = "chat"
         page_mode = "chat"
@@ -1180,25 +1166,45 @@ with st.sidebar:
         clear_col, keep_col = st.columns(2)
         if clear_col.button("Xóa" if is_vi else "Clear", key="confirm_clear_chat_button", type="primary"):
             st.session_state.messages = []
+            st.session_state.queued_chat_prompt = None
+            st.session_state.queued_support_style = None
             st.session_state.confirm_clear_chat = False
             st.rerun()
         if keep_col.button("Giữ lại" if is_vi else "Keep", key="cancel_clear_chat"):
             st.session_state.confirm_clear_chat = False
             st.rerun()
 
+    if st.session_state.messages:
+        export_role_names = {"user": "Bạn", "assistant": "SkyeChat"} if is_vi else {"user": "You", "assistant": "SkyeChat"}
+        export_text = "\n\n".join(
+            f"## {export_role_names.get(item.get('role'), 'SkyeChat')}\n\n{item.get('content', '')}"
+            for item in st.session_state.messages
+            if isinstance(item, dict) and item.get("role") in export_role_names and isinstance(item.get("content"), str)
+        )
+        st.download_button(
+            "⬇️ Tải hội thoại" if is_vi else "⬇️ Download chat",
+            data=f"# SkyeChat\n\n{export_text}\n",
+            file_name=f"skyechat_chat_{datetime.now(get_app_timezone()).strftime('%Y%m%d')}.md",
+            mime="text/markdown",
+            use_container_width=True,
+            help="Bản tải xuống chỉ được tạo khi bạn bấm nút." if is_vi else "The download is created only when you click.",
+        )
+
     st.divider()
-    safety_notice = (
-        "**Lưu ý an toàn**\n\nSkyeChat hỗ trợ lắng nghe và sơ cứu tâm lý ban đầu; không thay thế chuyên gia. "
-        "Nếu bạn hoặc ai đó đang gặp nguy hiểm, hãy báo ngay cho người lớn đáng tin. "
-        "Trẻ em tại Việt Nam có thể gọi Tổng đài Bảo vệ Trẻ em **111**."
-        if is_vi
-        else "**Safety note**\n\nSkyeChat offers supportive listening and initial wellbeing guidance; it does not replace a professional. "
-        "If you or someone else is in immediate danger, contact a trusted adult or local emergency services now."
-    )
-    st.warning(
-        safety_notice,
-        icon="🫶",
-    )
+    with st.expander("🆘 Cần trợ giúp ngay?" if is_vi else "🆘 Need urgent help?"):
+        st.warning(
+            (
+                "SkyeChat không phải dịch vụ khẩn cấp hay chuyên gia. Nếu bạn có thể bị thương ngay lúc này, hãy đến nơi có người, tránh xa vật có thể gây hại và nhờ một người bạn tin cậy ở bên. Liên hệ dịch vụ khẩn cấp tại nơi bạn sống hoặc đến cơ sở cấp cứu gần nhất."
+                if is_vi
+                else "SkyeChat is not an emergency service or a professional. If you may be hurt right now, move to a place with other people, put distance between yourself and anything you could use to cause harm, and ask someone you trust to stay with you. Contact local emergency services or go to the nearest emergency department."
+            ),
+            icon="🫶",
+        )
+        st.caption(
+            "Nếu bạn chưa gặp nguy hiểm tức thời nhưng cần người thật hỗ trợ, hãy liên hệ chuyên gia sức khỏe tâm thần hoặc một người tin cậy. Đừng chờ chatbot trả lời trong tình huống khẩn cấp."
+            if is_vi
+            else "If there is no immediate danger but you need human support, contact a mental-health professional or someone you trust. Do not wait for a chatbot in an emergency."
+        )
     st.caption(
         "Lịch sử chat của SkyeChat chỉ lưu trong phiên trình duyệt hiện tại."
         if is_vi
@@ -1224,182 +1230,17 @@ if is_authenticated or st.session_state.guest_mode:
             else:
                 st.session_state.guest_mode = False
                 st.session_state.messages = []
+                st.session_state.queued_chat_prompt = None
+                st.session_state.queued_support_style = None
                 st.session_state.page_mode = "chat"
             st.rerun()
 
 
 if is_diary:
-    st.markdown(
-        """
-        <style>
-        [data-testid="stForm"] {
-          background: #e8f1ee;
-          border: 1px solid #cddfda;
-          border-radius: 22px;
-          padding: 1.1rem 1.2rem 1.2rem;
-          box-shadow: 0 12px 28px rgba(57, 111, 69, .07);
-        }
-        [data-testid="stTextInput"] input,
-        [data-testid="stTextArea"] textarea {
-          background: #fbfefb !important;
-          border: 1px solid #c9dfcb !important;
-          border-radius: 13px !important;
-        }
-        [data-testid="stTextInput"] input:focus,
-        [data-testid="stTextArea"] textarea:focus {
-          border-color: #72a97c !important;
-          box-shadow: 0 0 0 3px rgba(79, 155, 107, .13) !important;
-        }
-        [data-testid="stSelectSlider"] [role="slider"] {
-          background: #438d5c !important;
-          border-color: #438d5c !important;
-        }
-        [data-testid="stDownloadButton"] button,
-        [data-testid="stFormSubmitButton"] button {
-          color: #fff !important;
-          border: 1px solid #3f8052 !important;
-          border-radius: 13px !important;
-          background: #477c71 !important;
-          box-shadow: 0 6px 15px rgba(63, 128, 82, .18);
-          transition: transform .18s ease, box-shadow .18s ease;
-        }
-        [data-testid="stDownloadButton"] button:hover,
-        [data-testid="stFormSubmitButton"] button:hover {
-          color: #fff !important;
-          border-color: #2f7045 !important;
-          background: #376a61 !important;
-          transform: translateY(-1px);
-          box-shadow: 0 9px 20px rgba(63, 128, 82, .24);
-        }
-        [data-testid="stExpander"] {
-          border: 1px solid #d4e7d4 !important;
-          border-radius: 16px !important;
-          background: rgba(247, 252, 246, .92) !important;
-        }
-        [data-testid="stExpander"] summary:hover { background: #edf6eb !important; }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    inject_css("journal")
 
 if IS_DARK_THEME:
-    st.markdown(
-        """
-        <style>
-        :root {
-          --sky-ink: #e5efe5;
-          --sky-muted: #b0c1b1;
-          --sky-paper: #141d17;
-        }
-        .stApp {
-          color: #e4eee4 !important;
-      background: #172321 !important;
-        }
-        [data-testid="stAppViewContainer"],
-        [data-testid="stMain"],
-        [data-testid="stMainBlockContainer"] { background-color: #171d1b !important; }
-        [data-testid="stHeader"] { background: rgba(23, 29, 27, .92) !important; }
-        [data-testid="stSidebar"] {
-          background: #202d2b !important;
-          border-right: 1px solid rgba(137, 179, 139, .18) !important;
-        }
-        [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color: #c1d0c2 !important; }
-        h1, h2, h3,
-        [data-testid="stMarkdownContainer"],
-        [data-testid="stMarkdownContainer"] p,
-        [data-testid="stMarkdownContainer"] li,
-        [data-testid="stWidgetLabel"],
-        [data-testid="stWidgetLabel"] p,
-        [data-testid="stSidebar"] label,
-        [data-testid="stMain"] label { color: #e4eee4 !important; }
-        [data-testid="stCaptionContainer"] { color: #afc0b0 !important; }
-        .hero {
-          background: #263b3a !important;
-          border-color: rgba(171, 205, 166, .18) !important;
-          box-shadow: 0 16px 45px rgba(0, 0, 0, .22) !important;
-        }
-        .hero-eyebrow { color: #acd4a8 !important; }
-        .hero-title { color: #eff7ed !important; }
-        .hero-tagline { color: #cfdfd6 !important; background: rgba(35, 52, 47, .82) !important; border-color: rgba(166, 193, 181, .25) !important; }
-        .hero-copy { color: #c5d4c5 !important; }
-        .welcome-card {
-          background: #202e2c !important;
-          border-color: #394d3c !important;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, .18) !important;
-          color: #dce8dc !important;
-        }
-        .welcome-card strong { color: #a9d5ae !important; }
-        .soft-note { color: #afc2b0 !important; }
-        .diary-intro {
-          background: #203331 !important;
-          border-color: #405b44 !important;
-          color: #cfe0d0 !important;
-        }
-        .sidebar-brand {
-          background: #263b36 !important;
-          color: #c9d9ca !important;
-        }
-        .sidebar-brand strong { color: #f0f6ed !important; }
-        div[data-testid="stChatMessage"] {
-          background: #202a22 !important;
-          border-color: #39483b !important;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, .16) !important;
-          color: #e4eee4 !important;
-        }
-        div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
-          background: #2b403c !important;
-          border-color: #4a6046 !important;
-        }
-        div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
-          background: #213532 !important;
-          border-color: #3b5544 !important;
-        }
-        [data-testid="stChatInput"] textarea,
-        [data-testid="stTextInput"] input,
-        [data-testid="stTextArea"] textarea {
-          background: #202a22 !important;
-          color: #edf5ed !important;
-          border-color: #455a47 !important;
-        }
-        [data-testid="stChatInput"] textarea::placeholder,
-        [data-testid="stTextInput"] input::placeholder,
-        [data-testid="stTextArea"] textarea::placeholder { color: #a8b9a9 !important; }
-        [data-testid="stChatInput"] textarea:focus,
-        [data-testid="stTextInput"] input:focus,
-        [data-testid="stTextArea"] textarea:focus {
-          border-color: #85b98b !important;
-          box-shadow: 0 0 0 3px rgba(112, 175, 122, .18) !important;
-        }
-        [data-testid="stForm"] {
-          background: #1e302d !important;
-          border-color: #3c5540 !important;
-          box-shadow: 0 12px 28px rgba(0, 0, 0, .18) !important;
-        }
-        [data-testid="stExpander"] {
-          background: #1d2921 !important;
-          border-color: #3c5140 !important;
-          color: #e2ece2 !important;
-        }
-        [data-testid="stExpander"] summary:hover { background: #29392b !important; }
-        .stButton button {
-          background: #253329 !important;
-          border-color: #4a624b !important;
-          color: #dcebdc !important;
-        }
-        .stButton button:hover { background: #304532 !important; color: #f2f8f1 !important; }
-        [data-testid="stChatInput"] button,
-        [data-testid="stDownloadButton"] button,
-        [data-testid="stFormSubmitButton"] button {
-          background: #477c71 !important;
-          border-color: #75a97a !important;
-          color: #fff !important;
-        }
-        .footer { color: #9bad9d !important; }
-        .teru-bozu { filter: drop-shadow(0 5px 9px rgba(0, 0, 0, .42)); }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    inject_css("dark")
 
 
 # ==============================
@@ -1631,7 +1472,7 @@ else:
                   <strong>Đây là không gian của bạn.</strong><br>
                   Bạn không cần phải tìm đúng từ ngữ. Hãy kể một điều nhỏ đang khiến bạn bận tâm,
                   hoặc chỉ cần nói hôm nay bạn cảm thấy thế nào.
-                  <div class="soft-note" style="margin-top:.7rem">Mình ở đây để lắng nghe, từng chút một.</div>
+                  <div class="soft-note soft-note--spaced">Mình ở đây để lắng nghe, từng chút một.</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -1643,31 +1484,61 @@ else:
                   <strong>This is your space.</strong><br>
                   You do not need to find the perfect words. Share one small thing on your mind,
                   or simply tell me how today feels.
-                  <div class="soft-note" style="margin-top:.7rem">I’m here to listen, one step at a time.</div>
+                  <div class="soft-note soft-note--spaced">I’m here to listen, one step at a time.</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
     for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
+        message_role = message.get("role")
+        if message_role not in ("user", "assistant"):
+            continue
+        avatar = CHAT_AVATAR if message_role == "assistant" else USER_AVATAR
+        with st.chat_message(message_role, avatar=avatar):
             st.markdown(message["content"])
 
+    if not st.session_state.messages:
+        starter_prompts = (
+            [
+                ("🫶 Chỉ cần lắng nghe", "Mình chưa cần lời khuyên, chỉ muốn được lắng nghe một chút."),
+                ("🧭 Gỡ rối suy nghĩ", "Có vài điều đang rối trong đầu mình. Giúp mình nhìn từng phần nhé."),
+                ("🌱 Tìm bước nhỏ", "Mình đang gặp chuyện khó. Cùng tìm một bước nhỏ mình có thể làm nhé."),
+            ]
+            if is_vi
+            else [
+                ("🫶 Just listen", "I do not need advice yet; I would just like to be heard for a moment."),
+                ("🧭 Untangle my thoughts", "A few things feel tangled in my mind. Could you help me look at them one at a time?"),
+                ("🌱 Find a small step", "I am dealing with something hard. Can we find one small step I could take?"),
+            ]
+        )
+        quick_cols = st.columns(3)
+        for index, (label, starter_prompt) in enumerate(starter_prompts):
+            if quick_cols[index].button(label, key=f"quick_start_{index}", use_container_width=True, disabled=not ai_is_configured()):
+                st.session_state.queued_chat_prompt = starter_prompt
+                st.session_state.queued_support_style = ("listen", "untangle", "next_step")[index]
+                st.rerun()
+
+    queued_prompt = st.session_state.pop("queued_chat_prompt", None)
     placeholder = "Hãy chia sẻ với SkyeChat..." if is_vi else "Share your thoughts with SkyeChat..."
-    prompt = st.chat_input(placeholder, max_chars=5000, disabled=not ai_is_configured())
+    chat_input_prompt = st.chat_input(placeholder, max_chars=5000, disabled=not ai_is_configured())
+    prompt = queued_prompt or chat_input_prompt
     if prompt and prompt.strip():
         prompt = prompt.strip()
         candidate_history = [*st.session_state.messages, {"role": "user", "content": prompt}]
         # Keep the user's turn even if Gemini is temporarily unavailable.
         st.session_state.messages = candidate_history[-MAX_STORED_MESSAGES:]
-        with st.chat_message("user"):
+        with st.chat_message("user", avatar=USER_AVATAR):
             st.markdown(prompt)
 
         try:
-            with st.chat_message("assistant"):
+            with st.chat_message("assistant", avatar=CHAT_AVATAR):
                 with st.spinner("SkyeChat đang lắng nghe..." if is_vi else "SkyeChat is listening..."):
                     reply = st.write_stream(
-                        generate_reply(candidate_history, build_system_prompt(is_vi))
+                        generate_reply(
+                            candidate_history,
+                            build_system_prompt(is_vi, st.session_state.support_style),
+                        )
                     )
             if not isinstance(reply, str) or not reply.strip():
                 raise GeminiAPIError("The configured AI provider returned an empty response.")
