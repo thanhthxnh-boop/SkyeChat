@@ -307,6 +307,94 @@ div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
 [data-testid="stMarkdownContainer"] a { color: #456F4E !important; }
 .breathing-orb { background: #79A985 !important; }
 
+
+
+/* Stronger brown panels over the green page background */
+
+:root { --frame-brown: #846854; --panel-brown: #C1B7AA; --panel-brown-light: #D8D0C3; }
+[data-testid="stBottom"], [data-testid="stBottomBlockContainer"] {
+  background: #E8F1E6 !important;
+}
+[data-testid="stBottom"]::before {
+  background: linear-gradient(transparent, #E8F1E6 85%) !important;
+}
+.hero {
+  background: linear-gradient(125deg, #C1B7AA 0%, #A99885 100%) !important;
+  border: 1px solid #846854 !important;
+  box-shadow: 0 16px 42px rgba(83,65,47,.18) !important;
+}
+.hero .hero-eyebrow, .hero .hero-title, .hero .hero-copy { color: #294535 !important; }
+.hero .hero-tagline {
+  color: #34563E !important;
+  background: #E8F1E6 !important;
+  border-color: #846854 !important;
+}
+.welcome-card, .diary-intro, .support-tool-card,
+div[data-testid="stChatMessage"], [data-testid="stExpander"] {
+  background: #D8D0C3 !important;
+  border-color: #846854 !important;
+  color: #294535 !important;
+}
+.sidebar-brand {
+  background: #C1B7AA !important;
+  border: 1px solid #846854 !important;
+  color: #294535 !important;
+}
+.sidebar-brand strong { color: #294535 !important; }
+div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
+  background: #C1B7AA !important;
+  border-color: #846854 !important;
+}
+div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
+  background: #D8D0C3 !important;
+  border-color: #846854 !important;
+}
+[data-testid="stChatInput"] { background: transparent !important; }
+[data-testid="stChatInput"] textarea,
+[data-testid="stTextInput"] input,
+[data-testid="stTextArea"] textarea {
+  background: #F3F0EA !important;
+  border-color: #846854 !important;
+  color: #294535 !important;
+}
+.stButton button {
+  background: #C1B7AA !important;
+  border-color: #846854 !important;
+  color: #294535 !important;
+}
+.stButton button:hover {
+  background: #B1A18F !important;
+  border-color: #735A45 !important;
+  color: #233D2D !important;
+}
+[data-testid="stChatInput"] button,
+[data-testid="stDownloadButton"] button,
+[data-testid="stFormSubmitButton"] button {
+  background: #477A55 !important;
+  border-color: #846854 !important;
+  color: #fff !important;
+}
+
+
+
+/* Thicker brown frames */
+
+[data-testid="stSidebar"] { border-right: 2px solid #846854 !important; }
+.hero { border: 3px solid #846854 !important; }
+.welcome-card, .diary-intro, .sidebar-brand, .support-tool-card,
+div[data-testid="stChatMessage"], [data-testid="stExpander"], [data-testid="stForm"] {
+  border: 2px solid #846854 !important;
+}
+[data-testid="stChatInput"] textarea,
+[data-testid="stTextInput"] input,
+[data-testid="stTextArea"] textarea,
+.stButton button,
+[data-testid="stDownloadButton"] button,
+[data-testid="stFormSubmitButton"] button {
+  border-width: 2px !important;
+  border-color: #846854 !important;
+}
+
 /* ENDSECTION */
 
 /* SECTION:auth */
@@ -324,6 +412,19 @@ div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
 [data-testid="stTextInput"] input { background: #F7FAF5 !important; border-color: #9D8C7C !important; }
 [data-testid="stFormSubmitButton"] button { background: #477A55 !important; border-color: #846854 !important; }
 
+
+
+/* Stronger brown panels over the green page background */
+
+[data-testid="stForm"] { background: #D8D0C3 !important; border-color: #846854 !important; }
+[data-testid="stTextInput"] input { background: #F3F0EA !important; border-color: #846854 !important; }
+[data-testid="stFormSubmitButton"] button { background: #477A55 !important; border-color: #846854 !important; }
+
+
+
+/* Thicker brown frames */
+[data-testid="stForm"] { border: 2px solid #846854 !important; }
+[data-testid="stTextInput"] input, [data-testid="stFormSubmitButton"] button { border-width: 2px !important; border-color: #846854 !important; }
 /* ENDSECTION */
 
 /* SECTION:journal */
@@ -392,6 +493,24 @@ div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
 [data-testid="stDownloadButton"] button,
 [data-testid="stFormSubmitButton"] button { background: #477A55 !important; border-color: #846854 !important; }
 
+
+
+/* Stronger brown panels over the green page background */
+
+[data-testid="stForm"] { background: #D8D0C3 !important; border-color: #846854 !important; }
+[data-testid="stExpander"] { background: #D8D0C3 !important; border-color: #846854 !important; }
+[data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea {
+  background: #F3F0EA !important; border-color: #846854 !important;
+}
+[data-testid="stDownloadButton"] button, [data-testid="stFormSubmitButton"] button {
+  background: #477A55 !important; border-color: #846854 !important;
+}
+
+
+
+/* Thicker brown frames */
+[data-testid="stForm"], [data-testid="stExpander"] { border: 2px solid #846854 !important; }
+[data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea, [data-testid="stDownloadButton"] button, [data-testid="stFormSubmitButton"] button { border-width: 2px !important; border-color: #846854 !important; }
 /* ENDSECTION */
 
 /* SECTION:dark */
@@ -569,5 +688,57 @@ div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
 [data-testid="stExpander"] summary:hover { background: #2B402D !important; }
 [data-testid="stMarkdownContainer"] a { color: #B9D2B7 !important; }
 .footer { color: #B4C3B0 !important; }
+
+
+
+/* Stronger brown panels over the green page background */
+
+[data-testid="stBottom"], [data-testid="stBottomBlockContainer"] { background: #17271D !important; }
+[data-testid="stBottom"]::before { background: linear-gradient(transparent, #17271D 85%) !important; }
+.hero {
+  background: linear-gradient(125deg, #846854 0%, #6F5843 100%) !important;
+  border-color: #C1B7AA !important;
+}
+.hero .hero-eyebrow, .hero .hero-title, .hero .hero-copy { color: #F3F0EA !important; }
+.hero .hero-tagline { background: #243526 !important; border-color: #C1B7AA !important; color: #E8F1E6 !important; }
+.welcome-card, .diary-intro, .support-tool-card,
+div[data-testid="stChatMessage"], [data-testid="stExpander"], [data-testid="stForm"] {
+  background: #4A3D31 !important;
+  border-color: #C1B7AA !important;
+  color: #E8F1E6 !important;
+}
+.sidebar-brand { background: #846854 !important; border-color: #C1B7AA !important; color: #F3F0EA !important; }
+.sidebar-brand strong { color: #F3F0EA !important; }
+div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) { background: #594836 !important; }
+div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) { background: #40372E !important; }
+[data-testid="stChatInput"] { background: transparent !important; }
+[data-testid="stChatInput"] textarea,
+[data-testid="stTextInput"] input,
+[data-testid="stTextArea"] textarea { background: #40372E !important; border-color: #C1B7AA !important; }
+.stButton button { background: #846854 !important; border-color: #C1B7AA !important; color: #F3F0EA !important; }
+.stButton button:hover { background: #9D8C7C !important; border-color: #E0D7CA !important; }
+[data-testid="stChatInput"] button,
+[data-testid="stDownloadButton"] button,
+[data-testid="stFormSubmitButton"] button { background: #477A55 !important; border-color: #C1B7AA !important; }
+
+
+
+/* Thicker brown frames */
+
+[data-testid="stSidebar"] { border-right: 2px solid #C1B7AA !important; }
+.hero { border: 3px solid #C1B7AA !important; }
+.welcome-card, .diary-intro, .sidebar-brand, .support-tool-card,
+div[data-testid="stChatMessage"], [data-testid="stExpander"], [data-testid="stForm"] {
+  border: 2px solid #C1B7AA !important;
+}
+[data-testid="stChatInput"] textarea,
+[data-testid="stTextInput"] input,
+[data-testid="stTextArea"] textarea,
+.stButton button,
+[data-testid="stDownloadButton"] button,
+[data-testid="stFormSubmitButton"] button {
+  border-width: 2px !important;
+  border-color: #C1B7AA !important;
+}
 
 /* ENDSECTION */
