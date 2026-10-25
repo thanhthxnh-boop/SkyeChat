@@ -12,8 +12,17 @@
   --sky-paper: #F7FAF5;
 }
 input[type="radio"] { accent-color: #347A55; }
-html, body, [class*="css"] { font-family: "Lora", "Segoe UI", ui-sans-serif, system-ui, -apple-system, sans-serif; font-size: 16px; line-height: 1.6; }
+html, body, [class*="css"] { font-family: "Lora", Georgia, "Times New Roman", serif; font-size: 16px; line-height: 1.6; }
 [data-testid="stMarkdownContainer"], [data-testid="stWidgetLabel"], textarea, input, button { letter-spacing: .01em; }
+/* Use the same text face throughout Streamlit; keep display headings distinctive. */
+.stApp p, .stApp li, .stApp label, .stApp button, .stApp input, .stApp textarea,
+.stApp small, .stApp summary, .stApp [data-testid="stMarkdownContainer"],
+.stApp [data-testid="stWidgetLabel"], .stApp [data-testid="stCaptionContainer"] {
+  font-family: "Lora", Georgia, "Times New Roman", serif !important;
+}
+.stApp h1, .stApp h2, .stApp h3, .hero-title, .sidebar-brand strong {
+  font-family: "Playfair Display", Georgia, serif !important;
+}
 .stApp {
   color: var(--sky-ink);
   background: #EDF5ED;
@@ -24,6 +33,22 @@ html, body, [class*="css"] { font-family: "Lora", "Segoe UI", ui-sans-serif, sys
   background: #E2F0E4;
   border-right: 1px solid rgba(52,122,85,.20);
 }
+[data-testid="stSidebar"] { min-width: 0; overflow-x: hidden; }
+[data-testid="stSidebar"] [data-testid="stSidebarContent"],
+[data-testid="stSidebar"] [data-testid="stSidebarUserContent"],
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+  box-sizing: border-box; max-width: 100%; min-width: 0;
+}
+[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] { padding-inline: .85rem !important; }
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"],
+[data-testid="stSidebar"] [data-testid="stWidgetLabel"],
+[data-testid="stSidebar"] [data-testid="stTextInput"],
+[data-testid="stSidebar"] [data-testid="stTextArea"],
+[data-testid="stSidebar"] [data-testid="stSelectbox"],
+[data-testid="stSidebar"] [data-testid="stRadio"] {
+  box-sizing: border-box; max-width: 100%; min-width: 0;
+}
+[data-testid="stSidebar"] p, [data-testid="stSidebar"] label { overflow-wrap: anywhere; word-break: normal; }
 [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color: #526B59; }
 h1, h2, h3 { font-family: "Playfair Display", Georgia, serif !important; color: var(--sky-ink); }
 h1 { letter-spacing: -1.2px; }
