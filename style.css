@@ -212,7 +212,7 @@ div[data-testid="stAlert"] { border-radius: 15px; }
 }
 .bg-video-layer video {
   display: block; width: 100%; height: 100%; object-fit: cover;
-  opacity: .18; filter: saturate(.82) brightness(.88);
+  opacity: .42; filter: saturate(.92) brightness(.94);
 }
 body:has(.bg-video-layer) .stApp,
 body:has(.bg-video-layer) [data-testid="stAppViewContainer"],
@@ -667,6 +667,25 @@ div[data-testid="stChatMessage"], [data-testid="stSidebar"] .sidebar-brand,
 /* Final blue frame cleanup */
 [data-testid="stExpander"] { border: 2px solid #6F9FC0 !important; border-radius: 14px !important; box-shadow: none !important; outline: none !important; overflow: hidden; }
 [data-testid="stExpander"] details, [data-testid="stExpander"] summary { border: 0 !important; box-shadow: none !important; outline: none !important; }
+
+/* Let the video show through Streamlit's canvas, header, and composer. Keep
+   the sidebar, cards, and input fields opaque for readability. */
+body:has(.bg-video-layer) .stApp,
+body:has(.bg-video-layer) [data-testid="stAppViewContainer"],
+body:has(.bg-video-layer) [data-testid="stMain"],
+body:has(.bg-video-layer) [data-testid="stMainBlockContainer"],
+body:has(.bg-video-layer) [data-testid="stHeader"],
+body:has(.bg-video-layer) [data-testid="stBottom"],
+body:has(.bg-video-layer) [data-testid="stBottomBlockContainer"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+body:has(.bg-video-layer) [data-testid="stBottom"]::before,
+body:has(.bg-video-layer) [data-testid="stBottom"]::after,
+body:has(.bg-video-layer) [data-testid="stBottomBlockContainer"]::before,
+body:has(.bg-video-layer) [data-testid="stBottomBlockContainer"]::after {
+  background: none !important;
+}
 /* ENDSECTION */
 
 /* SECTION:journal */
@@ -1132,4 +1151,21 @@ div[data-testid="stChatMessage"], [data-testid="stSidebar"] .sidebar-brand,
 [data-testid="stExpander"] details, [data-testid="stExpander"] summary { border: 0 !important; box-shadow: none !important; outline: none !important; }
 [data-testid="stExpander"]:hover { box-shadow: none !important; }
 
+/* Preserve the video background when dark appearance is active too. */
+body:has(.bg-video-layer) .stApp,
+body:has(.bg-video-layer) [data-testid="stAppViewContainer"],
+body:has(.bg-video-layer) [data-testid="stMain"],
+body:has(.bg-video-layer) [data-testid="stMainBlockContainer"],
+body:has(.bg-video-layer) [data-testid="stHeader"],
+body:has(.bg-video-layer) [data-testid="stBottom"],
+body:has(.bg-video-layer) [data-testid="stBottomBlockContainer"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+body:has(.bg-video-layer) [data-testid="stBottom"]::before,
+body:has(.bg-video-layer) [data-testid="stBottom"]::after,
+body:has(.bg-video-layer) [data-testid="stBottomBlockContainer"]::before,
+body:has(.bg-video-layer) [data-testid="stBottomBlockContainer"]::after {
+  background: none !important;
+}
 /* ENDSECTION */
