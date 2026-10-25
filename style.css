@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap');
 
+/* Use native UI fonts so Vietnamese diacritics do not depend on a remote font download. */
 /* SECTION:base */
 :root {
   --primary-color: #347A55;
@@ -13,15 +14,21 @@
 }
 input[type="radio"] { accent-color: #347A55; }
 html, body, [class*="css"] { font-family: "Lora", Georgia, "Times New Roman", serif; font-size: 16px; line-height: 1.6; }
+html, body, [class*="css"] { font-family: system-ui, "Segoe UI", Arial, sans-serif; font-size: 16px; line-height: 1.6; }
 [data-testid="stMarkdownContainer"], [data-testid="stWidgetLabel"], textarea, input, button { letter-spacing: .01em; }
 /* Use the same text face throughout Streamlit; keep display headings distinctive. */
+/* Use one native font for all text and reset spacing that can distort Vietnamese marks. */
 .stApp p, .stApp li, .stApp label, .stApp button, .stApp input, .stApp textarea,
 .stApp small, .stApp summary, .stApp [data-testid="stMarkdownContainer"],
 .stApp [data-testid="stWidgetLabel"], .stApp [data-testid="stCaptionContainer"] {
   font-family: "Lora", Georgia, "Times New Roman", serif !important;
+  font-family: system-ui, "Segoe UI", Arial, sans-serif !important;
+  letter-spacing: normal !important; font-kerning: normal; word-spacing: normal;
 }
 .stApp h1, .stApp h2, .stApp h3, .hero-title, .sidebar-brand strong {
   font-family: "Playfair Display", Georgia, serif !important;
+  font-family: system-ui, "Segoe UI", Arial, sans-serif !important;
+  letter-spacing: normal !important; font-kerning: normal; word-spacing: normal;
 }
 .stApp {
   color: var(--sky-ink);
@@ -52,6 +59,8 @@ html, body, [class*="css"] { font-family: "Lora", Georgia, "Times New Roman", se
 [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color: #526B59; }
 h1, h2, h3 { font-family: "Playfair Display", Georgia, serif !important; color: var(--sky-ink); }
 h1 { letter-spacing: -1.2px; }
+h1, h2, h3 { font-family: system-ui, "Segoe UI", Arial, sans-serif !important; color: var(--sky-ink); }
+h1 { letter-spacing: normal; }
 .hero {
   position: relative; overflow: hidden;
   padding: 1.65rem 2rem 1.55rem;
@@ -78,11 +87,13 @@ h1 { letter-spacing: -1.2px; }
 @keyframes cloud-drift { 0%, 100% { translate: 0 0; } 50% { translate: 0 8px; } }
 .hero-eyebrow { color: #3D8257; font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
 .hero-title { color: #183C2C; font: 700 2.25rem/1.22 "Playfair Display", Georgia, serif; margin: .25rem 0 .45rem; }
+.hero-title { color: #183C2C; font: 700 2.25rem/1.22 system-ui, "Segoe UI", Arial, sans-serif; margin: .25rem 0 .45rem; }
 .hero-tagline {
   display: inline-block; vertical-align: .22em; margin-left: .4rem;
   padding: .33rem .72rem; border: 1px solid rgba(52,122,85,.20);
   border-radius: 999px; background: rgba(255,255,255,.62);
   color: #4A7755; font: 600 .82rem/1.25 "Lora", Georgia, serif;
+  color: #4A7755; font: 600 .82rem/1.25 system-ui, "Segoe UI", Arial, sans-serif;
   letter-spacing: .01em; white-space: normal;
 }
 .hero-copy { color: #566F5B; max-width: 660px; font-size: 1rem; margin: 0; }
@@ -108,6 +119,7 @@ h1 { letter-spacing: -1.2px; }
 }
 .sidebar-brand .cloud { font-size: 2.2rem; }
 .sidebar-brand strong { display: block; font: 700 1.25rem "Playfair Display", Georgia, serif; color: #183C2C; }
+.sidebar-brand strong { display: block; font: 700 1.25rem system-ui, "Segoe UI", Arial, sans-serif; color: #183C2C; }
 .sidebar-brand span { font-size: .82rem; }
 div[data-testid="stChatMessage"] {
   border: 1px solid rgba(72,130,82,.24); border-radius: 20px;
