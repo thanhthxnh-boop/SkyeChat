@@ -649,6 +649,96 @@ div[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] li { margin
   .stApp { animation: none !important; background-position: 50% 50%; }
 }
 
+
+
+/* Compact composer + restored full-screen video background */
+.stApp {
+  isolation: isolate !important;
+  background: transparent !important;
+  background-image: none !important;
+}
+html, body { background: #eaf3f7; }
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"],
+[data-testid="stMainBlockContainer"] { background: transparent !important; }
+[data-testid="stHeader"] {
+  background: rgba(239, 247, 250, .40) !important;
+  backdrop-filter: blur(14px);
+}
+.bg-video-layer {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: -1 !important;
+  display: block !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  background: linear-gradient(135deg, #d6e7ef, #b5d0dd 55%, #e6f0f5) !important;
+}
+.bg-video-layer video {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100vw !important;
+  min-height: 100vh !important;
+  object-fit: cover !important;
+  opacity: .68 !important;
+  filter: saturate(.86) brightness(1.02) !important;
+}
+.bg-video-layer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(125deg, rgba(233, 244, 249, .34), rgba(220, 236, 243, .16) 48%, rgba(235, 244, 248, .35));
+}
+[data-testid="stSidebar"] { background: rgba(224, 238, 245, .72) !important; }
+
+[data-testid="stChatInput"] {
+  width: 100% !important;
+  padding-top: .15rem !important;
+  padding-bottom: .15rem !important;
+}
+[data-testid="stChatInput"] > div {
+  min-height: 64px !important;
+  height: auto !important;
+  padding: .35rem .45rem !important;
+  border-radius: 18px !important;
+  align-items: center !important;
+  gap: .3rem !important;
+  background: rgba(248, 252, 254, .92) !important;
+  border: 1px solid rgba(114, 157, 180, .32) !important;
+  box-shadow: 0 7px 22px rgba(31, 64, 83, .08) !important;
+}
+[data-testid="stChatInput"] textarea {
+  min-height: 42px !important;
+  max-height: 160px !important;
+  padding: .55rem .7rem !important;
+  line-height: 1.4 !important;
+  font-size: .96rem !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+  border-radius: 13px !important;
+}
+[data-testid="stChatInput"] button {
+  align-self: center !important;
+  min-width: 2.35rem !important;
+  min-height: 2.35rem !important;
+  width: 2.35rem !important;
+  height: 2.35rem !important;
+  margin: .05rem !important;
+  border-radius: 12px !important;
+}
+[data-testid="stChatInput"]:focus-within > div {
+  border-color: rgba(71, 125, 153, .52) !important;
+  box-shadow: 0 0 0 3px rgba(71, 125, 153, .11), 0 9px 24px rgba(31, 64, 83, .1) !important;
+}
+@media (max-width: 720px) {
+  [data-testid="stChatInput"] > div { min-height: 58px !important; padding: .25rem .35rem !important; }
+  [data-testid="stChatInput"] textarea { min-height: 40px !important; padding: .45rem .55rem !important; font-size: .92rem !important; }
+  [data-testid="stChatInput"] button { min-width: 2.2rem !important; min-height: 2.2rem !important; width: 2.2rem !important; height: 2.2rem !important; }
+}
+
 /* ENDSECTION */
 
 /* SECTION:auth */
@@ -839,4 +929,21 @@ div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
   animation: sky-background-drift 28s ease-in-out infinite !important;
 }
 @media (prefers-reduced-motion: reduce) { .stApp { animation: none !important; background-position: 50% 50% !important; } }
+
+
+/* Keep the video visible in dark mode while preserving readable surfaces. */
+.stApp { background: transparent !important; background-image: none !important; isolation: isolate !important; }
+html, body { background: #10191f !important; }
+[data-testid="stAppViewContainer"], [data-testid="stMain"],
+[data-testid="stMainBlockContainer"] { background: transparent !important; }
+.bg-video-layer { background: linear-gradient(135deg, #10191f, #182933 58%, #111d25) !important; }
+.bg-video-layer video { opacity: .48 !important; filter: saturate(.72) brightness(.78) !important; }
+.bg-video-layer::after { background: linear-gradient(125deg, rgba(8, 16, 22, .42), rgba(13, 25, 33, .20) 48%, rgba(8, 16, 22, .48)) !important; }
+[data-testid="stHeader"] { background: rgba(16, 25, 31, .42) !important; }
+[data-testid="stSidebar"] { background: rgba(18, 31, 40, .78) !important; }
+[data-testid="stChatInput"] > div { min-height: 64px !important; padding: .35rem .45rem !important; background: rgba(23, 36, 46, .94) !important; border-color: rgba(139, 185, 207, .28) !important; }
+[data-testid="stChatInput"] textarea { min-height: 42px !important; height: 42px !important; max-height: 160px !important; padding: .55rem .7rem !important; background: transparent !important; color: #edf6fa !important; }
+[data-testid="stChatInput"] textarea::placeholder { color: #91a6b2 !important; }
+@media (max-width: 720px) { [data-testid="stChatInput"] > div { min-height: 58px !important; } [data-testid="stChatInput"] textarea { min-height: 40px !important; } }
+
 /* ENDSECTION */
