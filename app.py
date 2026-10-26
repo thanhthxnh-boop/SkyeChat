@@ -301,6 +301,44 @@ def build_system_prompt(is_vi, support_style="listen"):
     base_prompt = SYSTEM_PROMPT_VI if is_vi else SYSTEM_PROMPT_EN
     guide = SKYECHAT_GUIDE_VI if is_vi else SKYECHAT_GUIDE_EN
     guide_title = "HƯỚNG DẪN RIÊNG" if is_vi else "CUSTOM GUIDE"
+
+    support_styles = {
+        "listen": (
+            "Ưu tiên lắng nghe và phản ánh ngắn điều người dùng vừa chia sẻ; không vội đưa lời khuyên trừ khi họ muốn."
+            if is_vi
+            else "Prioritize listening and briefly reflecting what the user shared; do not rush into advice unless they ask."
+        ),
+        "untangle": (
+            "Giúp người dùng tách sự việc, suy nghĩ và cảm xúc; mỗi lượt chỉ đưa một câu hỏi gợi mở khi hữu ích."
+            if is_vi
+            else "Help the user separate events, thoughts, and feelings; ask at most one useful, gentle question per turn."
+        ),
+        "next_step": (
+            "Khi phù hợp, cùng người dùng tìm một bước nhỏ, cụ thể và do họ tự chọn; không áp đặt kế hoạch."
+            if is_vi
+            else "When useful, help the user choose one small, concrete next step; never impose a plan."
+        ),
+    }
+
+    style_instruction = support_styles.get(
+        support_style,
+        support_styles["listen"],
+    )
+    preference_title = (
+        "CÁCH ĐỒNG HÀNH NGƯỜI DÙNG CHỌN"
+        if is_vi
+        else "USER'S CHOSEN SUPPORT STYLE"
+    )
+
+    return (
+        f"{base_prompt}\n\n"
+        f"{guide_title}:\n{guide}\n\n"
+        f"{preference_title}:\n{style_instruction}"
+    )
+    """Build a short, user-led support prompt for the selected conversation style."""
+    base_prompt = SYSTEM_PROMPT_VI if is_vi else SYSTEM_PROMPT_EN
+    guide = SKYECHAT_GUIDE_VI if is_vi else SKYECHAT_GUIDE_EN
+    guide_title = "HƯỚNG DẪN RIÊNG" if is_vi else "CUSTOM GUIDE"
     support_styles = {
         "listen": (
             "Ưu tiên lắng nghe và phản ánh ngắn điều người dùng vừa chia sẻ; không vội đưa lời khuyên trừ khi họ muốn."
