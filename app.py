@@ -1828,3 +1828,42 @@ st.markdown(
     f'<div class="footer">{footer_text}</div>',
     unsafe_allow_html=True,
 )
+import streamlit as st
+
+dark_mode = st.sidebar.toggle("🌙 Chế độ tối", key="dark_mode")
+
+LIGHT_VIDEO = "https://res.cloudinary.com/hvdshzdc/video/upload/v1793030412/17592628-uhd_3840_2160_24fps.mp4"
+DARK_VIDEO = "https://res.cloudinary.com/hvdshzdc/video/upload/v1793032204/10596022-hd_3840_2160_24fps.mp4"
+
+video_url = DARK_VIDEO if dark_mode else LIGHT_VIDEO
+
+st.markdown(
+    f"""
+    <style>
+    #rain-background {{
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover;
+        opacity: 0.35;
+        pointer-events: none;
+        z-index: 0;
+    }}
+
+    [data-testid="stAppViewContainer"] {{
+        background: transparent !important;
+    }}
+
+    .main .block-container {{
+        position: relative;
+        z-index: 1;
+    }}
+    </style>
+
+    <video id="rain-background" autoplay muted loop playsinline>
+        <source src="{video_url}" type="video/mp4">
+    </video>
+    """,
+    unsafe_allow_html=True,
+)
