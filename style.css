@@ -606,6 +606,120 @@ div[data-testid="stChatMessage"], [data-testid="stSidebar"] .sidebar-brand,
 [data-testid="stRadio"] [data-baseweb="radio"] > div:first-child { border-color: #6F9FC0 !important; }
 [data-testid="stRadio"] [data-baseweb="radio"] > div:first-child > div { background-color: #4B8FB1 !important; }
 
+
+/* Video-first mode: remove every large opaque surface only while a video exists. */
+body:has(.bg-video-layer) .stApp,
+body:has(.bg-video-layer) [data-testid="stAppViewContainer"],
+body:has(.bg-video-layer) [data-testid="stMain"],
+body:has(.bg-video-layer) [data-testid="stMainBlockContainer"],
+body:has(.bg-video-layer) [data-testid="stHeader"],
+body:has(.bg-video-layer) [data-testid="stBottom"],
+body:has(.bg-video-layer) [data-testid="stBottomBlockContainer"],
+body:has(.bg-video-layer) [data-testid="stSidebar"],
+body:has(.bg-video-layer) [data-testid="stSidebarContent"],
+body:has(.bg-video-layer) [data-testid="stSidebarUserContent"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+body:has(.bg-video-layer) .hero,
+body:has(.bg-video-layer) .welcome-card,
+body:has(.bg-video-layer) .diary-intro,
+body:has(.bg-video-layer) .sidebar-brand,
+body:has(.bg-video-layer) .support-tool-card,
+body:has(.bg-video-layer) .breathing-orb,
+body:has(.bg-video-layer) div[data-testid="stChatMessage"],
+body:has(.bg-video-layer) [data-testid="stForm"],
+body:has(.bg-video-layer) [data-testid="stExpander"],
+body:has(.bg-video-layer) [data-testid="stAlert"],
+body:has(.bg-video-layer) [data-testid="stVerticalBlockBorderWrapper"],
+body:has(.bg-video-layer) [data-testid="stChatInput"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+body:has(.bg-video-layer) [data-testid="stChatInput"] textarea,
+body:has(.bg-video-layer) [data-testid="stTextInput"] input,
+body:has(.bg-video-layer) [data-testid="stTextArea"] textarea,
+body:has(.bg-video-layer) [data-testid="stNumberInput"] input,
+body:has(.bg-video-layer) [data-testid="stSelectbox"] [data-baseweb="select"] > div,
+body:has(.bg-video-layer) [data-testid="stMultiSelect"] [data-baseweb="select"] > div,
+body:has(.bg-video-layer) .stButton button,
+body:has(.bg-video-layer) [data-testid="stChatInput"] button,
+body:has(.bg-video-layer) [data-testid="stDownloadButton"] button,
+body:has(.bg-video-layer) [data-testid="stFormSubmitButton"] button {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body:has(.bg-video-layer) [data-testid="stBottom"]::before,
+body:has(.bg-video-layer) [data-testid="stBottom"]::after,
+body:has(.bg-video-layer) [data-testid="stBottomBlockContainer"]::before,
+body:has(.bg-video-layer) [data-testid="stBottomBlockContainer"]::after {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body:has(.bg-video-layer) .hero,
+body:has(.bg-video-layer) .welcome-card,
+body:has(.bg-video-layer) .diary-intro,
+body:has(.bg-video-layer) .sidebar-brand,
+body:has(.bg-video-layer) .support-tool-card,
+body:has(.bg-video-layer) div[data-testid="stChatMessage"],
+body:has(.bg-video-layer) [data-testid="stForm"],
+body:has(.bg-video-layer) [data-testid="stExpander"],
+body:has(.bg-video-layer) [data-testid="stAlert"],
+body:has(.bg-video-layer) [data-testid="stChatInput"] textarea,
+body:has(.bg-video-layer) [data-testid="stTextInput"] input,
+body:has(.bg-video-layer) [data-testid="stTextArea"] textarea,
+body:has(.bg-video-layer) .stButton button,
+body:has(.bg-video-layer) [data-testid="stChatInput"] button,
+body:has(.bg-video-layer) [data-testid="stDownloadButton"] button,
+body:has(.bg-video-layer) [data-testid="stFormSubmitButton"] button {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Keep transparent controls legible and easy to locate over moving footage. */
+body:has(.bg-video-layer) .hero,
+body:has(.bg-video-layer) .welcome-card,
+body:has(.bg-video-layer) .diary-intro,
+body:has(.bg-video-layer) .sidebar-brand,
+body:has(.bg-video-layer) .support-tool-card,
+body:has(.bg-video-layer) div[data-testid="stChatMessage"],
+body:has(.bg-video-layer) [data-testid="stForm"],
+body:has(.bg-video-layer) [data-testid="stExpander"],
+body:has(.bg-video-layer) [data-testid="stAlert"],
+body:has(.bg-video-layer) [data-testid="stChatInput"] textarea,
+body:has(.bg-video-layer) [data-testid="stTextInput"] input,
+body:has(.bg-video-layer) [data-testid="stTextArea"] textarea,
+body:has(.bg-video-layer) .stButton button,
+body:has(.bg-video-layer) [data-testid="stChatInput"] button,
+body:has(.bg-video-layer) [data-testid="stDownloadButton"] button,
+body:has(.bg-video-layer) [data-testid="stFormSubmitButton"] button {
+  border-color: rgba(111, 159, 192, .82) !important;
+}
+/* Light mode text halo for contrast on both bright and shaded video frames. */
+body:has(.bg-video-layer) .stApp,
+body:has(.bg-video-layer) [data-testid="stSidebar"],
+body:has(.bg-video-layer) .hero,
+body:has(.bg-video-layer) .hero *,
+body:has(.bg-video-layer) .welcome-card,
+body:has(.bg-video-layer) .diary-intro,
+body:has(.bg-video-layer) .sidebar-brand,
+body:has(.bg-video-layer) .support-tool-card,
+body:has(.bg-video-layer) div[data-testid="stChatMessage"],
+body:has(.bg-video-layer) [data-testid="stWidgetLabel"],
+body:has(.bg-video-layer) [data-testid="stCaptionContainer"],
+body:has(.bg-video-layer) .footer {
+  text-shadow: 0 1px 2px rgba(255,255,255,.88), 0 0 10px rgba(255,255,255,.38);
+}
 /* ENDSECTION */
 
 /* SECTION:auth */
@@ -668,8 +782,7 @@ div[data-testid="stChatMessage"], [data-testid="stSidebar"] .sidebar-brand,
 [data-testid="stExpander"] { border: 2px solid #6F9FC0 !important; border-radius: 14px !important; box-shadow: none !important; outline: none !important; overflow: hidden; }
 [data-testid="stExpander"] details, [data-testid="stExpander"] summary { border: 0 !important; box-shadow: none !important; outline: none !important; }
 
-/* Let the video show through Streamlit's canvas, header, and composer. Keep
-   the sidebar, cards, and input fields opaque for readability. */
+/* With video enabled, the canvas and UI surfaces reveal the video layer. */
 body:has(.bg-video-layer) .stApp,
 body:has(.bg-video-layer) [data-testid="stAppViewContainer"],
 body:has(.bg-video-layer) [data-testid="stMain"],
@@ -685,6 +798,120 @@ body:has(.bg-video-layer) [data-testid="stBottom"]::after,
 body:has(.bg-video-layer) [data-testid="stBottomBlockContainer"]::before,
 body:has(.bg-video-layer) [data-testid="stBottomBlockContainer"]::after {
   background: none !important;
+}
+
+/* Video-first mode: remove every large opaque surface only while a video exists. */
+body:has(.bg-video-layer) .stApp,
+body:has(.bg-video-layer) [data-testid="stAppViewContainer"],
+body:has(.bg-video-layer) [data-testid="stMain"],
+body:has(.bg-video-layer) [data-testid="stMainBlockContainer"],
+body:has(.bg-video-layer) [data-testid="stHeader"],
+body:has(.bg-video-layer) [data-testid="stBottom"],
+body:has(.bg-video-layer) [data-testid="stBottomBlockContainer"],
+body:has(.bg-video-layer) [data-testid="stSidebar"],
+body:has(.bg-video-layer) [data-testid="stSidebarContent"],
+body:has(.bg-video-layer) [data-testid="stSidebarUserContent"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+body:has(.bg-video-layer) .hero,
+body:has(.bg-video-layer) .welcome-card,
+body:has(.bg-video-layer) .diary-intro,
+body:has(.bg-video-layer) .sidebar-brand,
+body:has(.bg-video-layer) .support-tool-card,
+body:has(.bg-video-layer) .breathing-orb,
+body:has(.bg-video-layer) div[data-testid="stChatMessage"],
+body:has(.bg-video-layer) [data-testid="stForm"],
+body:has(.bg-video-layer) [data-testid="stExpander"],
+body:has(.bg-video-layer) [data-testid="stAlert"],
+body:has(.bg-video-layer) [data-testid="stVerticalBlockBorderWrapper"],
+body:has(.bg-video-layer) [data-testid="stChatInput"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+body:has(.bg-video-layer) [data-testid="stChatInput"] textarea,
+body:has(.bg-video-layer) [data-testid="stTextInput"] input,
+body:has(.bg-video-layer) [data-testid="stTextArea"] textarea,
+body:has(.bg-video-layer) [data-testid="stNumberInput"] input,
+body:has(.bg-video-layer) [data-testid="stSelectbox"] [data-baseweb="select"] > div,
+body:has(.bg-video-layer) [data-testid="stMultiSelect"] [data-baseweb="select"] > div,
+body:has(.bg-video-layer) .stButton button,
+body:has(.bg-video-layer) [data-testid="stChatInput"] button,
+body:has(.bg-video-layer) [data-testid="stDownloadButton"] button,
+body:has(.bg-video-layer) [data-testid="stFormSubmitButton"] button {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body:has(.bg-video-layer) [data-testid="stBottom"]::before,
+body:has(.bg-video-layer) [data-testid="stBottom"]::after,
+body:has(.bg-video-layer) [data-testid="stBottomBlockContainer"]::before,
+body:has(.bg-video-layer) [data-testid="stBottomBlockContainer"]::after {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body:has(.bg-video-layer) .hero,
+body:has(.bg-video-layer) .welcome-card,
+body:has(.bg-video-layer) .diary-intro,
+body:has(.bg-video-layer) .sidebar-brand,
+body:has(.bg-video-layer) .support-tool-card,
+body:has(.bg-video-layer) div[data-testid="stChatMessage"],
+body:has(.bg-video-layer) [data-testid="stForm"],
+body:has(.bg-video-layer) [data-testid="stExpander"],
+body:has(.bg-video-layer) [data-testid="stAlert"],
+body:has(.bg-video-layer) [data-testid="stChatInput"] textarea,
+body:has(.bg-video-layer) [data-testid="stTextInput"] input,
+body:has(.bg-video-layer) [data-testid="stTextArea"] textarea,
+body:has(.bg-video-layer) .stButton button,
+body:has(.bg-video-layer) [data-testid="stChatInput"] button,
+body:has(.bg-video-layer) [data-testid="stDownloadButton"] button,
+body:has(.bg-video-layer) [data-testid="stFormSubmitButton"] button {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Keep transparent controls legible and easy to locate over moving footage. */
+body:has(.bg-video-layer) .hero,
+body:has(.bg-video-layer) .welcome-card,
+body:has(.bg-video-layer) .diary-intro,
+body:has(.bg-video-layer) .sidebar-brand,
+body:has(.bg-video-layer) .support-tool-card,
+body:has(.bg-video-layer) div[data-testid="stChatMessage"],
+body:has(.bg-video-layer) [data-testid="stForm"],
+body:has(.bg-video-layer) [data-testid="stExpander"],
+body:has(.bg-video-layer) [data-testid="stAlert"],
+body:has(.bg-video-layer) [data-testid="stChatInput"] textarea,
+body:has(.bg-video-layer) [data-testid="stTextInput"] input,
+body:has(.bg-video-layer) [data-testid="stTextArea"] textarea,
+body:has(.bg-video-layer) .stButton button,
+body:has(.bg-video-layer) [data-testid="stChatInput"] button,
+body:has(.bg-video-layer) [data-testid="stDownloadButton"] button,
+body:has(.bg-video-layer) [data-testid="stFormSubmitButton"] button {
+  border-color: rgba(111, 159, 192, .82) !important;
+}
+/* Light mode text halo for contrast on both bright and shaded video frames. */
+body:has(.bg-video-layer) .stApp,
+body:has(.bg-video-layer) [data-testid="stSidebar"],
+body:has(.bg-video-layer) .hero,
+body:has(.bg-video-layer) .hero *,
+body:has(.bg-video-layer) .welcome-card,
+body:has(.bg-video-layer) .diary-intro,
+body:has(.bg-video-layer) .sidebar-brand,
+body:has(.bg-video-layer) .support-tool-card,
+body:has(.bg-video-layer) div[data-testid="stChatMessage"],
+body:has(.bg-video-layer) [data-testid="stWidgetLabel"],
+body:has(.bg-video-layer) [data-testid="stCaptionContainer"],
+body:has(.bg-video-layer) .footer {
+  text-shadow: 0 1px 2px rgba(255,255,255,.88), 0 0 10px rgba(255,255,255,.38);
 }
 /* ENDSECTION */
 
@@ -832,6 +1059,120 @@ body:has(.bg-video-layer) [data-testid="stBottomBlockContainer"]::after {
 @media (max-width: 700px) {
   .hero::before { top: 1% !important; right: 2% !important; font-size: 3.8rem; text-shadow: -48px 42px 0 rgba(246,251,254,.52); }
   .hero::after { display: none; }
+}
+
+/* Video-first mode: remove every large opaque surface only while a video exists. */
+body:has(.bg-video-layer) .stApp,
+body:has(.bg-video-layer) [data-testid="stAppViewContainer"],
+body:has(.bg-video-layer) [data-testid="stMain"],
+body:has(.bg-video-layer) [data-testid="stMainBlockContainer"],
+body:has(.bg-video-layer) [data-testid="stHeader"],
+body:has(.bg-video-layer) [data-testid="stBottom"],
+body:has(.bg-video-layer) [data-testid="stBottomBlockContainer"],
+body:has(.bg-video-layer) [data-testid="stSidebar"],
+body:has(.bg-video-layer) [data-testid="stSidebarContent"],
+body:has(.bg-video-layer) [data-testid="stSidebarUserContent"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+body:has(.bg-video-layer) .hero,
+body:has(.bg-video-layer) .welcome-card,
+body:has(.bg-video-layer) .diary-intro,
+body:has(.bg-video-layer) .sidebar-brand,
+body:has(.bg-video-layer) .support-tool-card,
+body:has(.bg-video-layer) .breathing-orb,
+body:has(.bg-video-layer) div[data-testid="stChatMessage"],
+body:has(.bg-video-layer) [data-testid="stForm"],
+body:has(.bg-video-layer) [data-testid="stExpander"],
+body:has(.bg-video-layer) [data-testid="stAlert"],
+body:has(.bg-video-layer) [data-testid="stVerticalBlockBorderWrapper"],
+body:has(.bg-video-layer) [data-testid="stChatInput"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+body:has(.bg-video-layer) [data-testid="stChatInput"] textarea,
+body:has(.bg-video-layer) [data-testid="stTextInput"] input,
+body:has(.bg-video-layer) [data-testid="stTextArea"] textarea,
+body:has(.bg-video-layer) [data-testid="stNumberInput"] input,
+body:has(.bg-video-layer) [data-testid="stSelectbox"] [data-baseweb="select"] > div,
+body:has(.bg-video-layer) [data-testid="stMultiSelect"] [data-baseweb="select"] > div,
+body:has(.bg-video-layer) .stButton button,
+body:has(.bg-video-layer) [data-testid="stChatInput"] button,
+body:has(.bg-video-layer) [data-testid="stDownloadButton"] button,
+body:has(.bg-video-layer) [data-testid="stFormSubmitButton"] button {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body:has(.bg-video-layer) [data-testid="stBottom"]::before,
+body:has(.bg-video-layer) [data-testid="stBottom"]::after,
+body:has(.bg-video-layer) [data-testid="stBottomBlockContainer"]::before,
+body:has(.bg-video-layer) [data-testid="stBottomBlockContainer"]::after {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body:has(.bg-video-layer) .hero,
+body:has(.bg-video-layer) .welcome-card,
+body:has(.bg-video-layer) .diary-intro,
+body:has(.bg-video-layer) .sidebar-brand,
+body:has(.bg-video-layer) .support-tool-card,
+body:has(.bg-video-layer) div[data-testid="stChatMessage"],
+body:has(.bg-video-layer) [data-testid="stForm"],
+body:has(.bg-video-layer) [data-testid="stExpander"],
+body:has(.bg-video-layer) [data-testid="stAlert"],
+body:has(.bg-video-layer) [data-testid="stChatInput"] textarea,
+body:has(.bg-video-layer) [data-testid="stTextInput"] input,
+body:has(.bg-video-layer) [data-testid="stTextArea"] textarea,
+body:has(.bg-video-layer) .stButton button,
+body:has(.bg-video-layer) [data-testid="stChatInput"] button,
+body:has(.bg-video-layer) [data-testid="stDownloadButton"] button,
+body:has(.bg-video-layer) [data-testid="stFormSubmitButton"] button {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Keep transparent controls legible and easy to locate over moving footage. */
+body:has(.bg-video-layer) .hero,
+body:has(.bg-video-layer) .welcome-card,
+body:has(.bg-video-layer) .diary-intro,
+body:has(.bg-video-layer) .sidebar-brand,
+body:has(.bg-video-layer) .support-tool-card,
+body:has(.bg-video-layer) div[data-testid="stChatMessage"],
+body:has(.bg-video-layer) [data-testid="stForm"],
+body:has(.bg-video-layer) [data-testid="stExpander"],
+body:has(.bg-video-layer) [data-testid="stAlert"],
+body:has(.bg-video-layer) [data-testid="stChatInput"] textarea,
+body:has(.bg-video-layer) [data-testid="stTextInput"] input,
+body:has(.bg-video-layer) [data-testid="stTextArea"] textarea,
+body:has(.bg-video-layer) .stButton button,
+body:has(.bg-video-layer) [data-testid="stChatInput"] button,
+body:has(.bg-video-layer) [data-testid="stDownloadButton"] button,
+body:has(.bg-video-layer) [data-testid="stFormSubmitButton"] button {
+  border-color: rgba(111, 159, 192, .82) !important;
+}
+/* Light mode text halo for contrast on both bright and shaded video frames. */
+body:has(.bg-video-layer) .stApp,
+body:has(.bg-video-layer) [data-testid="stSidebar"],
+body:has(.bg-video-layer) .hero,
+body:has(.bg-video-layer) .hero *,
+body:has(.bg-video-layer) .welcome-card,
+body:has(.bg-video-layer) .diary-intro,
+body:has(.bg-video-layer) .sidebar-brand,
+body:has(.bg-video-layer) .support-tool-card,
+body:has(.bg-video-layer) div[data-testid="stChatMessage"],
+body:has(.bg-video-layer) [data-testid="stWidgetLabel"],
+body:has(.bg-video-layer) [data-testid="stCaptionContainer"],
+body:has(.bg-video-layer) .footer {
+  text-shadow: 0 1px 2px rgba(255,255,255,.88), 0 0 10px rgba(255,255,255,.38);
 }
 /* ENDSECTION */
 
@@ -1199,4 +1540,118 @@ body:has(.bg-video-layer) [data-testid="stBottomBlockContainer"]::after {
 }
 .hero { background: #315A70 !important; }
 .hero::before, .hero::after { color: #EAF6FC !important; }
+
+/* Video-first mode: remove every large opaque surface only while a video exists. */
+body:has(.bg-video-layer) .stApp,
+body:has(.bg-video-layer) [data-testid="stAppViewContainer"],
+body:has(.bg-video-layer) [data-testid="stMain"],
+body:has(.bg-video-layer) [data-testid="stMainBlockContainer"],
+body:has(.bg-video-layer) [data-testid="stHeader"],
+body:has(.bg-video-layer) [data-testid="stBottom"],
+body:has(.bg-video-layer) [data-testid="stBottomBlockContainer"],
+body:has(.bg-video-layer) [data-testid="stSidebar"],
+body:has(.bg-video-layer) [data-testid="stSidebarContent"],
+body:has(.bg-video-layer) [data-testid="stSidebarUserContent"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+body:has(.bg-video-layer) .hero,
+body:has(.bg-video-layer) .welcome-card,
+body:has(.bg-video-layer) .diary-intro,
+body:has(.bg-video-layer) .sidebar-brand,
+body:has(.bg-video-layer) .support-tool-card,
+body:has(.bg-video-layer) .breathing-orb,
+body:has(.bg-video-layer) div[data-testid="stChatMessage"],
+body:has(.bg-video-layer) [data-testid="stForm"],
+body:has(.bg-video-layer) [data-testid="stExpander"],
+body:has(.bg-video-layer) [data-testid="stAlert"],
+body:has(.bg-video-layer) [data-testid="stVerticalBlockBorderWrapper"],
+body:has(.bg-video-layer) [data-testid="stChatInput"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+body:has(.bg-video-layer) [data-testid="stChatInput"] textarea,
+body:has(.bg-video-layer) [data-testid="stTextInput"] input,
+body:has(.bg-video-layer) [data-testid="stTextArea"] textarea,
+body:has(.bg-video-layer) [data-testid="stNumberInput"] input,
+body:has(.bg-video-layer) [data-testid="stSelectbox"] [data-baseweb="select"] > div,
+body:has(.bg-video-layer) [data-testid="stMultiSelect"] [data-baseweb="select"] > div,
+body:has(.bg-video-layer) .stButton button,
+body:has(.bg-video-layer) [data-testid="stChatInput"] button,
+body:has(.bg-video-layer) [data-testid="stDownloadButton"] button,
+body:has(.bg-video-layer) [data-testid="stFormSubmitButton"] button {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body:has(.bg-video-layer) [data-testid="stBottom"]::before,
+body:has(.bg-video-layer) [data-testid="stBottom"]::after,
+body:has(.bg-video-layer) [data-testid="stBottomBlockContainer"]::before,
+body:has(.bg-video-layer) [data-testid="stBottomBlockContainer"]::after {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body:has(.bg-video-layer) .hero,
+body:has(.bg-video-layer) .welcome-card,
+body:has(.bg-video-layer) .diary-intro,
+body:has(.bg-video-layer) .sidebar-brand,
+body:has(.bg-video-layer) .support-tool-card,
+body:has(.bg-video-layer) div[data-testid="stChatMessage"],
+body:has(.bg-video-layer) [data-testid="stForm"],
+body:has(.bg-video-layer) [data-testid="stExpander"],
+body:has(.bg-video-layer) [data-testid="stAlert"],
+body:has(.bg-video-layer) [data-testid="stChatInput"] textarea,
+body:has(.bg-video-layer) [data-testid="stTextInput"] input,
+body:has(.bg-video-layer) [data-testid="stTextArea"] textarea,
+body:has(.bg-video-layer) .stButton button,
+body:has(.bg-video-layer) [data-testid="stChatInput"] button,
+body:has(.bg-video-layer) [data-testid="stDownloadButton"] button,
+body:has(.bg-video-layer) [data-testid="stFormSubmitButton"] button {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Keep transparent controls legible and easy to locate over moving footage. */
+body:has(.bg-video-layer) .hero,
+body:has(.bg-video-layer) .welcome-card,
+body:has(.bg-video-layer) .diary-intro,
+body:has(.bg-video-layer) .sidebar-brand,
+body:has(.bg-video-layer) .support-tool-card,
+body:has(.bg-video-layer) div[data-testid="stChatMessage"],
+body:has(.bg-video-layer) [data-testid="stForm"],
+body:has(.bg-video-layer) [data-testid="stExpander"],
+body:has(.bg-video-layer) [data-testid="stAlert"],
+body:has(.bg-video-layer) [data-testid="stChatInput"] textarea,
+body:has(.bg-video-layer) [data-testid="stTextInput"] input,
+body:has(.bg-video-layer) [data-testid="stTextArea"] textarea,
+body:has(.bg-video-layer) .stButton button,
+body:has(.bg-video-layer) [data-testid="stChatInput"] button,
+body:has(.bg-video-layer) [data-testid="stDownloadButton"] button,
+body:has(.bg-video-layer) [data-testid="stFormSubmitButton"] button {
+  border-color: rgba(111, 159, 192, .82) !important;
+}
+/* Dark mode text halo for contrast over changing video brightness. */
+body:has(.bg-video-layer) .stApp,
+body:has(.bg-video-layer) [data-testid="stSidebar"],
+body:has(.bg-video-layer) .hero,
+body:has(.bg-video-layer) .hero *,
+body:has(.bg-video-layer) .welcome-card,
+body:has(.bg-video-layer) .diary-intro,
+body:has(.bg-video-layer) .sidebar-brand,
+body:has(.bg-video-layer) .support-tool-card,
+body:has(.bg-video-layer) div[data-testid="stChatMessage"],
+body:has(.bg-video-layer) [data-testid="stWidgetLabel"],
+body:has(.bg-video-layer) [data-testid="stCaptionContainer"],
+body:has(.bg-video-layer) .footer {
+  text-shadow: 0 1px 3px rgba(0,0,0,.92), 0 0 10px rgba(0,0,0,.48);
+}
 /* ENDSECTION */
