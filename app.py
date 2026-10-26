@@ -384,10 +384,13 @@ if "dark_mode" not in st.session_state:
     except Exception:
         st.session_state.dark_mode = False
 
-# The page uses an animated CSS gradient instead of a fixed HTML video layer.
-# This avoids stacking-context issues that can hide Streamlit widgets.
+# Inject the selected theme before drawing any page, including login/register.
 if st.session_state.dark_mode:
     inject_css("dark")
+
+# Render the decorative video once for every screen. The video layer is fixed
+# behind the Streamlit interface, so auth forms and chat widgets remain clickable.
+render_video_background()
 
 
 def save_auth_state(auth_response):
@@ -1543,9 +1546,6 @@ if is_diary:
 
 # The selected appearance stylesheet is injected near session-state initialization.
 
-if not is_diary:
-    render_video_background()
-
 # ==============================
 # Header và hội thoại
 # ==============================
@@ -1832,8 +1832,8 @@ else:
 
     queued_prompt = st.session_state.pop("queued_chat_prompt", None)
     placeholder = "Hãy chia sẻ với SkyeChat..." if is_vi else "Share your thoughts with SkyeChat..."
-    # Newer Streamlit versions let us set the initial chat composer height directly.
-    # Keep a compatibility fallback for versions that do not expose the `height` option.
+    # Keep the composer compact by default; CSS also overrides Streamlit wrapper sizing.
+    # Older Streamlit releases without `height` still use the CSS fallback.
     chat_input_kwargs = {
         "placeholder": placeholder,
         "max_chars": 5000,
@@ -1841,7 +1841,7 @@ else:
     }
     try:
         if "height" in inspect.signature(st.chat_input).parameters:
-            chat_input_kwargs["height"] = 64
+            chat_input_kwargs["height"] = 52
     except (TypeError, ValueError):
         pass
     chat_input_prompt = st.chat_input(**chat_input_kwargs)
