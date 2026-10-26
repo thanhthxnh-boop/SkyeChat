@@ -1193,6 +1193,75 @@ html body .stApp [data-testid="stChatInput"] button {
 
 
 
+/* Greeting layout fix v2: title and slogan are separate rows, never inline-overlapping. */
+.hero-title--greeting {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: .25rem 0 .2rem !important;
+  line-height: 1.18 !important;
+  letter-spacing: -.035em !important;
+  overflow: visible !important;
+}
+.hero-title--greeting .hero-greeting-text {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+}
+.hero-tagline-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  flex-wrap: wrap !important;
+  gap: .85rem !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: .55rem 0 .65rem !important;
+  position: relative;
+  z-index: 2;
+}
+.hero-tagline-row .hero-tagline {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 1 auto !important;
+  width: auto !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: .42rem .9rem !important;
+  font-size: .88rem !important;
+  line-height: 1.45 !important;
+  letter-spacing: .015em !important;
+  word-spacing: .06em !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  text-align: left !important;
+  vertical-align: baseline !important;
+}
+.hero-tagline-row .hero-cloud {
+  display: inline-block !important;
+  flex: 0 0 auto !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  font-size: 1.7rem !important;
+  letter-spacing: normal !important;
+  filter: drop-shadow(0 3px 7px rgba(80, 152, 190, .15));
+}
+@media (max-width: 767px) {
+  .hero-title--greeting { font-size: clamp(1.55rem, 6.5vw, 2rem) !important; }
+  .hero-tagline-row { gap: .7rem !important; margin-top: .65rem !important; }
+  .hero-tagline-row .hero-tagline { font-size: .82rem !important; padding: .38rem .76rem !important; }
+  .hero-tagline-row .hero-cloud { font-size: 1.45rem !important; }
+}
+@media (max-width: 380px) {
+  .hero-tagline-row { align-items: flex-start !important; }
+  .hero-tagline-row .hero-tagline { max-width: calc(100% - 2.2rem) !important; }
+}
+
 /* ENDSECTION */
 
 /* SECTION:auth */
@@ -1496,5 +1565,17 @@ html body .stApp [data-testid="stChatInput"] button {
   background: rgba(17, 39, 51, .94) !important;
   border-color: rgba(139, 185, 207, .35) !important;
 }
+
+/* Keep slogan text readable in dark mode without inherited compressed title spacing. */
+.hero-tagline-row { gap: .85rem !important; }
+.hero-tagline-row .hero-tagline {
+  letter-spacing: .015em !important;
+  word-spacing: .06em !important;
+  line-height: 1.45 !important;
+  color: #d7eff9 !important;
+  background: rgba(17, 39, 51, .94) !important;
+  border-color: rgba(139, 185, 207, .35) !important;
+}
+.hero-tagline-row .hero-cloud { letter-spacing: normal !important; }
 
 /* ENDSECTION */
