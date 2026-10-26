@@ -331,6 +331,8 @@ if "auth_user_id" not in st.session_state:
     st.session_state.auth_user_id = None
 if "auth_email" not in st.session_state:
     st.session_state.auth_email = ""
+if "auth_phone" not in st.session_state:
+    st.session_state.auth_phone = ""
 if "guest_mode" not in st.session_state:
     st.session_state.guest_mode = False
 if "recovery_otp_sent" not in st.session_state:
@@ -341,6 +343,14 @@ if "signup_otp_sent" not in st.session_state:
     st.session_state.signup_otp_sent = False
 if "signup_target" not in st.session_state:
     st.session_state.signup_target = ""
+if "signup_type" not in st.session_state:
+    st.session_state.signup_type = "email"
+if "phone_login_otp_sent" not in st.session_state:
+    st.session_state.phone_login_otp_sent = False
+if "phone_login_target" not in st.session_state:
+    st.session_state.phone_login_target = ""
+if "auth_notice" not in st.session_state:
+    st.session_state.auth_notice = ""
 if "recovery_type" not in st.session_state:
     st.session_state.recovery_type = ""
 if "password_reset_pending" not in st.session_state:
@@ -370,16 +380,18 @@ def save_auth_state(auth_response):
     if auth_user:
         st.session_state.auth_user_id = auth_user.id
         st.session_state.auth_email = auth_user.email or ""
+        st.session_state.auth_phone = getattr(auth_user, "phone", "") or ""
         metadata = getattr(auth_user, "user_metadata", {}) or {}
         if not st.session_state.nickname_is_custom:
-            st.session_state.nickname = metadata.get("nickname") or auth_user.email or "Bạn"
+            st.session_state.nickname = metadata.get("nickname") or auth_user.email or getattr(auth_user, "phone", "") or "Bạn"
     elif getattr(auth_session, "user", None):
         auth_user = auth_session.user
         st.session_state.auth_user_id = auth_user.id
         st.session_state.auth_email = auth_user.email or ""
+        st.session_state.auth_phone = getattr(auth_user, "phone", "") or ""
         metadata = getattr(auth_user, "user_metadata", {}) or {}
         if not st.session_state.nickname_is_custom:
-            st.session_state.nickname = metadata.get("nickname") or auth_user.email or "Bạn"
+            st.session_state.nickname = metadata.get("nickname") or auth_user.email or getattr(auth_user, "phone", "") or "Bạn"
     return bool(st.session_state.auth_user_id)
 
 
@@ -391,6 +403,7 @@ def clear_auth_state():
     st.session_state.auth_refresh_token = None
     st.session_state.auth_user_id = None
     st.session_state.auth_email = ""
+    st.session_state.auth_phone = ""
     st.session_state.nickname = "Bạn"
     st.session_state.nickname_is_custom = False
     st.session_state.messages = []
@@ -401,6 +414,10 @@ def clear_auth_state():
     st.session_state.recovery_type = ""
     st.session_state.signup_otp_sent = False
     st.session_state.signup_target = ""
+    st.session_state.signup_type = "email"
+    st.session_state.phone_login_otp_sent = False
+    st.session_state.phone_login_target = ""
+    st.session_state.auth_notice = ""
     st.session_state.password_reset_pending = False
     st.session_state.confirm_delete_diary_id = None
     st.session_state.confirm_clear_chat = False
@@ -446,9 +463,10 @@ def restore_auth_state(client):
         if auth_user:
             st.session_state.auth_user_id = auth_user.id
             st.session_state.auth_email = auth_user.email or ""
+            st.session_state.auth_phone = getattr(auth_user, "phone", "") or ""
             metadata = getattr(auth_user, "user_metadata", {}) or {}
             if not st.session_state.nickname_is_custom:
-                st.session_state.nickname = metadata.get("nickname") or auth_user.email or "Bạn"
+                st.session_state.nickname = metadata.get("nickname") or auth_user.email or getattr(auth_user, "phone", "") or "Bạn"
         return bool(st.session_state.auth_user_id)
     except Exception:
         try:
@@ -591,10 +609,23 @@ if not is_authenticated and not st.session_state.guest_mode:
         st.markdown('<div class="footer">SkyeChat · By ThanhAI · since august 2026</div>', unsafe_allow_html=True)
         st.stop()
     inject_css("auth")
-    login_tab, signup_tab, recovery_tab = st.tabs(["Đăng nhập", "Tạo tài khoản", "Quên mật khẩu"])
 
     def is_valid_email(value):
         return bool(re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", value))
+
+    def normalize_phone(value):
+        """Accept only international E.164 numbers so SMS providers get a consistent value."""
+        phone = re.sub(r"[\s().-]", "", str(value or ""))
+        return phone if re.fullmatch(r"\+[1-9]\d{7,14}", phone) else ""
+
+    def clear_signup_otp_state():
+        st.session_state.signup_otp_sent = False
+        st.session_state.signup_target = ""
+        st.session_state.signup_type = "email"
+
+    def clear_phone_login_otp_state():
+        st.session_state.phone_login_otp_sent = False
+        st.session_state.phone_login_target = ""
 
     def show_auth_error(exc, action):
         """Translate common Supabase Auth errors into actionable, safe guidance."""
@@ -607,12 +638,16 @@ if not is_authenticated and not st.session_state.guest_mode:
             type(exc).__name__,
             code or "unavailable",
         )
-        if any(value in details for value in ("signup_disabled", "email_provider_disabled", "signups not allowed")):
-            st.error("Đăng ký email đang bị tắt trong Supabase. Hãy bật Email provider và quyền cho phép tạo tài khoản mới trong Authentication settings.")
+        if any(value in details for value in ("signup_disabled", "email_provider_disabled", "phone_provider_disabled", "signups not allowed")):
+            st.error("Đăng ký đang bị tắt trong Supabase. Hãy bật Email/Phone provider phù hợp và cho phép tạo tài khoản mới trong Authentication settings.")
         elif any(value in details for value in ("rate limit", "too many", "over_email_send_rate_limit", "over_request_rate_limit")):
             st.warning("Bạn thử quá nhiều lần. Hãy đợi một chút rồi thử lại.")
-        elif "already registered" in details or "user already exists" in details or "email_exists" in details:
-            st.warning("Email này đã có tài khoản. Hãy đăng nhập hoặc dùng chức năng quên mật khẩu.")
+        elif any(value in details for value in ("already registered", "user already exists", "email_exists", "phone_exists")):
+            st.warning("Email hoặc số điện thoại này có thể đã được dùng. Hãy thử đăng nhập hoặc khôi phục tài khoản.")
+        elif any(value in details for value in ("phone_provider_disabled", "phone signups are disabled", "phone provider is disabled")):
+            st.error("Đăng ký bằng số điện thoại đang tắt. Hãy bật Phone provider trong Supabase Authentication.")
+        elif any(value in details for value in ("sms_provider", "sms provider", "sms_send_failed", "sms delivery", "phone provider")):
+            st.error("Chưa gửi được SMS. Hãy bật xác thực Phone và cấu hình nhà cung cấp SMS trong Supabase Authentication.")
         elif "email_address_not_authorized" in details:
             st.error("Máy chủ email mặc định của Supabase không gửi đến địa chỉ này. Hãy cấu hình SMTP riêng trong Supabase để gửi email xác nhận cho người dùng.")
         elif "invalid login credentials" in details or "invalid credentials" in details:
@@ -632,6 +667,7 @@ if not is_authenticated and not st.session_state.guest_mode:
                 diagnostic,
                 flags=re.IGNORECASE,
             )
+            diagnostic = re.sub(r"\+?\d[\d\s().-]{7,}\d", "[số điện thoại đã ẩn]", diagnostic)
             diagnostic = re.sub(
                 r"(?i)(access[_ -]?token|refresh[_ -]?token|api[_ -]?key)\s*[:=]\s*\S+",
                 r"\1=[đã ẩn]",
@@ -640,132 +676,235 @@ if not is_authenticated and not st.session_state.guest_mode:
             detail_text = f" Chi tiết: {diagnostic}" if diagnostic else ""
             st.error(f"{action} chưa thành công (mã lỗi: {error_id}).{detail_text}")
 
+    # OTP confirmation gets its own focused screen so users cannot miss this step.
+    if st.session_state.signup_otp_sent or st.session_state.phone_login_otp_sent:
+        is_signup_otp = bool(st.session_state.signup_otp_sent)
+        otp_target = (
+            st.session_state.signup_target
+            if is_signup_otp
+            else st.session_state.phone_login_target
+        )
+        otp_identifier_type = (
+            st.session_state.signup_type if is_signup_otp else "phone"
+        )
+        otp_is_phone = otp_identifier_type == "phone"
+        delivery_label = "tin nhắn SMS" if otp_is_phone else "email"
+
+        st.markdown(
+            """
+            <section class="hero">
+              <div class="hero-eyebrow">Xác minh tài khoản</div>
+              <div class="hero-title">Nhập mã xác thực 🔐</div>
+              <p class="hero-copy">Mã dùng một lần giúp xác nhận bạn đang sở hữu phương thức liên hệ này.</p>
+            </section>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.caption(f"Nhập mã đã được yêu cầu gửi tới {otp_target} qua {delivery_label}.")
+        st.caption("Nếu mã chưa đến, kiểm tra Spam/SMS và cấu hình nhà cung cấp. Email hoặc số điện thoại đã dùng sẽ không tạo được tài khoản trùng.")
+        with st.form("skyechat_dedicated_otp_form"):
+            otp_code = st.text_input(
+                "Mã xác thực",
+                max_chars=12,
+                autocomplete="one-time-code",
+                help="Nhập mã mới nhất; mã cũ sẽ hết hiệu lực khi bạn yêu cầu gửi lại.",
+            )
+            verify_col, resend_col = st.columns(2)
+            with verify_col:
+                verify_otp_submitted = st.form_submit_button(
+                    "Xác minh và tiếp tục", type="primary", use_container_width=True
+                )
+            with resend_col:
+                resend_otp_submitted = st.form_submit_button(
+                    "Gửi lại mã", use_container_width=True
+                )
+
+        if verify_otp_submitted:
+            normalized_code = otp_code.strip()
+            if not normalized_code:
+                st.warning("Hãy nhập mã xác thực.")
+            elif not re.fullmatch(r"\d{6,12}", normalized_code):
+                st.warning("Mã xác thực cần gồm 6–12 chữ số.")
+            else:
+                try:
+                    otp_identifier_key = "phone" if otp_is_phone else "email"
+                    otp_credentials = {
+                        "token": normalized_code,
+                        "type": "sms" if otp_is_phone else "email",
+                        otp_identifier_key: otp_target,
+                    }
+                    auth_response = supabase_client.auth.verify_otp(otp_credentials)
+                    if save_auth_state(auth_response):
+                        clear_signup_otp_state()
+                        clear_phone_login_otp_state()
+                        st.rerun()
+                    clear_signup_otp_state()
+                    clear_phone_login_otp_state()
+                    st.session_state.auth_notice = (
+                        "Đã xác minh. Bạn có thể đăng nhập bằng email/số điện thoại vừa đăng ký và mật khẩu."
+                        if is_signup_otp
+                        else "Đã xác minh mã. Nếu chưa được đăng nhập, hãy thử lại bằng số điện thoại."
+                    )
+                    st.rerun()
+                except Exception as exc:
+                    LOGGER.warning("Supabase OTP verification failed (%s)", type(exc).__name__)
+                    st.error("Mã không hợp lệ hoặc đã hết hạn. Hãy kiểm tra mã mới nhất rồi thử lại.")
+
+        if resend_otp_submitted:
+            try:
+                if is_signup_otp:
+                    resend_kind = "sms" if otp_is_phone else "signup"
+                    resend_identifier_key = "phone" if otp_is_phone else "email"
+                    resend_payload = {"type": resend_kind, resend_identifier_key: otp_target}
+                    supabase_client.auth.resend(resend_payload)
+                else:
+                    supabase_client.auth.sign_in_with_otp(
+                        {"phone": otp_target, "options": {"should_create_user": False}}
+                    )
+                st.success(f"Đã yêu cầu gửi lại mã qua {delivery_label}. Kiểm tra tin nhắn/thư rác.")
+            except Exception as exc:
+                show_auth_error(exc, "Gửi lại mã xác thực")
+
+        if st.button("Quay lại đăng nhập / đăng ký", key="cancel_auth_otp"):
+            clear_signup_otp_state()
+            clear_phone_login_otp_state()
+            st.rerun()
+        st.markdown('<div class="footer">SkyeChat · By ThanhAI · since august 2026</div>', unsafe_allow_html=True)
+        st.stop()
+
+    if st.session_state.auth_notice:
+        st.info(st.session_state.pop("auth_notice"))
+
+    login_tab, signup_tab, recovery_tab = st.tabs(["Đăng nhập", "Tạo tài khoản", "Quên mật khẩu"])
+
     with login_tab:
-        st.caption("Đăng nhập bằng email hoặc số điện thoại đã xác minh.")
+        login_method = st.radio(
+            "Cách đăng nhập",
+            ["Mật khẩu", "Mã SMS"],
+            horizontal=True,
+            key="login_method",
+        )
         with st.form("skyechat_login_form"):
-            login_identity = st.text_input("Email hoặc số điện thoại", placeholder="ban@example.com hoặc +84901234567")
-            login_password = st.text_input("Mật khẩu", type="password", autocomplete="current-password")
-            login_submitted = st.form_submit_button("Đăng nhập", type="primary", use_container_width=True)
+            if login_method == "Mật khẩu":
+                login_identity = st.text_input(
+                    "Email hoặc số điện thoại",
+                    placeholder="ban@example.com hoặc +84901234567",
+                    autocomplete="username",
+                )
+                login_password = st.text_input(
+                    "Mật khẩu", type="password", autocomplete="current-password"
+                )
+            else:
+                login_phone_input = st.text_input(
+                    "Số điện thoại",
+                    placeholder="+84901234567",
+                    autocomplete="tel",
+                    help="Nhập mã quốc gia theo định dạng quốc tế, ví dụ +84.",
+                )
+            login_submitted = st.form_submit_button(
+                "Đăng nhập", type="primary", use_container_width=True
+            )
         if login_submitted:
-            identity = login_identity.strip()
-            if not identity:
+            identity = login_identity.strip() if login_method == "Mật khẩu" else ""
+            phone = normalize_phone(login_phone_input) if login_method == "Mã SMS" else ""
+            if login_method == "Mã SMS" and not phone:
+                st.warning("Hãy nhập số hợp lệ theo định dạng quốc tế, ví dụ +84901234567.")
+            elif login_method == "Mật khẩu" and not identity:
                 st.warning("Hãy nhập email hoặc số điện thoại.")
-            elif not login_password:
+            elif login_method == "Mật khẩu" and not login_password:
                 st.warning("Hãy nhập mật khẩu.")
-            elif "@" in identity and not is_valid_email(identity):
+            elif login_method == "Mật khẩu" and "@" in identity and not is_valid_email(identity):
                 st.warning("Hãy kiểm tra lại địa chỉ email.")
-            elif "@" not in identity and (not identity.startswith("+") or not identity[1:].isdigit() or not 8 <= len(identity[1:]) <= 15):
+            elif login_method == "Mật khẩu" and "@" not in identity and not normalize_phone(identity):
                 st.warning("Số điện thoại cần có mã quốc gia, ví dụ +84901234567.")
             else:
                 try:
-                    auth_credentials = (
-                        {"email": identity.lower(), "password": login_password}
-                        if "@" in identity
-                        else {"phone": identity, "password": login_password}
-                    )
-                    auth_response = supabase_client.auth.sign_in_with_password(auth_credentials)
-                    if save_auth_state(auth_response):
+                    if login_method == "Mã SMS":
+                        supabase_client.auth.sign_in_with_otp(
+                            {"phone": phone, "options": {"should_create_user": False}}
+                        )
+                        st.session_state.phone_login_target = phone
+                        st.session_state.phone_login_otp_sent = True
                         st.rerun()
-                    st.info("Hãy xác nhận email đăng ký rồi thử đăng nhập lại.")
+                    else:
+                        auth_credentials = (
+                            {"email": identity.lower(), "password": login_password}
+                            if "@" in identity
+                            else {"phone": normalize_phone(identity), "password": login_password}
+                        )
+                        auth_response = supabase_client.auth.sign_in_with_password(auth_credentials)
+                        if save_auth_state(auth_response):
+                            st.rerun()
+                        st.info("Hãy xác nhận email hoặc số điện thoại đăng ký rồi thử lại.")
                 except Exception as exc:
                     show_auth_error(exc, "Đăng nhập")
 
     with signup_tab:
-        st.caption("Tạo tài khoản miễn phí để lưu nhật ký và tiếp tục sử dụng trên thiết bị khác.")
+        signup_method = st.radio(
+            "Tạo tài khoản bằng",
+            ["Email", "Số điện thoại"],
+            horizontal=True,
+            key="signup_method",
+        )
+        st.caption("Tạo tài khoản để lưu nhật ký và tiếp tục sử dụng trên thiết bị khác.")
         with st.form("skyechat_signup_form"):
             signup_nickname = st.text_input("Tên hiển thị", placeholder="Tên bạn muốn dùng", max_chars=32, autocomplete="nickname")
-            signup_email = st.text_input("Email", placeholder="ban@example.com", autocomplete="email")
+            signup_identity = st.text_input(
+                "Email" if signup_method == "Email" else "Số điện thoại",
+                placeholder="ban@example.com" if signup_method == "Email" else "+84901234567",
+                autocomplete="email" if signup_method == "Email" else "tel",
+                help="" if signup_method == "Email" else "Nhập mã quốc gia theo định dạng quốc tế, ví dụ +84.",
+            )
             signup_password = st.text_input("Tạo mật khẩu", type="password", autocomplete="new-password", help="Dùng ít nhất 8 ký tự.")
             signup_password_confirm = st.text_input("Nhập lại mật khẩu", type="password", autocomplete="new-password")
             signup_submitted = st.form_submit_button("Tạo tài khoản", type="primary", use_container_width=True)
         if signup_submitted:
-            normalized_email = signup_email.strip().lower()
+            normalized_target = (
+                signup_identity.strip().lower()
+                if signup_method == "Email"
+                else normalize_phone(signup_identity)
+            )
+            identifier_key = "email" if signup_method == "Email" else "phone"
+            identifier_type = identifier_key
             if not signup_nickname.strip():
                 st.warning("Hãy nhập tên hiển thị.")
-            elif not is_valid_email(normalized_email):
+            elif signup_method == "Email" and not is_valid_email(normalized_target):
                 st.warning("Hãy nhập địa chỉ email hợp lệ.")
+            elif signup_method == "Số điện thoại" and not normalized_target:
+                st.warning("Số điện thoại cần đúng định dạng quốc tế, ví dụ +84901234567.")
             elif len(signup_password) < 8:
                 st.warning("Mật khẩu cần có ít nhất 8 ký tự.")
             elif signup_password != signup_password_confirm:
                 st.warning("Hai mật khẩu chưa khớp.")
             else:
                 try:
+                    signup_credentials = {
+                        identifier_key: normalized_target,
+                        "password": signup_password,
+                        "options": {"data": {"nickname": signup_nickname.strip()}},
+                    }
                     auth_response = supabase_client.auth.sign_up(
-                        {
-                            "email": normalized_email,
-                            "password": signup_password,
-                            "options": {"data": {"nickname": signup_nickname.strip()}},
-                        }
+                        signup_credentials
                     )
                     if save_auth_state(auth_response):
-                        st.session_state.signup_otp_sent = False
-                        st.session_state.signup_target = ""
+                        clear_signup_otp_state()
                         st.rerun()
-                    st.session_state.signup_target = normalized_email
+                    st.session_state.signup_target = normalized_target
+                    st.session_state.signup_type = identifier_type
                     st.session_state.signup_otp_sent = True
-                    st.success("Mã xác thực đã được gửi tới email. Nhập mã ngay bên dưới để hoàn tất và đăng nhập.")
+                    st.rerun()
                 except Exception as exc:
-                    signup_error = str(exc).lower()
-                    if any(
-                        marker in signup_error
-                        for marker in ("already registered", "user already exists", "email_exists")
-                    ):
-                        st.session_state.signup_target = normalized_email
-                        st.session_state.signup_otp_sent = True
-                        st.info(
-                            "Email này đã có tài khoản. Nếu chưa xác minh, bấm 'Gửi lại mã' bên dưới; "
-                            "nếu đã xác minh, hãy đăng nhập hoặc dùng chức năng quên mật khẩu."
-                        )
-                    else:
-                        show_auth_error(exc, "Tạo tài khoản")
-
-        if st.session_state.signup_otp_sent:
-            st.caption(f"Mã xác thực đã gửi tới {st.session_state.signup_target}.")
-            with st.form("skyechat_signup_verify_form"):
-                signup_code = st.text_input(
-                    "Mã xác thực email", max_chars=12, autocomplete="one-time-code"
-                )
-                verify_signup_col, resend_signup_col = st.columns(2)
-                with verify_signup_col:
-                    verify_signup = st.form_submit_button(
-                        "Xác minh và đăng nhập", type="primary", use_container_width=True
-                    )
-                with resend_signup_col:
-                    resend_signup = st.form_submit_button(
-                        "Gửi lại mã", use_container_width=True
-                    )
-
-            if resend_signup:
-                try:
-                    supabase_client.auth.resend(
-                        {"type": "signup", "email": st.session_state.signup_target}
-                    )
-                    st.success("Đã gửi lại mã xác thực. Hãy kiểm tra cả thư mục Spam.")
-                except Exception as exc:
-                    show_auth_error(exc, "Gửi lại mã xác thực")
-
-            if verify_signup:
-                if not signup_code.strip():
-                    st.warning("Hãy nhập mã trong email.")
-                else:
-                    try:
-                        auth_response = supabase_client.auth.verify_otp(
-                            {
-                                "email": st.session_state.signup_target,
-                                "token": signup_code.strip(),
-                                "type": "email",
-                            }
-                        )
-                        if save_auth_state(auth_response):
-                            st.session_state.signup_otp_sent = False
-                            st.session_state.signup_target = ""
-                            st.rerun()
-                        st.error("Email đã được xác minh nhưng chưa mở được phiên đăng nhập. Hãy đăng nhập bằng email và mật khẩu.")
-                    except Exception as exc:
-                        LOGGER.warning(
-                            "Supabase signup OTP verification failed: %s", type(exc).__name__
-                        )
-                        st.error("Mã không hợp lệ hoặc đã hết hạn. Hãy kiểm tra lại hoặc gửi mã mới.")
+                    show_auth_error(exc, "Tạo tài khoản")
+        if signup_method == "Email":
+            st.info(
+                "Để nhập mã tại trang xác minh, vào Supabase → Authentication → Email Templates → "
+                "Confirm signup và dùng biến `{{ .Token }}` trong nội dung email."
+            )
+        else:
+            st.info(
+                "Đăng ký bằng SMS cần bật Phone provider, bật Confirm Phone và cấu hình nhà cung cấp SMS "
+                "trong Supabase → Authentication."
+            )
     with recovery_tab:
         st.caption(
             "Khôi phục qua email. Mẫu email khôi phục của Supabase cần hiển thị mã {{ .Token }} "
@@ -1142,9 +1281,9 @@ with st.sidebar:
         )
     else:
         st.caption(
-            f"Tài khoản: {st.session_state.auth_email}"
+            f"Tài khoản: {st.session_state.auth_email or st.session_state.auth_phone}"
             if is_vi
-            else f"Account: {st.session_state.auth_email}"
+            else f"Account: {st.session_state.auth_email or st.session_state.auth_phone}"
         )
 
     nickname_display = st.session_state.nickname
@@ -1689,4 +1828,3 @@ st.markdown(
     f'<div class="footer">{footer_text}</div>',
     unsafe_allow_html=True,
 )
-
