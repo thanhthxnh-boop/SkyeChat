@@ -739,6 +739,410 @@ html, body { background: #eaf3f7; }
   [data-testid="stChatInput"] button { min-width: 2.2rem !important; min-height: 2.2rem !important; width: 2.2rem !important; height: 2.2rem !important; }
 }
 
+
+
+/* === SkyeChat compact composer + visible motion polish (authoritative overrides) === */
+html body .stApp [data-testid="stChatInput"] {
+  width: min(100%, 980px) !important;
+  max-width: 980px !important;
+  margin: .35rem auto .15rem !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  box-sizing: border-box !important;
+}
+html body .stApp [data-testid="stChatInput"] > div {
+  display: flex !important;
+  align-items: center !important;
+  gap: .35rem !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 50px !important;
+  max-height: none !important;
+  padding: 3px 5px !important;
+  border-radius: 17px !important;
+  box-sizing: border-box !important;
+  transition: border-color .2s ease, box-shadow .2s ease, background .2s ease !important;
+}
+html body .stApp [data-testid="stChatInput"] textarea {
+  display: block !important;
+  min-height: 38px !important;
+  height: 38px !important;
+  max-height: 92px !important;
+  padding: .45rem .65rem !important;
+  margin: 0 !important;
+  line-height: 1.35 !important;
+  font-size: .94rem !important;
+  border-radius: 12px !important;
+  resize: none !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+  transition: border-color .2s ease, box-shadow .2s ease !important;
+}
+html body .stApp [data-testid="stChatInput"] button {
+  flex: 0 0 36px !important;
+  width: 36px !important;
+  min-width: 36px !important;
+  max-width: 36px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 11px !important;
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease !important;
+}
+html body .stApp [data-testid="stChatInput"] button:hover {
+  transform: translateY(-1px) scale(1.025) !important;
+}
+html body .stApp [data-testid="stChatInput"]:focus-within > div {
+  box-shadow: 0 0 0 3px rgba(71, 125, 153, .15), 0 8px 22px rgba(31, 64, 83, .11) !important;
+}
+
+/* Give login/signup the same glass-over-video appearance as chat. */
+[data-testid="stForm"] {
+  background: rgba(248, 252, 254, .76) !important;
+  border-color: var(--sky-line) !important;
+  box-shadow: 0 16px 38px rgba(31, 64, 83, .10) !important;
+  backdrop-filter: blur(18px) saturate(1.08) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.08) !important;
+}
+[data-testid="stTabs"] [data-baseweb="tab-panel"] {
+  animation: sky-panel-in .38s cubic-bezier(.2,.75,.25,1) both;
+}
+[data-testid="stForm"] [data-testid="stTextInput"],
+[data-testid="stForm"] [data-testid="stSelectbox"],
+[data-testid="stForm"] [data-testid="stRadio"] {
+  animation: sky-control-in .42s ease both;
+}
+[data-testid="stForm"] [data-testid="stTextInput"]:nth-of-type(2) { animation-delay: .04s; }
+[data-testid="stForm"] [data-testid="stTextInput"]:nth-of-type(3) { animation-delay: .08s; }
+[data-testid="stForm"] [data-testid="stFormSubmitButton"] { animation: sky-control-in .46s ease .08s both; }
+.stButton button, [data-testid="stFormSubmitButton"] button,
+[data-testid="stDownloadButton"] button, [data-testid="stChatInput"] button {
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease, background .18s ease !important;
+}
+.stButton button:hover, [data-testid="stFormSubmitButton"] button:hover,
+[data-testid="stDownloadButton"] button:hover {
+  transform: translateY(-1px) !important;
+  filter: brightness(1.025) !important;
+  box-shadow: 0 8px 20px rgba(31, 64, 83, .12) !important;
+}
+.hero { animation: sky-hero-in .55s cubic-bezier(.2,.75,.25,1) both; }
+.welcome-card, .sidebar-brand, .diary-intro { animation: sky-soft-in .55s ease both; }
+div[data-testid="stChatMessage"] { animation: sky-message-in .35s cubic-bezier(.2,.75,.25,1) both; }
+.bg-video-layer video {
+  transform: scale(1.035);
+  animation: sky-video-drift 34s ease-in-out infinite alternate;
+  will-change: transform;
+}
+.bg-video-layer::after { animation: sky-video-tint 12s ease-in-out infinite alternate; }
+@keyframes sky-hero-in { from { opacity: 0; transform: translateY(10px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes sky-soft-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes sky-panel-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes sky-control-in { from { opacity: .2; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes sky-message-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes sky-video-drift { from { transform: scale(1.035) translate3d(-.5%, -.35%, 0); } to { transform: scale(1.09) translate3d(.5%, .35%, 0); } }
+@keyframes sky-video-tint { from { opacity: .82; } to { opacity: 1; } }
+@media (max-width: 720px) {
+  html body .stApp [data-testid="stChatInput"] { width: 100% !important; max-width: 100% !important; }
+  html body .stApp [data-testid="stChatInput"] > div { min-height: 48px !important; padding: 3px !important; }
+  html body .stApp [data-testid="stChatInput"] textarea { min-height: 36px !important; height: 36px !important; padding: .4rem .55rem !important; font-size: .9rem !important; }
+  html body .stApp [data-testid="stChatInput"] button { flex-basis: 34px !important; width: 34px !important; min-width: 34px !important; height: 34px !important; min-height: 34px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bg-video-layer video, .bg-video-layer::after, .hero, .welcome-card, .sidebar-brand,
+  .diary-intro, [data-testid="stForm"], [data-testid="stTabs"] [data-baseweb="tab-panel"],
+  [data-testid="stForm"] [data-testid="stTextInput"], [data-testid="stForm"] [data-testid="stFormSubmitButton"],
+  div[data-testid="stChatMessage"] { animation: none !important; transform: none !important; }
+  .stButton button, [data-testid="stFormSubmitButton"] button, [data-testid="stChatInput"] button { transition: none !important; }
+}
+
+
+
+
+/* ================================================================
+   SKYECHAT RESPONSIVE LAYER — final, authoritative layout rules
+   Breakpoints cover ultrawide, desktop, laptop, tablet, phone and tiny phone.
+   ================================================================ */
+:root {
+  --sky-page-gutter: clamp(0.75rem, 2.2vw, 2rem);
+  --sky-composer-max: 68rem;
+  --sky-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+html, body, .stApp, [data-testid="stAppViewContainer"] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+}
+.stApp { min-height: 100vh; min-height: 100dvh; }
+[data-testid="stMain"], [data-testid="stMainBlockContainer"],
+[data-testid="stVerticalBlock"], [data-testid="stElementContainer"],
+[data-testid="stMarkdownContainer"], [data-testid="column"] {
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+html body .stApp [data-testid="stMainBlockContainer"] {
+  width: 100% !important;
+  max-width: 1360px !important;
+  margin-inline: auto !important;
+  padding-inline: var(--sky-page-gutter) !important;
+  padding-top: clamp(.85rem, 1.8vw, 1.75rem) !important;
+  padding-bottom: calc(8rem + var(--sky-safe-bottom)) !important;
+}
+html body .stApp [data-testid="stHorizontalBlock"] {
+  min-width: 0 !important;
+  gap: clamp(.45rem, 1.25vw, 1rem) !important;
+}
+html body .stApp [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+  min-width: 0 !important;
+}
+.hero {
+  width: 100%;
+  max-width: 100%;
+  padding: clamp(1rem, 2vw, 1.9rem) clamp(1rem, 2.4vw, 2rem);
+}
+.hero-title { font-size: clamp(1.45rem, 2.3vw, 2.35rem) !important; line-height: 1.17 !important; overflow-wrap: anywhere; }
+.hero-copy { max-width: 75ch; font-size: clamp(.9rem, 1vw, 1.04rem); }
+[data-testid="stForm"], [data-testid="stTabs"], [data-testid="stExpander"],
+[data-testid="stAlert"], [data-testid="stDataFrame"], [data-testid="stTable"] {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+[data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea,
+[data-testid="stNumberInput"] input, [data-testid="stSelectbox"] [role="combobox"],
+[data-testid="stMultiSelect"] [role="combobox"] {
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+[data-testid="stMarkdownContainer"] pre, [data-testid="stMarkdownContainer"] table {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+}
+[data-testid="stMarkdownContainer"] img, [data-testid="stImage"] img,
+[data-testid="stImage"] video { max-width: 100% !important; height: auto; }
+
+/* Streamlit pins chat_input to a bottom container. Constrain the container as
+   well as the input itself; styling only the textarea does not constrain width. */
+html body .stApp [data-testid="stBottomBlockContainer"] {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  padding-inline: clamp(.5rem, 2vw, 1.75rem) !important;
+  padding-top: .25rem !important;
+  padding-bottom: calc(.45rem + var(--sky-safe-bottom)) !important;
+  box-sizing: border-box !important;
+  background: transparent !important;
+}
+html body .stApp [data-testid="stBottomBlockContainer"] > div {
+  width: 100% !important;
+  max-width: var(--sky-composer-max) !important;
+  min-width: 0 !important;
+  margin-inline: auto !important;
+}
+html body .stApp [data-testid="stChatInput"] {
+  display: block !important;
+  width: 100% !important;
+  max-width: var(--sky-composer-max) !important;
+  min-width: 0 !important;
+  margin: .2rem auto 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+}
+html body .stApp [data-testid="stChatInput"] > div {
+  display: flex !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 48px !important;
+  height: auto !important;
+  max-height: none !important;
+  align-items: center !important;
+  gap: .3rem !important;
+  padding: 3px 5px !important;
+  border-radius: 16px !important;
+  box-sizing: border-box !important;
+}
+html body .stApp [data-testid="stChatInput"] textarea {
+  display: block !important;
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 38px !important;
+  height: 38px !important;
+  max-height: 112px !important;
+  margin: 0 !important;
+  padding: .42rem .65rem !important;
+  line-height: 1.4 !important;
+  font-size: clamp(.88rem, .95vw, .96rem) !important;
+  resize: none !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+}
+html body .stApp [data-testid="stChatInput"] button {
+  flex: 0 0 35px !important;
+  width: 35px !important;
+  min-width: 35px !important;
+  max-width: 35px !important;
+  height: 35px !important;
+  min-height: 35px !important;
+  max-height: 35px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 11px !important;
+}
+
+/* Ultra-wide monitors */
+@media (min-width: 1800px) {
+  :root { --sky-page-gutter: clamp(2rem, 2.5vw, 3rem); --sky-composer-max: 72rem; }
+  html body .stApp [data-testid="stMainBlockContainer"] { max-width: 1500px !important; }
+  .hero { padding: 2rem 2.25rem; }
+}
+/* Large desktop */
+@media (min-width: 1440px) and (max-width: 1799px) {
+  :root { --sky-composer-max: 66rem; }
+  html body .stApp [data-testid="stMainBlockContainer"] { max-width: 1380px !important; }
+}
+/* Standard desktop and laptop */
+@media (min-width: 992px) and (max-width: 1439px) {
+  :root { --sky-page-gutter: clamp(1rem, 2vw, 1.6rem); --sky-composer-max: 60rem; }
+  html body .stApp [data-testid="stMainBlockContainer"] { max-width: 100% !important; }
+  [data-testid="stSidebar"][aria-expanded="true"] {
+    width: clamp(15rem, 20vw, 18rem) !important;
+    min-width: clamp(15rem, 20vw, 18rem) !important;
+    max-width: 18rem !important;
+  }
+}
+/* Tablet landscape and tablet portrait */
+@media (min-width: 768px) and (max-width: 991px) {
+  :root { --sky-page-gutter: 1rem; --sky-composer-max: 100%; }
+  html body .stApp [data-testid="stMainBlockContainer"] {
+    max-width: 100% !important;
+    padding-top: 1rem !important;
+    padding-bottom: calc(7.5rem + var(--sky-safe-bottom)) !important;
+  }
+  [data-testid="stSidebar"][aria-expanded="true"] {
+    width: min(19rem, 42vw) !important;
+    min-width: min(19rem, 42vw) !important;
+    max-width: 19rem !important;
+  }
+  .hero { border-radius: 21px; }
+  .hero::after { font-size: 112px; right: 2%; }
+  html body .stApp [data-testid="stBottomBlockContainer"] { padding-inline: .9rem !important; }
+  html body .stApp [data-testid="stChatInput"] { max-width: 100% !important; }
+}
+/* Phones and narrow tablet windows */
+@media (max-width: 767px) {
+  :root { --sky-page-gutter: .75rem; --sky-composer-max: 100%; }
+  html body .stApp [data-testid="stMainBlockContainer"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: .7rem var(--sky-page-gutter) calc(8rem + var(--sky-safe-bottom)) !important;
+  }
+  html body .stApp [data-testid="stHorizontalBlock"] {
+    flex-wrap: wrap !important;
+    gap: .55rem !important;
+  }
+  html body .stApp [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .hero { margin: .15rem 0 .8rem; padding: 1.05rem .95rem; border-radius: 18px; }
+  .hero-title { font-size: clamp(1.35rem, 6.3vw, 1.8rem) !important; line-height: 1.18 !important; }
+  .hero-copy { font-size: .92rem; line-height: 1.55; }
+  .hero-eyebrow { font-size: .66rem; letter-spacing: .09em !important; }
+  .hero::before { width: 130px; height: 130px; top: -62px; }
+  .hero::after { top: -13px; right: -4px; font-size: clamp(4.3rem, 17vw, 6.1rem); opacity: .38; }
+  .teru-bozu { display: none !important; }
+  [data-testid="stTabs"] { max-width: 100% !important; }
+  [data-testid="stTabs"] [data-baseweb="tab-list"] {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    scrollbar-width: thin;
+  }
+  [data-testid="stTabs"] button[role="tab"] { flex: 0 0 auto !important; white-space: nowrap !important; padding-inline: .7rem !important; font-size: .88rem !important; }
+  html body .stApp [data-testid="stForm"] { padding: .85rem !important; border-radius: 16px !important; }
+  [data-testid="stFormSubmitButton"] button, .stButton button, [data-testid="stDownloadButton"] button { min-height: 42px !important; }
+  div[data-testid="stChatMessage"] { padding: .7rem .75rem !important; border-radius: 16px !important; }
+  html body .stApp [data-testid="stBottomBlockContainer"] {
+    padding-inline: .5rem !important;
+    padding-top: .15rem !important;
+    padding-bottom: calc(.35rem + var(--sky-safe-bottom)) !important;
+  }
+  html body .stApp [data-testid="stBottomBlockContainer"] > div { max-width: 100% !important; }
+  html body .stApp [data-testid="stChatInput"] { width: 100% !important; max-width: 100% !important; margin-top: .1rem !important; }
+  html body .stApp [data-testid="stChatInput"] > div { min-height: 46px !important; padding: 3px !important; border-radius: 14px !important; }
+  html body .stApp [data-testid="stChatInput"] textarea { min-height: 36px !important; height: 36px !important; max-height: 100px !important; padding: .38rem .5rem !important; font-size: .88rem !important; }
+  html body .stApp [data-testid="stChatInput"] button { flex-basis: 33px !important; width: 33px !important; min-width: 33px !important; max-width: 33px !important; height: 33px !important; min-height: 33px !important; max-height: 33px !important; }
+  [data-testid="stSidebar"][aria-expanded="true"] { width: min(86vw, 19rem) !important; min-width: min(86vw, 19rem) !important; max-width: 19rem !important; }
+  [data-testid="stSidebar"] [data-testid="stSidebarContent"] { padding: .6rem .7rem 1rem !important; }
+  [data-testid="stImage"] img { max-width: min(100%, 180px) !important; }
+}
+/* Small phones */
+@media (max-width: 480px) {
+  :root { --sky-page-gutter: .55rem; }
+  html, body, [class*="css"] { font-size: 14px; }
+  html body .stApp [data-testid="stMainBlockContainer"] { padding-inline: .55rem !important; }
+  .hero { padding: .9rem .78rem; border-radius: 16px; }
+  .hero-title { font-size: clamp(1.25rem, 6.6vw, 1.55rem) !important; }
+  .hero-copy { font-size: .87rem; }
+  .hero::after { font-size: 4rem; }
+  html body .stApp [data-testid="stForm"] { padding: .72rem !important; }
+  html body .stApp [data-testid="stBottomBlockContainer"] { padding-inline: .35rem !important; }
+  html body .stApp [data-testid="stChatInput"] > div { min-height: 44px !important; padding: 2px !important; }
+  html body .stApp [data-testid="stChatInput"] textarea { min-height: 35px !important; height: 35px !important; padding: .34rem .44rem !important; font-size: .86rem !important; }
+  html body .stApp [data-testid="stChatInput"] button { flex-basis: 32px !important; width: 32px !important; min-width: 32px !important; max-width: 32px !important; height: 32px !important; min-height: 32px !important; max-height: 32px !important; }
+}
+/* Very small phones / split-screen */
+@media (max-width: 360px) {
+  .hero-title { font-size: 1.22rem !important; }
+  .hero-eyebrow { font-size: .6rem; }
+  [data-testid="stTabs"] button[role="tab"] { padding-inline: .5rem !important; font-size: .82rem !important; }
+  html body .stApp [data-testid="stChatInput"] textarea { font-size: .82rem !important; }
+}
+/* Short landscape windows: reserve space for content above the composer. */
+@media (max-height: 520px) and (orientation: landscape) {
+  html body .stApp [data-testid="stMainBlockContainer"] { padding-top: .45rem !important; padding-bottom: calc(5.75rem + var(--sky-safe-bottom)) !important; }
+  .hero { margin-block: .1rem .55rem; padding-block: .75rem; }
+  .hero::before { width: 110px; height: 110px; }
+  .hero::after { font-size: 4.5rem; }
+  html body .stApp [data-testid="stBottomBlockContainer"] { padding-block: .15rem !important; }
+}
+/* When reduced motion is requested, preserve layout and stop decorative CSS motion. */
+@media (prefers-reduced-motion: reduce) {
+  .bg-video-layer video { animation: none !important; transform: none !important; }
+  .hero::after, .hero::before, .teru-bozu, .breathing-orb::before, .breathing-orb::after { animation: none !important; }
+}
+
+
+
+/* Keep the greeting badge readable next to the heading at every width. */
+html body .stApp .hero-title .hero-tagline {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  vertical-align: middle !important;
+  max-width: min(100%, 14rem) !important;
+  margin: .18rem 0 .18rem .35rem !important;
+  padding: .24rem .55rem !important;
+  line-height: 1.25 !important;
+  font-size: clamp(.62rem, .72vw, .76rem) !important;
+  white-space: normal !important;
+  overflow-wrap: break-word !important;
+  text-align: center !important;
+}
+@media (max-width: 767px) {
+  html body .stApp .hero-title .hero-tagline {
+    display: flex !important;
+    width: max-content !important;
+    max-width: 100% !important;
+    margin: .42rem 0 .15rem !important;
+    font-size: .68rem !important;
+  }
+}
+
 /* ENDSECTION */
 
 /* SECTION:auth */
@@ -768,6 +1172,35 @@ html, body { background: #eaf3f7; }
 [data-testid="stTabs"] [data-baseweb="tab-list"] { margin-bottom: .25rem; }
 [data-testid="stTabs"] [data-baseweb="tab-panel"] [data-testid="stForm"] { animation: auth-form-arrive .38s cubic-bezier(.2,.75,.25,1) both; }
 @keyframes auth-form-arrive { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+
+
+/* Auth pages animate in gently and keep the video legible behind translucent panels. */
+[data-testid="stTabs"] [data-baseweb="tab-list"] { gap: .3rem; }
+[data-testid="stTabs"] button[role="tab"] { transition: color .2s ease, background .2s ease, border-color .2s ease; }
+[data-testid="stTabs"] [data-baseweb="tab-panel"] { animation: sky-auth-panel-in .42s cubic-bezier(.2,.75,.25,1) both; }
+[data-testid="stForm"] { animation: sky-auth-form-in .48s cubic-bezier(.2,.75,.25,1) both; }
+[data-testid="stForm"] [data-testid="stTextInput"] input { transition: background .2s ease, border-color .2s ease, box-shadow .2s ease; }
+[data-testid="stForm"] [data-testid="stFormSubmitButton"] button { transition: transform .18s ease, box-shadow .18s ease, filter .18s ease; }
+[data-testid="stForm"] [data-testid="stFormSubmitButton"] button:hover { transform: translateY(-1px); filter: brightness(1.025); }
+@keyframes sky-auth-panel-in { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes sky-auth-form-in { from { opacity: 0; transform: translateY(12px) scale(.995); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+
+
+
+/* Responsive auth screens */
+@media (max-width: 767px) {
+  html body .stApp [data-testid="stTabs"] { width: 100% !important; }
+  html body .stApp [data-testid="stForm"] { width: 100% !important; max-width: 100% !important; }
+  html body .stApp [data-testid="stForm"] [data-testid="stTextInput"] input { width: 100% !important; min-height: 2.7rem !important; font-size: 16px !important; }
+  html body .stApp [data-testid="stFormSubmitButton"] button { min-height: 2.7rem !important; }
+  html body .stApp [data-testid="stTabs"] [data-baseweb="tab-panel"] { padding-inline: 0 !important; }
+}
+@media (max-width: 480px) {
+  html body .stApp [data-testid="stForm"] { padding: .7rem !important; }
+  html body .stApp [data-testid="stTabs"] button[role="tab"] { font-size: .82rem !important; }
+}
 
 /* ENDSECTION */
 
@@ -945,5 +1378,56 @@ html, body { background: #10191f !important; }
 [data-testid="stChatInput"] textarea { min-height: 42px !important; height: 42px !important; max-height: 160px !important; padding: .55rem .7rem !important; background: transparent !important; color: #edf6fa !important; }
 [data-testid="stChatInput"] textarea::placeholder { color: #91a6b2 !important; }
 @media (max-width: 720px) { [data-testid="stChatInput"] > div { min-height: 58px !important; } [data-testid="stChatInput"] textarea { min-height: 40px !important; } }
+
+
+
+/* Night-mode compact composer overrides: no large textarea padding or tall shell. */
+html body .stApp [data-testid="stChatInput"] > div {
+  min-height: 50px !important;
+  height: auto !important;
+  padding: 3px 5px !important;
+  background: rgba(23, 36, 46, .94) !important;
+  border-color: rgba(139, 185, 207, .28) !important;
+}
+html body .stApp [data-testid="stChatInput"] textarea {
+  min-height: 38px !important;
+  height: 38px !important;
+  max-height: 92px !important;
+  padding: .45rem .65rem !important;
+  background: transparent !important;
+  color: #edf6fa !important;
+  line-height: 1.35 !important;
+  font-size: .94rem !important;
+}
+html body .stApp [data-testid="stChatInput"] button {
+  width: 36px !important; min-width: 36px !important; max-width: 36px !important;
+  height: 36px !important; min-height: 36px !important; max-height: 36px !important;
+}
+[data-testid="stForm"] {
+  background: rgba(22, 36, 45, .78) !important;
+  border-color: rgba(139, 185, 207, .25) !important;
+  box-shadow: 0 16px 38px rgba(0, 0, 0, .18) !important;
+}
+[data-testid="stHeader"] { background: rgba(16, 25, 31, .35) !important; }
+@media (max-width: 720px) {
+  html body .stApp [data-testid="stChatInput"] > div { min-height: 46px !important; padding: 3px !important; }
+  html body .stApp [data-testid="stChatInput"] textarea { min-height: 36px !important; height: 36px !important; }
+  html body .stApp [data-testid="stChatInput"] button { width: 34px !important; min-width: 34px !important; height: 34px !important; min-height: 34px !important; }
+}
+
+
+
+
+/* Responsive sizing remains authoritative in dark mode too. */
+@media (max-width: 767px) {
+  html body .stApp [data-testid="stChatInput"] > div { min-height: 46px !important; }
+  html body .stApp [data-testid="stChatInput"] textarea { min-height: 36px !important; height: 36px !important; }
+  html body .stApp [data-testid="stChatInput"] button { width: 33px !important; min-width: 33px !important; height: 33px !important; min-height: 33px !important; }
+}
+@media (max-width: 480px) {
+  html body .stApp [data-testid="stChatInput"] > div { min-height: 44px !important; }
+  html body .stApp [data-testid="stChatInput"] textarea { min-height: 35px !important; height: 35px !important; }
+  html body .stApp [data-testid="stChatInput"] button { width: 32px !important; min-width: 32px !important; height: 32px !important; min-height: 32px !important; }
+}
 
 /* ENDSECTION */
