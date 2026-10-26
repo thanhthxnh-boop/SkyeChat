@@ -1543,6 +1543,9 @@ if is_diary:
 
 # The selected appearance stylesheet is injected near session-state initialization.
 
+if not is_diary:
+    render_video_background()
+
 # ==============================
 # Header và hội thoại
 # ==============================
@@ -1838,7 +1841,7 @@ else:
     }
     try:
         if "height" in inspect.signature(st.chat_input).parameters:
-            chat_input_kwargs["height"] = 148
+            chat_input_kwargs["height"] = 64
     except (TypeError, ValueError):
         pass
     chat_input_prompt = st.chat_input(**chat_input_kwargs)
