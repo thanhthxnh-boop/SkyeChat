@@ -27,8 +27,10 @@ body { color: var(--sky-ink); background: var(--sky-bg); }
 .stApp {
   min-height: 100vh;
   color: var(--sky-ink);
-  background: linear-gradient(135deg, #eff7fa 0%, #e3eef4 52%, #f3f7f8 100%);
-  isolation: isolate;
+  background: linear-gradient(135deg, #eff7fa 0%, #dcecf3 34%, #f3f7f8 68%, #e3eef4 100%);
+  background-size: 220% 220%;
+  animation: sky-background-drift 28s ease-in-out infinite;
+  isolation: auto;
 }
 [data-testid="stAppViewContainer"], [data-testid="stMain"],
 [data-testid="stMainBlockContainer"] { background: transparent; }
@@ -186,12 +188,6 @@ input[type="radio"], input[type="checkbox"] { accent-color: var(--sky-accent); }
   opacity: .25;
   filter: saturate(.78) brightness(1.06);
 }
-body:has(.bg-video-layer) .stApp,
-body:has(.bg-video-layer) [data-testid="stAppViewContainer"],
-body:has(.bg-video-layer) [data-testid="stMain"],
-body:has(.bg-video-layer) [data-testid="stMainBlockContainer"],
-body:has(.bg-video-layer) [data-testid="stHeader"],
-body:has(.bg-video-layer) [data-testid="stSidebar"] { background-color: transparent !important; }
 
 /* Chat bubbles */
 div[data-testid="stChatMessage"] {
@@ -382,18 +378,7 @@ img, video, svg { max-width: 100%; }
 [data-testid="stMarkdownContainer"] th { background: var(--sky-panel); font-weight: 750; }
 [data-testid="stMarkdownContainer"] tr:last-child td { border-bottom: 0; }
 
-/* Atmospheric video, with tinting and a subtle readable veil.
-   Keep the fixed video behind the Streamlit content; z-index: 0 can cover
-   non-positioned widgets and make the main page look completely blank. */
-.bg-video-layer { z-index: -1 !important; }
-.bg-video-layer::after {
-  content: ""; position: absolute; inset: 0;
-  background: linear-gradient(125deg, rgba(231, 243, 248, .38), rgba(248, 251, 253, .2) 48%, rgba(214, 232, 240, .35));
-}
-.bg-video-layer video { transform: scale(1.025); animation: sky-video-settle 1.25s ease-out both; }
-body:has(.bg-video-layer) [data-testid="stAppViewContainer"] { position: relative; z-index: 1; }
-body:has(.bg-video-layer) [data-testid="stSidebar"] { position: relative; z-index: 2; }
-body:has(.bg-video-layer) [data-testid="stMainBlockContainer"] > div:not(:has(.bg-video-layer)) { position: relative; z-index: 1; }
+/* Animated background is applied directly to .stApp to keep all Streamlit widgets in the normal paint order. */
 
 /* Floating decorative mascot */
 .teru-bozu { position: fixed; top: 4.6rem; right: 1.4rem; z-index: 5; width: 48px; opacity: .88; pointer-events: none; filter: drop-shadow(0 8px 16px rgba(39, 88, 104, .12)); animation: mascot-float 6.5s ease-in-out infinite; }
@@ -656,6 +641,14 @@ div[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] li { margin
   }
 }
 
+@keyframes sky-background-drift {
+  0%, 100% { background-position: 0% 45%; }
+  50% { background-position: 100% 55%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stApp { animation: none !important; background-position: 50% 50%; }
+}
+
 /* ENDSECTION */
 
 /* SECTION:auth */
@@ -841,4 +834,9 @@ div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
 [data-testid="stChatInput"] textarea::placeholder {
   color: #91a6b2 !important;
 }
+.stApp {
+  background-size: 220% 220% !important;
+  animation: sky-background-drift 28s ease-in-out infinite !important;
+}
+@media (prefers-reduced-motion: reduce) { .stApp { animation: none !important; background-position: 50% 50% !important; } }
 /* ENDSECTION */
