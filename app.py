@@ -1342,8 +1342,10 @@ with st.sidebar:
         st.session_state.nickname_is_custom = True
 
     displayed_nickname = nickname_input.strip() or nickname_display
-    st.success(
-        f"👋 Chào {displayed_nickname}!" if is_vi else f"👋 Hello {displayed_nickname}!"
+    greeting_text = f"👋 Chào {displayed_nickname}!" if is_vi else f"👋 Hello {displayed_nickname}!"
+    st.markdown(
+        f'<div class="welcome-greeting">{escape(greeting_text)}</div>',
+        unsafe_allow_html=True,
     )
     lang = st.radio(
         "Ngôn ngữ" if is_vi else "Language",
@@ -1749,7 +1751,11 @@ else:
         f"""
         <section class="hero">
           <div class="hero-eyebrow">{hero_eyebrow}</div>
-          <div class="hero-title">{hero_greeting} <span class="hero-tagline">{hero_tagline}</span> ☁️</div>
+          <div class="hero-title hero-title--greeting">
+            <span class="hero-greeting-text">{hero_greeting}</span>
+            <span class="hero-tagline">{hero_tagline}</span>
+            <span class="hero-cloud" aria-hidden="true">☁️</span>
+          </div>
           <p class="hero-copy">{hero_copy}</p>
         </section>
         """,
