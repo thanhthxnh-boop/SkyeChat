@@ -151,6 +151,80 @@ input[type="radio"], input[type="checkbox"] { accent-color: var(--sky-accent); }
   padding: 1.15rem 1.25rem;
   background: var(--sky-surface);
 }
+/* Sky-blue greeting card in the sidebar */
+.welcome-greeting {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  width: 100%;
+  box-sizing: border-box;
+  margin: .75rem 0 1.15rem;
+  padding: .95rem 1rem;
+  border: 1px solid rgba(78, 174, 224, .38);
+  border-radius: 18px;
+  color: #168fc9 !important;
+  background: linear-gradient(135deg, rgba(220, 244, 252, .96), rgba(231, 248, 253, .91));
+  box-shadow: 0 8px 24px rgba(46, 142, 188, .10);
+  font-weight: 650;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  transition: color .22s ease, background .22s ease, border-color .22s ease, transform .22s ease, box-shadow .22s ease;
+}
+.welcome-greeting:hover {
+  color: #087db6 !important;
+  border-color: rgba(49, 157, 211, .58);
+  box-shadow: 0 10px 28px rgba(46, 142, 188, .15);
+  transform: translateY(-1px);
+}
+/* Keep the greeting, slogan and cloud distinct instead of crowding together. */
+.hero-title--greeting {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  column-gap: clamp(.8rem, 1.55vw, 1.4rem) !important;
+  row-gap: .55rem !important;
+  max-width: 100% !important;
+}
+.hero-title--greeting .hero-greeting-text {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.hero-title--greeting .hero-tagline {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  flex: 0 1 auto;
+  width: fit-content;
+  max-width: min(100%, 17rem) !important;
+  margin: 0 !important;
+  padding: .32rem .78rem !important;
+  line-height: 1.35 !important;
+  font-size: clamp(.68rem, .78vw, .82rem) !important;
+  white-space: normal !important;
+  text-align: center;
+  overflow-wrap: anywhere;
+  vertical-align: middle;
+}
+.hero-title--greeting .hero-cloud {
+  display: inline-block;
+  flex: 0 0 auto;
+  line-height: 1;
+  margin-left: .05rem;
+  filter: drop-shadow(0 3px 7px rgba(80, 152, 190, .15));
+}
+@media (max-width: 767px) {
+  .hero-title--greeting {
+    column-gap: .7rem !important;
+    row-gap: .55rem !important;
+  }
+  .hero-title--greeting .hero-tagline {
+    max-width: 100% !important;
+    font-size: .72rem !important;
+    padding: .28rem .68rem !important;
+  }
+}
+
 .welcome-card strong { color: var(--sky-accent-strong); }
 .soft-note { color: var(--sky-muted); font-size: .9rem; }
 .soft-note--spaced { margin-top: .7rem; }
@@ -1118,30 +1192,6 @@ html body .stApp [data-testid="stChatInput"] button {
 
 
 
-/* Keep the greeting badge readable next to the heading at every width. */
-html body .stApp .hero-title .hero-tagline {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  vertical-align: middle !important;
-  max-width: min(100%, 14rem) !important;
-  margin: .18rem 0 .18rem .35rem !important;
-  padding: .24rem .55rem !important;
-  line-height: 1.25 !important;
-  font-size: clamp(.62rem, .72vw, .76rem) !important;
-  white-space: normal !important;
-  overflow-wrap: break-word !important;
-  text-align: center !important;
-}
-@media (max-width: 767px) {
-  html body .stApp .hero-title .hero-tagline {
-    display: flex !important;
-    width: max-content !important;
-    max-width: 100% !important;
-    margin: .42rem 0 .15rem !important;
-    font-size: .68rem !important;
-  }
-}
 
 /* ENDSECTION */
 
@@ -1428,6 +1478,23 @@ html body .stApp [data-testid="stChatInput"] button {
   html body .stApp [data-testid="stChatInput"] > div { min-height: 44px !important; }
   html body .stApp [data-testid="stChatInput"] textarea { min-height: 35px !important; height: 35px !important; }
   html body .stApp [data-testid="stChatInput"] button { width: 32px !important; min-width: 32px !important; height: 32px !important; min-height: 32px !important; }
+}
+
+/* Accessible sky-blue greeting in dark appearance */
+.welcome-greeting {
+  color: #8dd9ff !important;
+  background: linear-gradient(135deg, rgba(26, 60, 77, .96), rgba(23, 46, 61, .92)) !important;
+  border-color: rgba(91, 181, 222, .40) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .12) !important;
+}
+.welcome-greeting:hover {
+  color: #b8eaff !important;
+  border-color: rgba(114, 205, 245, .62) !important;
+}
+.hero-title--greeting .hero-tagline {
+  color: #d7eff9 !important;
+  background: rgba(17, 39, 51, .94) !important;
+  border-color: rgba(139, 185, 207, .35) !important;
 }
 
 /* ENDSECTION */
