@@ -3,6 +3,7 @@ import json
 import logging
 import random
 import re
+import inspect
 import time
 from html import escape
 from datetime import datetime
@@ -1827,7 +1828,19 @@ else:
 
     queued_prompt = st.session_state.pop("queued_chat_prompt", None)
     placeholder = "Hãy chia sẻ với SkyeChat..." if is_vi else "Share your thoughts with SkyeChat..."
-    chat_input_prompt = st.chat_input(placeholder, max_chars=5000, disabled=not ai_is_configured())
+    # Newer Streamlit versions let us set the initial chat composer height directly.
+    # Keep a compatibility fallback for versions that do not expose the `height` option.
+    chat_input_kwargs = {
+        "placeholder": placeholder,
+        "max_chars": 5000,
+        "disabled": not ai_is_configured(),
+    }
+    try:
+        if "height" in inspect.signature(st.chat_input).parameters:
+            chat_input_kwargs["height"] = 148
+    except (TypeError, ValueError):
+        pass
+    chat_input_prompt = st.chat_input(**chat_input_kwargs)
     prompt = queued_prompt or chat_input_prompt
     if prompt and prompt.strip():
         prompt = prompt.strip()
