@@ -37,9 +37,10 @@ body { color: var(--sky-ink); background: var(--sky-bg); }
   backdrop-filter: blur(16px);
 }
 [data-testid="stMainBlockContainer"] {
-  max-width: 1160px;
+  max-width: 1440px;
   padding-top: 1.35rem;
   padding-bottom: 2.4rem;
+  padding-inline: clamp(1rem, 2vw, 2rem);
 }
 [data-testid="stSidebar"] {
   color: var(--sky-ink);
@@ -585,6 +586,73 @@ div[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] li { margin
 
 
 
+/* Spacious chat composer: enough room to draft several lines comfortably.
+   Streamlit grows the textarea further as text is entered; these rules set a better starting size. */
+[data-testid="stChatInput"] {
+  width: 100% !important;
+  padding-top: .5rem !important;
+  padding-bottom: .5rem !important;
+}
+[data-testid="stChatInput"] > div {
+  min-height: 176px !important;
+  padding: .75rem .85rem !important;
+  border-radius: 25px !important;
+  align-items: stretch !important;
+  gap: .45rem !important;
+  background: rgba(246, 250, 253, .94) !important;
+  border: 1px solid rgba(114, 157, 180, .24) !important;
+  box-shadow: 0 14px 38px rgba(31, 64, 83, .10) !important;
+}
+[data-testid="stChatInput"] textarea {
+  min-height: 132px !important;
+  max-height: 320px !important;
+  padding: 1.05rem 1.15rem !important;
+  line-height: 1.65 !important;
+  font-size: 1.04rem !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+  border-radius: 18px !important;
+}
+[data-testid="stChatInput"] textarea::placeholder {
+  white-space: normal !important;
+  line-height: 1.5 !important;
+  opacity: .9 !important;
+}
+[data-testid="stChatInput"] button {
+  align-self: flex-end !important;
+  min-width: 3.15rem !important;
+  min-height: 3.15rem !important;
+  margin: .15rem !important;
+  border-radius: 16px !important;
+  box-shadow: 0 5px 14px rgba(49, 94, 120, .15) !important;
+}
+[data-testid="stChatInput"]:focus-within > div {
+  border-color: rgba(71, 125, 153, .52) !important;
+  box-shadow: 0 0 0 4px rgba(71, 125, 153, .12), 0 16px 38px rgba(31, 64, 83, .13) !important;
+}
+@media (max-width: 720px) {
+  [data-testid="stMainBlockContainer"] {
+    padding-inline: .75rem !important;
+  }
+  [data-testid="stChatInput"] > div {
+    min-height: 138px !important;
+    padding: .55rem !important;
+    border-radius: 19px !important;
+  }
+  [data-testid="stChatInput"] textarea {
+    min-height: 100px !important;
+    padding: .8rem .9rem !important;
+    font-size: 1rem !important;
+  }
+  [data-testid="stChatInput"] button {
+    min-width: 2.8rem !important;
+    min-height: 2.8rem !important;
+    border-radius: 13px !important;
+  }
+}
+
 /* ENDSECTION */
 
 /* SECTION:auth */
@@ -758,4 +826,16 @@ div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
 .teru-bozu { filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .2)); }
 @media (max-width: 700px) { .hero { background: linear-gradient(125deg, rgba(26, 47, 59, .97), rgba(20, 34, 43, .96)); } }
 
+/* Preserve the roomy composer in night mode without a bright white panel. */
+[data-testid="stChatInput"] > div {
+  background: rgba(23, 36, 46, .96) !important;
+  border-color: rgba(139, 185, 207, .28) !important;
+}
+[data-testid="stChatInput"] textarea {
+  background: transparent !important;
+  color: #edf6fa !important;
+}
+[data-testid="stChatInput"] textarea::placeholder {
+  color: #91a6b2 !important;
+}
 /* ENDSECTION */
