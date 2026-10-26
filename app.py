@@ -1753,6 +1753,8 @@ else:
           <div class="hero-eyebrow">{hero_eyebrow}</div>
           <div class="hero-title hero-title--greeting">
             <span class="hero-greeting-text">{hero_greeting}</span>
+          </div>
+          <div class="hero-tagline-row">
             <span class="hero-tagline">{hero_tagline}</span>
             <span class="hero-cloud" aria-hidden="true">☁️</span>
           </div>
