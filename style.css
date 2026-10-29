@@ -1017,6 +1017,16 @@ html body .stApp [data-testid="stBottomBlockContainer"] {
   box-sizing: border-box !important;
   background: transparent !important;
 }
+/* Streamlit adds a separate backdrop around the pinned chat input. Keep that
+   wrapper transparent so the existing full-screen video remains visible. */
+html body .stApp [data-testid="stBottom"],
+html body .stApp [data-testid="stBottom"] > div,
+html body .stApp [data-testid="stBottomBlockContainer"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
 html body .stApp [data-testid="stBottomBlockContainer"] > div {
   width: 100% !important;
   max-width: var(--sky-composer-max) !important;
