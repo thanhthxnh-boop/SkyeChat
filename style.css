@@ -1473,10 +1473,10 @@ input[type="radio"], input[type="checkbox"], input[type="range"] {
   --sky-panel: rgba(30, 49, 61, .9);
   --sky-shadow: 0 18px 44px rgba(0, 0, 0, .2);
   --sky-input: rgba(19, 30, 38, .97);
-  --sky-new-chat-bg: #315967;
+  --sky-new-chat-bg: #3d687e;
   --sky-new-chat-ink: #edf7fa;
-  --sky-new-chat-border: #527889;
-  --sky-new-chat-hover: #3a6a7a;
+  --sky-new-chat-border: #66899a;
+  --sky-new-chat-hover: #49768a;
 }
 html, body { color: var(--sky-ink); background: #10191f; }
 .stApp { color: var(--sky-ink); background: linear-gradient(135deg, #10191f, #182933 58%, #111d25) !important; }
