@@ -1370,6 +1370,22 @@ input[type="radio"], input[type="checkbox"], input[type="range"] {
   background-color: var(--sky-accent) !important;
   border-color: var(--sky-accent) !important;
 }
+.st-key-new-chat-action [data-testid="stButton"] button,
+.st-key-new-chat-action [data-testid="stButton"] button p,
+.st-key-new-chat-action [data-testid="stButton"] button span {
+  color: #254451 !important;
+}
+.st-key-new-chat-action [data-testid="stButton"] button {
+  background: #fff !important;
+  border: 1px solid #d4e2e9 !important;
+  box-shadow: 0 4px 12px rgba(35, 67, 83, .08) !important;
+}
+.st-key-new-chat-action [data-testid="stButton"] button:hover {
+  color: #254451 !important;
+  background: #fff !important;
+  border-color: #c4d9e3 !important;
+  box-shadow: 0 7px 16px rgba(35, 67, 83, .12) !important;
+}
 /* ENDSECTION */
 
 /* SECTION:auth */
