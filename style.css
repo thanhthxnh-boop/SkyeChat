@@ -1,6 +1,7 @@
 /* SkyeChat — responsive, theme-aware styling. No remote font dependencies. */
 
 /* SECTION:base */
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Xanh+Mono&display=swap');
 :root {
   color-scheme: light;
   --sky-bg: #edf5f8;
@@ -18,6 +19,8 @@
   --sky-new-chat-ink: #254451;
   --sky-new-chat-border: #b9d0db;
   --sky-new-chat-hover: #cbdfe7;
+  --sky-title-text: #205a78;
+  --sky-copy-text: #2d4b5c;
 }
 
 html, body, [class*="css"] {
@@ -1396,6 +1399,17 @@ input[type="radio"], input[type="checkbox"], input[type="range"] {
   border-color: #c4d9e3 !important;
   box-shadow: 0 7px 16px rgba(35, 67, 83, .12) !important;
 }
+h1, h2, h3, h4, h5, h6, .hero-title, .hero-eyebrow {
+  color: var(--sky-title-text) !important;
+  font-family: "Xanh Mono", "Courier New", monospace !important;
+}
+p, li, label, small, summary, blockquote,
+[data-testid="stMarkdownContainer"], [data-testid="stCaptionContainer"],
+[data-testid="stWidgetLabel"], .hero-copy, .hero-tagline, .soft-note, .footer,
+.sidebar-brand span, [data-testid="stChatInput"] textarea {
+  color: var(--sky-copy-text) !important;
+  font-family: "Lora", Georgia, serif !important;
+}
 /* ENDSECTION */
 
 /* SECTION:auth */
@@ -1503,6 +1517,8 @@ input[type="radio"], input[type="checkbox"], input[type="range"] {
   --sky-new-chat-ink: #edf7fa;
   --sky-new-chat-border: #66899a;
   --sky-new-chat-hover: #49768a;
+  --sky-title-text: #d9f3ff;
+  --sky-copy-text: #d4e2e9;
 }
 html, body { color: var(--sky-ink); background: #10191f; }
 .stApp { color: var(--sky-ink); background: linear-gradient(135deg, #10191f, #182933 58%, #111d25) !important; }
@@ -1764,6 +1780,17 @@ input[type="radio"], input[type="checkbox"], input[type="range"] {
 }
 .st-key-new-chat-action [data-testid="stButton"] button:active {
   transform: translateY(0) scale(.99) !important;
+}
+h1, h2, h3, h4, h5, h6, .hero-title, .hero-eyebrow {
+  color: var(--sky-title-text) !important;
+  font-family: "Xanh Mono", "Courier New", monospace !important;
+}
+p, li, label, small, summary, blockquote,
+[data-testid="stMarkdownContainer"], [data-testid="stCaptionContainer"],
+[data-testid="stWidgetLabel"], .hero-copy, .hero-tagline, .soft-note, .footer,
+.sidebar-brand span, [data-testid="stChatInput"] textarea {
+  color: var(--sky-copy-text) !important;
+  font-family: "Lora", Georgia, serif !important;
 }
 
 /* ENDSECTION */
