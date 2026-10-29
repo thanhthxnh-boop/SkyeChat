@@ -1346,6 +1346,26 @@ html body .stApp [data-testid="stChatInput"] button {
   overflow-x: auto !important;
   line-height: 1.65 !important;
 }
+
+/* Streamlit widget accent: calm sky blue in light mode */
+:root, .stApp, [data-testid="stAppViewContainer"] {
+  --primary-color: var(--sky-accent) !important;
+}
+input[type="radio"], input[type="checkbox"], input[type="range"] {
+  accent-color: var(--sky-accent) !important;
+}
+[data-testid="stRadio"] [role="radio"][aria-checked="true"] {
+  accent-color: var(--sky-accent) !important;
+}
+[data-testid="stToggle"] [role="switch"][aria-checked="true"] {
+  background-color: var(--sky-accent) !important;
+  border-color: var(--sky-accent) !important;
+}
+[data-testid="stSlider"] [role="slider"],
+[data-testid="stSelectSlider"] [role="slider"] {
+  background-color: var(--sky-accent) !important;
+  border-color: var(--sky-accent) !important;
+}
 /* ENDSECTION */
 
 /* SECTION:auth */
@@ -1667,5 +1687,25 @@ html body .stApp [data-testid="stChatInput"] button {
   border-color: rgba(139, 185, 207, .35) !important;
 }
 .hero-tagline-row .hero-cloud { letter-spacing: normal !important; }
+
+/* Keep native radio, slider, and theme-switch accents consistent at night */
+:root, .stApp, [data-testid="stAppViewContainer"] {
+  --primary-color: var(--sky-accent) !important;
+}
+input[type="radio"], input[type="checkbox"], input[type="range"] {
+  accent-color: var(--sky-accent) !important;
+}
+[data-testid="stRadio"] [role="radio"][aria-checked="true"] {
+  accent-color: var(--sky-accent) !important;
+}
+[data-testid="stToggle"] [role="switch"][aria-checked="true"] {
+  background-color: var(--sky-accent) !important;
+  border-color: var(--sky-accent) !important;
+}
+[data-testid="stSlider"] [role="slider"],
+[data-testid="stSelectSlider"] [role="slider"] {
+  background-color: var(--sky-accent) !important;
+  border-color: var(--sky-accent) !important;
+}
 
 /* ENDSECTION */
