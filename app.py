@@ -694,9 +694,13 @@ if not is_authenticated and not st.session_state.guest_mode:
             type(exc).__name__,
             code or "unavailable",
         )
-        if any(value in details for value in ("signup_disabled", "email_provider_disabled", "phone_provider_disabled", "signups not allowed")):
-            st.error("Đăng ký đang bị tắt trong Supabase. Hãy bật Email/Phone provider phù hợp và cho phép tạo tài khoản mới trong Authentication settings.")
-        elif any(value in details for value in ("rate limit", "too many", "over_email_send_rate_limit", "over_request_rate_limit")):
+        if any(value in details for value in ("signup_disabled", "signups not allowed")):
+            st.error("Đăng ký mới đang bị tắt trong Supabase. Hãy bật quyền đăng ký trong Authentication settings.")
+        elif "email_provider_disabled" in details:
+            st.error("Email provider đang tắt trong Supabase. Hãy bật đăng nhập bằng Email trong Authentication → Sign In / Providers.")
+        elif "over_email_send_rate_limit" in details or "email rate limit exceeded" in details:
+            st.warning("Supabase đã chạm giới hạn gửi email mặc định (2 email/giờ cho toàn dự án). Chờ hết giới hạn hoặc cấu hình SMTP riêng trong Authentication → Emails → SMTP Settings.")
+        elif any(value in details for value in ("rate limit", "too many", "over_request_rate_limit")):
             st.warning("Bạn thử quá nhiều lần. Hãy đợi một chút rồi thử lại.")
         elif any(value in details for value in ("already registered", "user already exists", "email_exists", "phone_exists")):
             st.warning("Email hoặc số điện thoại này có thể đã được dùng. Hãy thử đăng nhập hoặc khôi phục tài khoản.")
@@ -705,7 +709,7 @@ if not is_authenticated and not st.session_state.guest_mode:
         elif any(value in details for value in ("sms_provider", "sms provider", "sms_send_failed", "sms delivery", "phone provider")):
             st.error("Chưa gửi được SMS. Hãy bật xác thực Phone và cấu hình nhà cung cấp SMS trong Supabase Authentication.")
         elif "email_address_not_authorized" in details:
-            st.error("Máy chủ email mặc định của Supabase không gửi đến địa chỉ này. Hãy cấu hình SMTP riêng trong Supabase để gửi email xác nhận cho người dùng.")
+            st.error("Máy chủ email mặc định của Supabase chỉ gửi tới địa chỉ thành viên trong nhóm dự án. Để gửi mã cho người dùng, hãy cấu hình SMTP riêng trong Authentication → Emails → SMTP Settings.")
         elif "invalid login credentials" in details or "invalid credentials" in details:
             st.error("Email hoặc mật khẩu chưa chính xác. Nếu chưa xác nhận email, hãy kiểm tra hộp thư.")
         elif "weak_password" in details or ("password" in details and any(value in details for value in ("weak", "short", "least", "characters"))):
@@ -989,8 +993,7 @@ if not is_authenticated and not st.session_state.guest_mode:
                         "Hãy kiểm tra cả thư mục Spam."
                     )
                 except Exception as exc:
-                    LOGGER.warning("Supabase password reset request failed: %s", type(exc).__name__)
-                    st.error("Chưa gửi được mã. Hãy kiểm tra cấu hình email Supabase rồi thử lại.")
+                    show_auth_error(exc, "password recovery")
 
         if st.session_state.recovery_otp_sent:
             st.caption(f"Nhập mã khôi phục đã gửi tới {st.session_state.recovery_target}.")
