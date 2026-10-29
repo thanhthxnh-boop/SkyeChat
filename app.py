@@ -5,6 +5,7 @@ import random
 import re
 import inspect
 import time
+import uuid
 from html import escape
 from datetime import datetime
 from pathlib import Path
@@ -347,6 +348,10 @@ def build_system_prompt(is_vi, support_style="listen"):
 # ==============================
 if "messages" not in st.session_state:
     st.session_state.messages = []
+if "chat_threads" not in st.session_state:
+    st.session_state.chat_threads = []
+if "active_chat_id" not in st.session_state:
+    st.session_state.active_chat_id = None
 if "support_style" not in st.session_state:
     st.session_state.support_style = "listen"
 if "mood_checkin" not in st.session_state:
@@ -439,6 +444,154 @@ def save_auth_state(auth_response):
     return bool(st.session_state.auth_user_id)
 
 
+def make_chat_thread(messages=None):
+    return {
+        "id": uuid.uuid4().hex,
+        "title": "",
+        "messages": list(messages or []),
+        "updated_at": time.time(),
+    }
+
+
+def ensure_active_chat_thread():
+    """Ensure the current session has one valid active conversation."""
+    threads = st.session_state.get("chat_threads")
+    if not isinstance(threads, list):
+        threads = []
+        st.session_state.chat_threads = threads
+
+    active_id = st.session_state.get("active_chat_id")
+    active = next((thread for thread in threads if thread.get("id") == active_id), None)
+    if active is None:
+        if threads:
+            active = threads[0]
+        else:
+            active = make_chat_thread(st.session_state.get("messages", []))
+            threads.insert(0, active)
+        st.session_state.active_chat_id = active["id"]
+
+    active_messages = active.get("messages")
+    st.session_state.messages = list(active_messages) if isinstance(active_messages, list) else []
+    return active
+
+
+def chat_title_from_messages(messages):
+    for message in messages:
+        if not isinstance(message, dict) or message.get("role") != "user":
+            continue
+        title = str(message.get("content", "") or "")
+        title = re.sub(r"(?s)```.*?```|~~~.*?~~~", " đoạn mã ", title)
+        title = re.sub(r"[\[\]`*_#]", "", title)
+        title = re.sub(r"\s+", " ", title).strip()
+        if not title:
+            return "Code discussion"
+        return title if len(title) <= 48 else title[:47].rstrip() + "…"
+    return ""
+
+
+def sync_active_chat_thread():
+    """Persist the current transcript in the session-only conversation list."""
+    threads = st.session_state.get("chat_threads")
+    if not isinstance(threads, list):
+        threads = []
+        st.session_state.chat_threads = threads
+    active_id = st.session_state.get("active_chat_id")
+    thread = next((item for item in threads if item.get("id") == active_id), None)
+    if thread is None:
+        thread = make_chat_thread()
+        threads.insert(0, thread)
+        st.session_state.active_chat_id = thread["id"]
+    thread["messages"] = list(st.session_state.messages)
+    thread["updated_at"] = time.time()
+    if not thread.get("title"):
+        thread["title"] = chat_title_from_messages(thread["messages"])
+    return thread
+
+
+def begin_new_chat():
+    current = sync_active_chat_thread()
+    if current.get("messages"):
+        current = make_chat_thread()
+        st.session_state.chat_threads.insert(0, current)
+        st.session_state.active_chat_id = current["id"]
+    else:
+        current["title"] = ""
+        current["updated_at"] = time.time()
+    st.session_state.messages = []
+    st.session_state.queued_chat_prompt = None
+    st.session_state.queued_support_style = None
+    st.session_state.confirm_clear_chat = False
+    st.session_state.page_mode = "chat"
+
+
+def open_chat_thread(thread_id):
+    sync_active_chat_thread()
+    thread = next(
+        (item for item in st.session_state.chat_threads if item.get("id") == thread_id),
+        None,
+    )
+    if thread is None:
+        return False
+    st.session_state.active_chat_id = thread_id
+    st.session_state.messages = list(thread.get("messages", []))
+    st.session_state.queued_chat_prompt = None
+    st.session_state.queued_support_style = None
+    st.session_state.confirm_clear_chat = False
+    st.session_state.page_mode = "chat"
+    thread["updated_at"] = time.time()
+    return True
+
+
+FENCED_CODE_BLOCK_PATTERN = re.compile(
+    r"(?ms)^[ \t]{0,3}(?P<fence>`{3,}|~{3,})(?P<info>[^\r\n]*)\r?\n"
+    r"(?P<code>.*?)(?:\r?\n)[ \t]{0,3}(?P=fence)[ \t]*$"
+)
+CODE_LANGUAGE_ALIASES = {
+    "py": "python", "js": "javascript", "ts": "typescript", "sh": "bash",
+    "shell": "bash", "yml": "yaml", "md": "markdown", "html5": "html",
+    "c++": "cpp", "cs": "csharp", "plain": "text", "plaintext": "text",
+}
+SUPPORTED_CODE_LANGUAGES = frozenset({
+    "bash", "c", "cpp", "csharp", "css", "diff", "go", "html", "java",
+    "javascript", "json", "kotlin", "markdown", "php", "python", "ruby",
+    "rust", "sql", "swift", "text", "toml", "typescript", "xml", "yaml",
+})
+
+
+def render_chat_message_content(content):
+    """Render prose as Markdown and fenced snippets as copyable syntax-highlighted code."""
+    source = str(content or "")
+    matches = list(FENCED_CODE_BLOCK_PATTERN.finditer(source))
+    if not matches:
+        st.markdown(source)
+        return
+
+    cursor = 0
+    for match in matches:
+        prose = source[cursor:match.start()]
+        if prose.strip():
+            st.markdown(prose)
+
+        info = match.group("info").strip().strip("{}").split()
+        language = info[0].lstrip(".").lower() if info else ""
+        language = CODE_LANGUAGE_ALIASES.get(language, language)
+        if language not in SUPPORTED_CODE_LANGUAGES:
+            language = None
+
+        code = match.group("code").rstrip("\r\n")
+        code_kwargs = {"language": language}
+        try:
+            if "wrap_lines" in inspect.signature(st.code).parameters:
+                code_kwargs["wrap_lines"] = False
+        except (TypeError, ValueError):
+            pass
+        st.code(code, **code_kwargs)
+        cursor = match.end()
+
+    remaining = source[cursor:]
+    if remaining.strip():
+        st.markdown(remaining)
+
 def clear_auth_state():
     gemini_http = st.session_state.pop("_gemini_http_session", None)
     if isinstance(gemini_http, requests.Session):
@@ -451,6 +604,8 @@ def clear_auth_state():
     st.session_state.nickname = "Bạn"
     st.session_state.nickname_is_custom = False
     st.session_state.messages = []
+    st.session_state.chat_threads = []
+    st.session_state.active_chat_id = None
     st.session_state.queued_chat_prompt = None
     st.session_state.queued_support_style = None
     st.session_state.recovery_otp_sent = False
@@ -600,6 +755,7 @@ if SUPABASE_URL and SUPABASE_KEY:
         LOGGER.warning("Supabase client initialization failed: %s", type(exc).__name__)
 
 is_authenticated = bool(supabase_client and restore_auth_state(supabase_client))
+ensure_active_chat_thread()
 if is_authenticated and st.session_state.password_reset_pending:
     st.markdown(
         """
@@ -1432,6 +1588,48 @@ with st.sidebar:
         """,
         unsafe_allow_html=True,
     )
+    with st.container(key="new-chat-action"):
+        if st.button(
+            "＋ Cuộc trò chuyện mới" if is_vi else "＋ New chat",
+            key="start_new_chat",
+            type="primary",
+            use_container_width=True,
+        ):
+            begin_new_chat()
+            st.rerun()
+
+    st.session_state.chat_threads.sort(
+        key=lambda item: float(item.get("updated_at", 0) or 0), reverse=True
+    )
+    visible_threads = [
+        item for item in st.session_state.chat_threads
+        if isinstance(item, dict) and item.get("messages")
+    ]
+    with st.container(key="chat-history"):
+        with st.expander(
+            "🕘 Cuộc trò chuyện gần đây" if is_vi else "🕘 Recent chats",
+            expanded=False,
+        ):
+            if not visible_threads:
+                st.caption(
+                    "Các cuộc trò chuyện của bạn sẽ xuất hiện ở đây."
+                    if is_vi else "Your conversations will appear here."
+                )
+            for thread in visible_threads:
+                thread_id = thread.get("id")
+                title = thread.get("title") or ("Cuộc trò chuyện mới" if is_vi else "New chat")
+                selected = thread_id == st.session_state.active_chat_id
+                with st.container(key=f"chat-thread-{thread_id}"):
+                    if st.button(
+                        f"💬 {title}",
+                        key=f"open_chat_{thread_id}",
+                        type="primary" if selected else "secondary",
+                        use_container_width=True,
+                        help=title,
+                    ):
+                        if open_chat_thread(thread_id):
+                            st.rerun()
+
     st.subheader(
         ("Phiên khách" if st.session_state.guest_mode else "Cài đặt của bạn")
         if is_vi
@@ -1581,26 +1779,39 @@ with st.sidebar:
 
     st.divider()
     st.markdown("**Nhà phát triển:** ThanhAI" if is_vi else "**Developer:** ThanhAI")
-    if st.button(
-        "🗑️ Xóa lịch sử trò chuyện" if is_vi else "🗑️ Clear chat history",
-        use_container_width=True,
-    ):
-        st.session_state.confirm_clear_chat = True
+    with st.container(key="delete-chat-action"):
+        if st.button(
+            "🗑️ Xóa lịch sử trò chuyện" if is_vi else "🗑️ Clear chat history",
+            key="show_clear_chat_confirmation",
+            use_container_width=True,
+        ):
+            st.session_state.confirm_clear_chat = True
     if st.session_state.confirm_clear_chat:
         st.caption(
-            "Bạn muốn xóa toàn bộ hội thoại trong phiên này?" if is_vi
-            else "Clear all messages from this session?"
+            "Xóa tất cả cuộc trò chuyện trong phiên này? Không thể khôi phục." if is_vi
+            else "Delete every conversation in this session? This cannot be undone."
         )
         clear_col, keep_col = st.columns(2)
-        if clear_col.button("Xóa" if is_vi else "Clear", key="confirm_clear_chat_button", type="primary"):
-            st.session_state.messages = []
-            st.session_state.queued_chat_prompt = None
-            st.session_state.queued_support_style = None
-            st.session_state.confirm_clear_chat = False
-            st.rerun()
-        if keep_col.button("Giữ lại" if is_vi else "Keep", key="cancel_clear_chat"):
-            st.session_state.confirm_clear_chat = False
-            st.rerun()
+        with clear_col:
+            with st.container(key="confirm-clear-chat-action"):
+                if st.button(
+                    "Xóa tất cả" if is_vi else "Delete all",
+                    key="confirm_clear_chat_button",
+                    type="primary",
+                    use_container_width=True,
+                ):
+                    st.session_state.chat_threads = []
+                    st.session_state.active_chat_id = None
+                    st.session_state.messages = []
+                    st.session_state.queued_chat_prompt = None
+                    st.session_state.queued_support_style = None
+                    st.session_state.confirm_clear_chat = False
+                    ensure_active_chat_thread()
+                    st.rerun()
+        with keep_col:
+            if st.button("Giữ lại" if is_vi else "Keep", key="cancel_clear_chat", use_container_width=True):
+                st.session_state.confirm_clear_chat = False
+                st.rerun()
 
     if st.session_state.messages:
         export_role_names = {"user": "Bạn", "assistant": "SkyeChat"} if is_vi else {"user": "You", "assistant": "SkyeChat"}
@@ -1658,6 +1869,8 @@ if is_authenticated or st.session_state.guest_mode:
             else:
                 st.session_state.guest_mode = False
                 st.session_state.messages = []
+                st.session_state.chat_threads = []
+                st.session_state.active_chat_id = None
                 st.session_state.queued_chat_prompt = None
                 st.session_state.queued_support_style = None
                 st.session_state.page_mode = "chat"
@@ -1936,7 +2149,7 @@ else:
             continue
         avatar = CHAT_AVATAR if message_role == "assistant" else USER_AVATAR
         with st.chat_message(message_role, avatar=avatar):
-            st.markdown(message["content"])
+            render_chat_message_content(message["content"])
 
     if not st.session_state.messages:
         starter_prompts = (
@@ -1980,8 +2193,9 @@ else:
         candidate_history = [*st.session_state.messages, {"role": "user", "content": prompt}]
         # Keep the user's turn even if Gemini is temporarily unavailable.
         st.session_state.messages = candidate_history[-MAX_STORED_MESSAGES:]
+        sync_active_chat_thread()
         with st.chat_message("user", avatar=USER_AVATAR):
-            st.markdown(prompt)
+            render_chat_message_content(prompt)
 
         try:
             with st.chat_message("assistant", avatar=CHAT_AVATAR):
@@ -1997,6 +2211,9 @@ else:
             st.session_state.messages = (
                 candidate_history + [{"role": "assistant", "content": reply.strip()}]
             )[-MAX_STORED_MESSAGES:]
+            sync_active_chat_thread()
+            # Re-render once so completed fenced blocks gain syntax highlighting and the code copy control.
+            st.rerun()
         except Exception as exc:
             LOGGER.exception("SkyeChat reply generation failed (%s)", type(exc).__name__)
             st.error(friendly_chat_error(exc, is_vi))
