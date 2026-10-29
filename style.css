@@ -408,6 +408,10 @@ div[data-testid="stChatMessage"]:hover { box-shadow: 0 10px 28px rgba(35,68,87,.
   --sky-success: #26765f;
   --sky-warning: #96621c;
   --sky-danger: #a3414b;
+  --sky-danger-ink: #743640;
+  --sky-danger-surface: rgba(163, 65, 75, .09);
+  --sky-danger-border: rgba(163, 65, 75, .25);
+  --sky-danger-hover: rgba(163, 65, 75, .15);
   --sky-duration-fast: 140ms;
   --sky-duration: 220ms;
   --sky-ease: cubic-bezier(.2, .75, .25, 1);
@@ -1298,6 +1302,50 @@ html body .stApp [data-testid="stChatInput"] button {
   from { opacity: 0; transform: translateY(5px) scale(.99); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* Conversation navigation and calm destructive controls */
+.st-key-new-chat-action [data-testid="stButton"] button {
+  justify-content: flex-start !important;
+  text-align: left !important;
+  padding-inline: .9rem !important;
+}
+.st-key-chat-history [data-testid="stButton"] button {
+  justify-content: flex-start !important;
+  text-align: left !important;
+  padding-inline: .7rem !important;
+}
+.st-key-chat-history [data-testid="stButton"] button p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.st-key-delete-chat-action [data-testid="stButton"] button,
+.st-key-confirm-clear-chat-action [data-testid="stButton"] button {
+  color: var(--sky-danger-ink) !important;
+  background: var(--sky-danger-surface) !important;
+  border-color: var(--sky-danger-border) !important;
+  box-shadow: none !important;
+}
+.st-key-delete-chat-action [data-testid="stButton"] button:hover,
+.st-key-confirm-clear-chat-action [data-testid="stButton"] button:hover {
+  color: var(--sky-danger-ink) !important;
+  background: var(--sky-danger-hover) !important;
+  border-color: var(--sky-danger) !important;
+  box-shadow: 0 6px 16px rgba(132, 52, 64, .12) !important;
+  transform: translateY(-1px) !important;
+}
+[data-testid="stCodeBlock"] {
+  overflow: hidden;
+  border: 1px solid var(--sky-line);
+  border-radius: 14px;
+  background: var(--sky-panel);
+  box-shadow: var(--sky-shadow-soft);
+}
+[data-testid="stCodeBlock"] pre {
+  padding: .95rem 1rem !important;
+  overflow-x: auto !important;
+  line-height: 1.65 !important;
+}
 /* ENDSECTION */
 
 /* SECTION:auth */
@@ -1463,6 +1511,10 @@ div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
   --sky-success: #88d1b3;
   --sky-warning: #f0c27c;
   --sky-danger: #f0a0a8;
+  --sky-danger-ink: #ffe3e7;
+  --sky-danger-surface: rgba(187, 78, 94, .18);
+  --sky-danger-border: rgba(240, 160, 168, .30);
+  --sky-danger-hover: rgba(187, 78, 94, .28);
 }
 ::selection { color: #071b24; background: rgba(145, 205, 229, .7); }
 .bg-video-layer::after { background: linear-gradient(125deg, rgba(8, 16, 22, .55), rgba(13, 25, 33, .25) 48%, rgba(8, 16, 22, .6)); }
@@ -1494,6 +1546,8 @@ div[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
 [data-testid="stMetric"] { background: rgba(26, 39, 48, .88); }
 [data-testid="stMarkdownContainer"] code { color: #d8eff8; background: rgba(13, 25, 33, .75); }
 [data-testid="stMarkdownContainer"] pre { background: rgba(13, 25, 33, .83); }
+[data-testid="stCodeBlock"] { border-color: rgba(153, 194, 214, .22); background: rgba(13, 25, 33, .83); }
+[data-testid="stCodeBlock"] pre { background: rgba(13, 25, 33, .83) !important; }
 [data-testid="stMarkdownContainer"] th { background: rgba(43, 66, 79, .8); }
 [data-testid="stMarkdownContainer"] th, [data-testid="stMarkdownContainer"] td { border-color: rgba(153, 194, 214, .16); }
 .footer { border-top-color: rgba(153, 194, 214, .12); }
