@@ -38,8 +38,9 @@ st.set_page_config(
 API_BASE = "https://generativelanguage.googleapis.com/v1/interactions"
 DEFAULT_MODEL = "gemini-3.8-flash"
 DEFAULT_FALLBACK_MODEL = "gemini-3.6-flash"
-FREE_GEMINI_MODELS = frozenset({"gemini-3.8-flash", "gemini-3.6-flash"})
-DEFAULT_THINKING_LEVEL = "low"
+DEFAULT_FAST_MODEL = "gemini-3.5-flash-lite"
+FREE_GEMINI_MODELS = frozenset({"gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"})
+DEFAULT_THINKING_LEVEL = "minimal"
 DEFAULT_MAX_OUTPUT_TOKENS = 1024
 GEMINI_SERVICE_TIER = "standard"
 # Keep three recent exchanges in the model request to reduce prompt processing time.
@@ -72,6 +73,9 @@ def normalize_free_model_name(value, default):
 PRIMARY_MODEL = normalize_free_model_name(get_secret("GEMINI_MODEL"), DEFAULT_MODEL)
 FALLBACK_MODEL = normalize_free_model_name(
     get_secret("GEMINI_FALLBACK_MODEL"), DEFAULT_FALLBACK_MODEL
+)
+FAST_MODEL = normalize_free_model_name(
+    get_secret("GEMINI_FAST_MODEL"), DEFAULT_FAST_MODEL
 )
 GEMINI_THINKING_LEVEL = str(
     get_secret("GEMINI_THINKING_LEVEL", DEFAULT_THINKING_LEVEL) or DEFAULT_THINKING_LEVEL
@@ -1122,9 +1126,12 @@ def is_complex_gemini_request(history):
 
 
 def select_gemini_thinking_level(history, model):
-    """Use low thinking for speed and medium for complex or detailed requests."""
+    """Use minimum thinking on fast-model chat and medium for complex requests."""
+    is_complex = is_complex_gemini_request(history)
     thinking_level = GEMINI_THINKING_LEVEL
-    if is_complex_gemini_request(history) and thinking_level in {"minimal", "low"}:
+    if not is_complex and model == FAST_MODEL:
+        thinking_level = "minimal"
+    elif is_complex and thinking_level in {"minimal", "low"}:
         thinking_level = "medium"
     # Gemini 3.8 Flash does not accept the minimal thinking level.
     if model == "gemini-3.8-flash" and thinking_level == "minimal":
@@ -1166,9 +1173,12 @@ def generate_reply(
         "x-goog-api-key": GEMINI_API_KEY,
     }
     models = []
-    model_candidates = (
-        (_model_override,) if _model_override else (PRIMARY_MODEL, FALLBACK_MODEL)
-    )
+    if _model_override:
+        model_candidates = (_model_override,)
+    elif is_complex_gemini_request(history):
+        model_candidates = (PRIMARY_MODEL, FALLBACK_MODEL)
+    else:
+        model_candidates = (FAST_MODEL, PRIMARY_MODEL, FALLBACK_MODEL)
     for model in model_candidates:
         model = str(model or "").strip()
         if model and re.fullmatch(r"[A-Za-z0-9._-]+", model) and model not in models:
@@ -1177,7 +1187,7 @@ def generate_reply(
         raise GeminiAPIError("No valid Gemini model is configured.")
 
     retryable_statuses = {408, 429, 500, 502, 503, 504}
-    fallback_statuses = retryable_statuses | {404}
+    fallback_statuses = retryable_statuses | {403, 404}
     last_status = None
     last_network_error = None
 
@@ -1224,6 +1234,8 @@ def generate_reply(
                             if model_index + 1 < len(models) and response.status_code in fallback_statuses:
                                 break
                             raise GeminiAPIError(message, response.status_code, api_code)
+                        if model_index + 1 < len(models):
+                            break
                         if attempt < MAX_RETRIES - 1:
                             retry_after = response.headers.get("Retry-After")
                             try:
@@ -1324,6 +1336,12 @@ def generate_reply(
             except GeminiAPIError as exc:
                 if exc.status_code is not None:
                     last_status = exc.status_code
+                if (
+                    exc.status_code in retryable_statuses
+                    and not emitted
+                    and model_index + 1 < len(models)
+                ):
+                    break
                 if exc.status_code in retryable_statuses and not emitted and attempt < MAX_RETRIES - 1:
                     time.sleep(min(0.8 * (2 ** attempt), 2.0) + random.uniform(0, 0.25))
                     continue
