@@ -40,12 +40,13 @@ DEFAULT_MODEL = "gemini-3.8-flash"
 DEFAULT_FALLBACK_MODEL = "gemini-3.6-flash"
 FREE_GEMINI_MODELS = frozenset({"gemini-3.8-flash", "gemini-3.6-flash"})
 DEFAULT_THINKING_LEVEL = "low"
-DEFAULT_MAX_OUTPUT_TOKENS = 512
+DEFAULT_MAX_OUTPUT_TOKENS = 1024
 GEMINI_SERVICE_TIER = "standard"
 # Keep three recent exchanges in the model request to reduce prompt processing time.
 MAX_HISTORY_MESSAGES = 6
 MAX_STORED_MESSAGES = 64
 MAX_RETRIES = 2
+MAX_CONTINUATION_HOPS = 2
 GEMINI_READ_TIMEOUT_SECONDS = 75
 
 def get_secret(name, default=None):
@@ -80,7 +81,7 @@ if GEMINI_THINKING_LEVEL not in {"minimal", "low", "medium", "high"}:
 try:
     GEMINI_MAX_OUTPUT_TOKENS = max(
         256,
-        min(1536, int(get_secret("GEMINI_MAX_OUTPUT_TOKENS", DEFAULT_MAX_OUTPUT_TOKENS))),
+        min(2048, int(get_secret("GEMINI_MAX_OUTPUT_TOKENS", DEFAULT_MAX_OUTPUT_TOKENS))),
     )
 except (TypeError, ValueError):
     GEMINI_MAX_OUTPUT_TOKENS = DEFAULT_MAX_OUTPUT_TOKENS
@@ -197,13 +198,19 @@ st.markdown(
 SYSTEM_PROMPT_VI = """
 Bạn là SkyeChat, trợ lý AI đồng hành cảm xúc cho người trưởng thành: ấm áp,
 cởi mở, tôn trọng và không phán xét. Trả lời bằng tiếng Việt tự nhiên, rõ ràng,
-thường trong 2–5 câu; dài hơn khi người dùng cần hướng dẫn hoặc an toàn đòi hỏi.
+với trao đổi đơn giản thường trong 2–5 câu; mở rộng khi người dùng cần hướng dẫn, yêu cầu chi tiết hoặc an toàn đòi hỏi.
 
 Chất lượng trả lời:
 - Trước khi trả lời, xác định ý định chính, cảm xúc, bối cảnh liên quan và điều
   người dùng đang cần: được lắng nghe, câu trả lời, lựa chọn hay bước hành động.
 - Bám vào chi tiết cụ thể trong tin nhắn mới nhất và lịch sử có liên quan. Không
   chép lại dài dòng, không dùng lời an ủi sáo rỗng, không lặp lời khuyên đã thử.
+- Khi người dùng yêu cầu chi tiết hoặc câu hỏi có nhiều phần, trả lời đủ từng ý theo
+  thứ tự; giải thích lý do, điều kiện, ví dụ hoặc bước làm cần thiết. Dùng tiêu đề hay
+  danh sách khi giúp nội dung dễ theo dõi; giữ phần đơn giản thật gọn.
+- Diễn đạt sáng tạo, tự nhiên và có cá tính; thay đổi cách diễn đạt để tránh câu mẫu.
+  Dùng ví dụ hoặc hình ảnh so sánh vừa đủ, không thi vị hóa nỗi đau và không bịa
+  thông tin.
 - Nếu là vấn đề cảm xúc, công nhận cảm xúc khi phù hợp, rồi đưa tối đa một bước
   nhỏ và thực tế. Chỉ hỏi một câu bổ sung khi câu trả lời thật sự phụ thuộc vào đó.
 - Nếu người dùng hỏi việc thực tế như lập trình, hãy giải quyết thẳng yêu cầu đó.
@@ -231,14 +238,22 @@ nhất của người dùng.
 
 SYSTEM_PROMPT_EN = """
 You are SkyeChat, a warm, respectful, non-judgmental emotional-support companion
-for adults. Write naturally and clearly, usually in 2–5 sentences; provide more
-detail when the user requests guidance or safety requires it.
+for adults. Write naturally and clearly, usually in 2–5 sentences for simple
+exchanges; expand when the user asks for detail, has a multi-part question, needs
+guidance, or safety requires it.
 
 Quality:
 - Identify the user's main intent, emotional context, relevant history, and what
   they need: listening, an answer, options, or an actionable next step.
 - Anchor the reply in a specific detail. Avoid generic reassurance, long
   paraphrases, and repeating advice the user has already tried.
+- When the user asks for detail or has a multi-part question, address each part
+  in order and include the reasons, conditions, examples, or steps needed for a
+  complete answer. Use headings or bullets when they make the answer easier to follow;
+  keep simple exchanges concise.
+- Be creative and distinctive while sounding natural and grounded. Vary phrasing
+  instead of repeating stock lines; use examples or imagery sparingly, never romanticize
+  distress, and never invent facts.
 - For emotional concerns, validate when appropriate and offer at most one small,
   practical step. Ask one follow-up only when the answer genuinely depends on it.
 - Answer practical requests such as coding directly. Address multi-part requests
@@ -1074,6 +1089,56 @@ def prepare_gemini_input(history):
     )
 
 
+GEMINI_COMPLEX_REQUEST_PATTERN = re.compile(
+    r"(?:\b(?:phân tích|so sánh|đánh giá|giải thích|hướng dẫn|từng bước|chi tiết|"
+    r"đầy đủ|lập kế hoạch|lập trình|sửa lỗi|tối ưu|review|debug|refactor|code|"
+    r"analyze|compare|evaluate|explain|detailed|thorough|plan|implement|optimize|"
+    r"step[- ]by[- ]step|in detail)\b)",
+    re.IGNORECASE,
+)
+
+
+def is_complex_gemini_request(history):
+    """Identify turns that need more reasoning or answer space."""
+    latest_user_text = next(
+        (
+            message.get("content", "").strip()
+            for message in reversed(history)
+            if isinstance(message, dict)
+            and message.get("role") == "user"
+            and isinstance(message.get("content"), str)
+        ),
+        "",
+    )
+    if not latest_user_text:
+        return False
+    list_items = re.findall(r"(?m)^\s*(?:[-*•]|\d+[.)])\s+", latest_user_text)
+    return (
+        len(latest_user_text) >= 900
+        or latest_user_text.count("?") + latest_user_text.count("？") >= 2
+        or len(list_items) >= 2
+        or bool(GEMINI_COMPLEX_REQUEST_PATTERN.search(latest_user_text))
+    )
+
+
+def select_gemini_thinking_level(history, model):
+    """Use low thinking for speed and medium for complex or detailed requests."""
+    thinking_level = GEMINI_THINKING_LEVEL
+    if is_complex_gemini_request(history) and thinking_level in {"minimal", "low"}:
+        thinking_level = "medium"
+    # Gemini 3.8 Flash does not accept the minimal thinking level.
+    if model == "gemini-3.8-flash" and thinking_level == "minimal":
+        thinking_level = "low"
+    return thinking_level
+
+
+def select_gemini_max_output_tokens(history):
+    """Give detailed requests more output room while keeping simple turns bounded."""
+    if is_complex_gemini_request(history):
+        return min(2048, max(GEMINI_MAX_OUTPUT_TOKENS, 1536))
+    return GEMINI_MAX_OUTPUT_TOKENS
+
+
 def get_gemini_http_session():
     """Reuse a private HTTP connection pool for this browser session only."""
     http = st.session_state.get("_gemini_http_session")
@@ -1083,7 +1148,13 @@ def get_gemini_http_session():
     return http
 
 
-def generate_reply(history, system_prompt):
+def generate_reply(
+    history,
+    system_prompt,
+    _continuation_token=None,
+    _continuation_hops=0,
+    _model_override=None,
+):
     """Stream a reply from Gemini, retrying transient failures with backoff."""
     if not GEMINI_API_KEY:
         raise GeminiAPIError("Gemini is not configured.")
@@ -1095,7 +1166,10 @@ def generate_reply(history, system_prompt):
         "x-goog-api-key": GEMINI_API_KEY,
     }
     models = []
-    for model in (PRIMARY_MODEL, FALLBACK_MODEL):
+    model_candidates = (
+        (_model_override,) if _model_override else (PRIMARY_MODEL, FALLBACK_MODEL)
+    )
+    for model in model_candidates:
         model = str(model or "").strip()
         if model and re.fullmatch(r"[A-Za-z0-9._-]+", model) and model not in models:
             models.append(model)
@@ -1109,11 +1183,7 @@ def generate_reply(history, system_prompt):
 
     http = get_gemini_http_session()
     for model_index, model in enumerate(models):
-        # Gemini 3.8 Flash supports low/medium/high, but not minimal. Keep a
-        # user-provided "minimal" setting compatible with the primary model.
-        model_thinking_level = GEMINI_THINKING_LEVEL
-        if model == "gemini-3.8-flash" and model_thinking_level == "minimal":
-            model_thinking_level = "low"
+        model_thinking_level = select_gemini_thinking_level(history, model)
         request_payload = {
             "model": model,
             "system_instruction": system_prompt,
@@ -1122,7 +1192,11 @@ def generate_reply(history, system_prompt):
             "store": False,
             "service_tier": "standard",
         }
-        generation_config = {"max_output_tokens": GEMINI_MAX_OUTPUT_TOKENS}
+        if _continuation_token:
+            request_payload["continuation_token"] = _continuation_token
+        generation_config = {
+            "max_output_tokens": select_gemini_max_output_tokens(history)
+        }
         if model.startswith(("gemini-3.", "gemini-4.")):
             generation_config["thinking_level"] = model_thinking_level
         request_payload["generation_config"] = generation_config
@@ -1161,6 +1235,7 @@ def generate_reply(history, system_prompt):
 
                     response.encoding = "utf-8"
                     interaction_status = None
+                    next_continuation_token = None
                     # Requests defaults to a 512-byte line buffer, which can
                     # delay small SSE chunks before Streamlit can display them.
                     for line in response.iter_lines(chunk_size=1, decode_unicode=True):
@@ -1190,7 +1265,14 @@ def generate_reply(history, system_prompt):
                         event_type = data.get("event_type") if isinstance(data, dict) else None
                         if event_type == "interaction.completed":
                             interaction = data.get("interaction", {})
-                            interaction_status = interaction.get("status") if isinstance(interaction, dict) else None
+                            if isinstance(interaction, dict):
+                                interaction_status = interaction.get("status")
+                                next_continuation_token = interaction.get("continuation_token")
+                            if interaction_status in ("failed", "cancelled", "requires_action"):
+                                raise GeminiAPIError("Gemini could not complete this interaction.")
+                        elif event_type == "interaction.status_update":
+                            interaction_status = data.get("status")
+                            next_continuation_token = data.get("continuation_token") or next_continuation_token
                             if interaction_status in ("failed", "cancelled", "requires_action"):
                                 raise GeminiAPIError("Gemini could not complete this interaction.")
                         if event_type == "step.delta":
@@ -1202,6 +1284,24 @@ def generate_reply(history, system_prompt):
                                 emitted = True
                                 generated_characters += len(chunk)
                                 yield chunk
+                    if interaction_status in ("incomplete", "requires_continuation"):
+                        if (
+                            next_continuation_token
+                            and _continuation_hops < MAX_CONTINUATION_HOPS
+                        ):
+                            yield from generate_reply(
+                                history,
+                                system_prompt,
+                                _continuation_token=next_continuation_token,
+                                _continuation_hops=_continuation_hops + 1,
+                                _model_override=model,
+                            )
+                            return
+                        raise GeminiAPIError(
+                            "Gemini reached the output limit before completing the reply."
+                        )
+                    if interaction_status not in (None, "completed"):
+                        raise GeminiAPIError("Gemini could not complete this interaction.")
                     if not emitted:
                         raise GeminiAPIError("Gemini returned no text. Please try again.")
                     LOGGER.info(
