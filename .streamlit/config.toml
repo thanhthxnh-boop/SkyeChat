@@ -1,0 +1,9 @@
+[theme]
+base = "light"
+primaryColor = "#477D99"
+
+[theme.light]
+primaryColor = "#477D99"
+
+[theme.dark]
+primaryColor = "#A1D0E5"
