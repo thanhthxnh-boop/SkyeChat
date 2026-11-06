@@ -1361,26 +1361,8 @@ html body .stApp [data-testid="stChatInput"] button {
 [data-testid="stCodeBlock"] pre {
   padding: .95rem 1rem !important;
   overflow-x: auto !important;
-  /* Cuối SECTION:base — giao diện sáng */
-.hero {
-  background-image:
-    linear-gradient(90deg, rgba(232, 244, 250, .94), rgba(232, 244, 250, .35)),
-    url("app/static/hero-wide-light.webp");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-@media (max-width: 700px) {
-  .hero {
-    background-image:
-      linear-gradient(180deg, rgba(232, 244, 250, .88), rgba(232, 244, 250, .38)),
-      url("app/static/hero-mobile-light.webp");
-  }
-}
   line-height: 1.65 !important;
 }
-
 /* Streamlit widget accent: calm sky blue in light mode */
 :root, .stApp, [data-testid="stAppViewContainer"] {
   --primary-color: var(--sky-accent) !important;
@@ -1429,6 +1411,35 @@ p, li, label, small, summary, blockquote,
   color: var(--sky-copy-text) !important;
   font-family: "Lora", Georgia, serif !important;
   letter-spacing: 2px !important;
+}
+/* Hero artwork — light appearance */
+.hero {
+  background-image:
+    linear-gradient(
+      90deg,
+      rgba(232, 244, 250, .86) 0%,
+      rgba(232, 244, 250, .48) 58%,
+      rgba(232, 244, 250, .18) 100%
+    ),
+    url("app/static/hero-wide-light.webp");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+@media (max-width: 700px) {
+  .hero {
+    background-image:
+      linear-gradient(
+        180deg,
+        rgba(232, 244, 250, .86) 0%,
+        rgba(232, 244, 250, .45) 100%
+      ),
+      url("app/static/hero-wide-light.webp");
+  }
+}
+.hero::before,
+.hero::after {
+  display: none !important;
 }
 /* ENDSECTION */
 
@@ -1723,23 +1734,6 @@ html body .stApp [data-testid="stChatInput"] button {
   html body .stApp [data-testid="stChatInput"] textarea { min-height: 36px !important; height: 36px !important; }
   html body .stApp [data-testid="stChatInput"] button { width: 33px !important; min-width: 33px !important; height: 33px !important; min-height: 33px !important; }
 }
-/* Cuối SECTION:dark — giao diện tối */
-.hero {
-  background-image:
-    linear-gradient(90deg, rgba(15, 31, 41, .94), rgba(15, 31, 41, .36)),
-    url("app/static/hero-wide-dark.webp");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-@media (max-width: 700px) {
-  .hero {
-    background-image:
-      linear-gradient(180deg, rgba(15, 31, 41, .90), rgba(15, 31, 41, .40)),
-      url("app/static/hero-mobile-dark.webp");
-  }
-}
 @media (max-width: 480px) {
   html body .stApp [data-testid="stChatInput"] > div { min-height: 44px !important; }
   html body .stApp [data-testid="stChatInput"] textarea { min-height: 35px !important; height: 35px !important; }
@@ -1833,4 +1827,33 @@ p, li, label, small, summary, blockquote,
   letter-spacing: 2px !important;
 }
 
+/* Hero artwork — dark appearance */
+.hero {
+  background-image:
+    linear-gradient(
+      90deg,
+      rgba(15, 31, 41, .82) 0%,
+      rgba(15, 31, 41, .48) 58%,
+      rgba(15, 31, 41, .20) 100%
+    ),
+    url("app/static/hero-wide-dark.webp");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+@media (max-width: 700px) {
+  .hero {
+    background-image:
+      linear-gradient(
+        180deg,
+        rgba(15, 31, 41, .84) 0%,
+        rgba(15, 31, 41, .45) 100%
+      ),
+      url("app/static/hero-wide-dark.webp");
+  }
+}
+.hero::before,
+.hero::after {
+  display: none !important;
+}
 /* ENDSECTION */
