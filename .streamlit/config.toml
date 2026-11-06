@@ -7,3 +7,5 @@ primaryColor = "#477D99"
 
 [theme.dark]
 primaryColor = "#A1D0E5"
+[server]
+enableStaticServing = true
