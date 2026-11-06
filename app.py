@@ -1571,7 +1571,12 @@ def friendly_chat_error(exc, is_vi):
 # Sidebar
 # ==============================
 if "language" not in st.session_state:
-    st.session_state.language = "Tiếng Việt 🇻🇳"
+    st.session_state.language = "Tiếng Việt"
+# Normalize existing sessions that still store the old flag-decorated labels.
+if str(st.session_state.language).startswith("Tiếng Việt"):
+    st.session_state.language = "Tiếng Việt"
+elif str(st.session_state.language).startswith("English"):
+    st.session_state.language = "English"
 is_vi = str(st.session_state.language).startswith("Tiếng Việt")
 
 with st.sidebar:
@@ -1661,14 +1666,14 @@ with st.sidebar:
         st.session_state.nickname_is_custom = True
 
     displayed_nickname = nickname_input.strip() or nickname_display
-    greeting_text = f"👋 Chào {displayed_nickname}!" if is_vi else f"👋 Hello {displayed_nickname}!"
+    greeting_text = f"Chào {displayed_nickname}!" if is_vi else f"Hello {displayed_nickname}!"
     st.markdown(
         f'<div class="welcome-greeting">{escape(greeting_text)}</div>',
         unsafe_allow_html=True,
     )
     lang = st.radio(
         "Ngôn ngữ" if is_vi else "Language",
-        ["Tiếng Việt 🇻🇳", "English 🇬🇧"],
+        ["Tiếng Việt", "English"],
         key="language",
         label_visibility="visible",
     )
@@ -1678,16 +1683,15 @@ with st.sidebar:
         st.session_state.support_style = queued_support_style
 
     support_style_labels = (
-        {"listen": "🫶 Chỉ lắng nghe", "untangle": "🧭 Cùng gỡ rối", "next_step": "🌱 Tìm bước nhỏ"}
+        {"listen": "Chỉ lắng nghe", "untangle": "Cùng gỡ rối", "next_step": "Tìm bước nhỏ"}
         if is_vi
-        else {"listen": "🫶 Just listen", "untangle": "🧭 Help me untangle it", "next_step": "🌱 Find a small step"}
+        else {"listen": "Just listen", "untangle": "Help me untangle it", "next_step": "Find a small step"}
     )
     st.radio(
         "Bạn muốn SkyeChat hỗ trợ thế nào?" if is_vi else "How would you like SkyeChat to help?",
         options=("listen", "untangle", "next_step"),
         format_func=lambda value: support_style_labels[value],
         key="support_style",
-        help=("Bạn có thể đổi lựa chọn bất cứ lúc nào." if is_vi else "You can change this any time."),
     )
 
     with st.expander("🌬️ Khoảng thở 1 phút" if is_vi else "🌬️ One-minute breathing space"):
@@ -2154,15 +2158,15 @@ else:
     if not st.session_state.messages:
         starter_prompts = (
             [
-                ("🫶 Chỉ cần lắng nghe", "Mình chưa cần lời khuyên, chỉ muốn được lắng nghe một chút."),
-                ("🧭 Gỡ rối suy nghĩ", "Có vài điều đang rối trong đầu mình. Giúp mình nhìn từng phần nhé."),
-                ("🌱 Tìm bước nhỏ", "Mình đang gặp chuyện khó. Cùng tìm một bước nhỏ mình có thể làm nhé."),
+                ("Chỉ cần lắng nghe", "Mình chưa cần lời khuyên, chỉ muốn được lắng nghe một chút."),
+                ("Gỡ rối suy nghĩ", "Có vài điều đang rối trong đầu mình. Giúp mình nhìn từng phần nhé."),
+                ("Tìm bước nhỏ", "Mình đang gặp chuyện khó. Cùng tìm một bước nhỏ mình có thể làm nhé."),
             ]
             if is_vi
             else [
-                ("🫶 Just listen", "I do not need advice yet; I would just like to be heard for a moment."),
-                ("🧭 Untangle my thoughts", "A few things feel tangled in my mind. Could you help me look at them one at a time?"),
-                ("🌱 Find a small step", "I am dealing with something hard. Can we find one small step I could take?"),
+                ("Just listen", "I do not need advice yet; I would just like to be heard for a moment."),
+                ("Untangle my thoughts", "A few things feel tangled in my mind. Could you help me look at them one at a time?"),
+                ("Find a small step", "I am dealing with something hard. Can we find one small step I could take?"),
             ]
         )
         quick_cols = st.columns(3)
