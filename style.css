@@ -1,7 +1,7 @@
-/* SkyeChat — responsive, theme-aware styling with classic serif typography. */
+/* SkyeChat — responsive, theme-aware styling with scoped classic accents. */
 
 /* SECTION:base */
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Xanh+Mono&display=swap');
 :root {
   color-scheme: light;
   --sky-bg: #edf5f8;
@@ -1401,7 +1401,7 @@ input[type="radio"], input[type="checkbox"], input[type="range"] {
 }
 h1, h2, h3, h4, h5, h6, .hero-title, .hero-eyebrow {
   color: var(--sky-title-text) !important;
-  font-family: "Cormorant Garamond", "Palatino Linotype", "Book Antiqua", Georgia, serif !important;
+  font-family: "Xanh Mono", "Courier New", monospace !important;
   letter-spacing: 2px !important;
 }
 .sidebar-brand strong, .welcome-greeting {
@@ -1790,7 +1790,7 @@ input[type="radio"], input[type="checkbox"], input[type="range"] {
 }
 h1, h2, h3, h4, h5, h6, .hero-title, .hero-eyebrow {
   color: var(--sky-title-text) !important;
-  font-family: "Cormorant Garamond", "Palatino Linotype", "Book Antiqua", Georgia, serif !important;
+  font-family: "Xanh Mono", "Courier New", monospace !important;
   letter-spacing: 2px !important;
 }
 .sidebar-brand strong, .welcome-greeting {
