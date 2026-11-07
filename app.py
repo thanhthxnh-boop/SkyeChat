@@ -629,6 +629,26 @@ def clear_auth_state():
     st.session_state.page_mode = "chat"
 
 
+def switch_account():
+    """Run account switching before widgets are recreated on the next rerun."""
+    if st.session_state.get("auth_user_id") or st.session_state.get("auth_access_token"):
+        try:
+            if supabase_client:
+                supabase_client.auth.sign_out()
+        except Exception as exc:
+            LOGGER.warning("Supabase sign out failed: %s", type(exc).__name__)
+        clear_auth_state()
+        return
+
+    st.session_state.guest_mode = False
+    st.session_state.messages = []
+    st.session_state.chat_threads = []
+    st.session_state.active_chat_id = None
+    st.session_state.queued_chat_prompt = None
+    st.session_state.queued_support_style = None
+    st.session_state.page_mode = "chat"
+
+
 def restore_auth_state(client):
     """Reuse the in-memory session and refresh it only when Supabase requires it."""
     access_token = st.session_state.auth_access_token
@@ -1862,23 +1882,12 @@ if is_authenticated or st.session_state.guest_mode:
         account_action = "👤 Đổi người dùng" if is_vi else "👤 Switch user"
         if st.session_state.guest_mode:
             account_action = "👤 Đăng nhập / đổi người dùng" if is_vi else "👤 Sign in / switch user"
-        if st.button(account_action, key="top_account_switch", use_container_width=True):
-            if is_authenticated:
-                try:
-                    if supabase_client:
-                        supabase_client.auth.sign_out()
-                except Exception as exc:
-                    LOGGER.warning("Supabase sign out failed: %s", type(exc).__name__)
-                clear_auth_state()
-            else:
-                st.session_state.guest_mode = False
-                st.session_state.messages = []
-                st.session_state.chat_threads = []
-                st.session_state.active_chat_id = None
-                st.session_state.queued_chat_prompt = None
-                st.session_state.queued_support_style = None
-                st.session_state.page_mode = "chat"
-            st.rerun()
+        st.button(
+            account_action,
+            key="top_account_switch",
+            use_container_width=True,
+            on_click=switch_account,
+        )
 
 
 if is_diary:
