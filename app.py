@@ -1,9 +1,12 @@
 import os
 import json
+import hashlib
+import hmac
 import logging
 import random
 import re
 import inspect
+import secrets
 import time
 import uuid
 from html import escape
@@ -398,6 +401,8 @@ if "password_reset_pending" not in st.session_state:
     st.session_state.password_reset_pending = False
 if "confirm_delete_diary_id" not in st.session_state:
     st.session_state.confirm_delete_diary_id = None
+if "journal_unlocked_for" not in st.session_state:
+    st.session_state.journal_unlocked_for = None
 if "confirm_clear_chat" not in st.session_state:
     st.session_state.confirm_clear_chat = False
 if "clear_diary_form" not in st.session_state:
@@ -619,6 +624,7 @@ def clear_auth_state():
     st.session_state.auth_notice = ""
     st.session_state.password_reset_pending = False
     st.session_state.confirm_delete_diary_id = None
+    st.session_state.journal_unlocked_for = None
     st.session_state.confirm_clear_chat = False
     st.session_state.clear_diary_form = False
     st.session_state.guest_mode = False
@@ -721,6 +727,157 @@ def load_diary_entries(client, user_id):
         .execute()
     )
     return result.data or []
+
+
+JOURNAL_PASSWORD_ITERATIONS = 310_000
+
+
+def load_journal_lock(client, user_id):
+    """Read the current user's journal-interface lock verifier."""
+    if not user_id:
+        return None
+    result = (
+        client.table("journal_lock_settings")
+        .select("salt, password_hash")
+        .eq("user_id", user_id)
+        .limit(1)
+        .execute()
+    )
+    rows = result.data or []
+    return rows[0] if rows else None
+
+
+def make_journal_password_verifier(password, salt=None):
+    salt_bytes = bytes.fromhex(salt) if salt else secrets.token_bytes(16)
+    digest = hashlib.pbkdf2_hmac(
+        "sha256", password.encode("utf-8"), salt_bytes, JOURNAL_PASSWORD_ITERATIONS
+    )
+    return salt_bytes.hex(), digest.hex()
+
+
+def verify_journal_password(password, settings):
+    if not settings:
+        return False
+    try:
+        _, candidate = make_journal_password_verifier(password, settings["salt"])
+        return hmac.compare_digest(candidate, str(settings["password_hash"]))
+    except (KeyError, TypeError, ValueError):
+        return False
+
+
+def save_journal_lock(client, user_id, password):
+    salt, password_hash = make_journal_password_verifier(password)
+    client.table("journal_lock_settings").upsert(
+        {"user_id": user_id, "salt": salt, "password_hash": password_hash},
+        on_conflict="user_id",
+    ).execute()
+
+
+def delete_journal_lock(client, user_id):
+    client.table("journal_lock_settings").delete().eq("user_id", user_id).execute()
+
+
+def render_journal_lock_controls(client, user_id, settings, is_vi):
+    """Gate journal rendering and provide separate-password controls."""
+    unlocked = st.session_state.get("journal_unlocked_for") == user_id
+    if settings and not unlocked:
+        st.info("Nhật ký đang khóa. Nhập mật khẩu để mở." if is_vi else "Your journal is locked. Enter its password to continue.")
+        with st.form("journal_unlock_form"):
+            password = st.text_input("Mật khẩu nhật ký" if is_vi else "Journal password", type="password")
+            submit = st.form_submit_button("Mở khóa nhật ký" if is_vi else "Unlock journal", type="primary")
+        if submit:
+            if verify_journal_password(password, settings):
+                st.session_state.journal_unlocked_for = user_id
+                st.rerun()
+            else:
+                st.error("Mật khẩu chưa đúng." if is_vi else "That password is incorrect.")
+        with st.expander("Quên mật khẩu khóa?" if is_vi else "Forgot the journal password?"):
+            st.caption(
+                "Bạn có thể xóa khóa bằng tài khoản SkyeChat đang đăng nhập. Khóa này chỉ khóa giao diện, không mã hóa nội dung trong Supabase."
+                if is_vi
+                else "You can remove the lock using the signed-in SkyeChat account. This locks the interface; it does not encrypt journal contents in Supabase."
+            )
+            with st.form("journal_lock_recovery_form"):
+                confirm = st.checkbox("Tôi muốn xóa khóa nhật ký" if is_vi else "I want to remove the journal lock")
+                reset = st.form_submit_button("Xóa khóa" if is_vi else "Remove lock")
+            if reset:
+                if not confirm:
+                    st.warning("Hãy xác nhận trước khi xóa khóa." if is_vi else "Confirm before removing the lock.")
+                else:
+                    try:
+                        delete_journal_lock(client, user_id)
+                        st.session_state.journal_unlocked_for = user_id
+                        st.rerun()
+                    except Exception as exc:
+                        LOGGER.warning("Journal lock recovery failed: %s", type(exc).__name__)
+                        st.error("Chưa xóa được khóa. Hãy kiểm tra cấu hình Supabase." if is_vi else "Could not remove the lock. Check Supabase configuration.")
+        return False
+
+    with st.expander("🔐 Cài đặt mật khẩu nhật ký" if is_vi else "🔐 Journal password settings", expanded=not settings):
+        st.caption(
+            "Mật khẩu này riêng với mật khẩu đăng nhập. Đây là khóa giao diện; nội dung nhật ký vẫn được lưu dạng văn bản trong Supabase."
+            if is_vi
+            else "This password is separate from your sign-in password. It is an interface lock; journal text remains stored as readable text in Supabase."
+        )
+        if settings:
+            with st.form("change_journal_password_form"):
+                current = st.text_input("Mật khẩu hiện tại" if is_vi else "Current password", type="password")
+                new_password = st.text_input("Mật khẩu mới (ít nhất 8 ký tự)" if is_vi else "New password (at least 8 characters)", type="password")
+                repeated = st.text_input("Nhập lại mật khẩu mới" if is_vi else "Confirm new password", type="password")
+                change = st.form_submit_button("Đổi mật khẩu nhật ký" if is_vi else "Change journal password")
+            if change:
+                if not verify_journal_password(current, settings):
+                    st.error("Mật khẩu hiện tại chưa đúng." if is_vi else "The current password is incorrect.")
+                elif len(new_password) < 8:
+                    st.warning("Mật khẩu mới cần ít nhất 8 ký tự." if is_vi else "Use at least 8 characters.")
+                elif new_password != repeated:
+                    st.warning("Hai mật khẩu mới chưa khớp." if is_vi else "The new passwords do not match.")
+                else:
+                    try:
+                        save_journal_lock(client, user_id, new_password)
+                        st.session_state.journal_unlocked_for = user_id
+                        st.success("Đã đổi mật khẩu nhật ký." if is_vi else "Journal password changed.")
+                        st.rerun()
+                    except Exception as exc:
+                        LOGGER.warning("Journal password update failed: %s", type(exc).__name__)
+                        st.error("Chưa đổi được mật khẩu. Hãy kiểm tra cấu hình Supabase." if is_vi else "Could not change the password. Check Supabase configuration.")
+            with st.form("disable_journal_password_form"):
+                current_to_disable = st.text_input("Mật khẩu hiện tại để tắt khóa" if is_vi else "Current password to turn off the lock", type="password")
+                disable = st.form_submit_button("Tắt mật khẩu nhật ký" if is_vi else "Turn off journal password")
+            if disable:
+                if not verify_journal_password(current_to_disable, settings):
+                    st.error("Mật khẩu hiện tại chưa đúng." if is_vi else "The current password is incorrect.")
+                else:
+                    try:
+                        delete_journal_lock(client, user_id)
+                        st.session_state.journal_unlocked_for = user_id
+                        st.rerun()
+                    except Exception as exc:
+                        LOGGER.warning("Journal password removal failed: %s", type(exc).__name__)
+                        st.error("Chưa tắt được mật khẩu. Hãy kiểm tra cấu hình Supabase." if is_vi else "Could not turn off the password. Check Supabase configuration.")
+            if st.button("Khóa nhật ký ngay" if is_vi else "Lock journal now", key="lock_journal_now"):
+                st.session_state.journal_unlocked_for = None
+                st.rerun()
+        else:
+            with st.form("set_journal_password_form"):
+                new_password = st.text_input("Tạo mật khẩu (ít nhất 8 ký tự)" if is_vi else "Create a password (at least 8 characters)", type="password")
+                repeated = st.text_input("Nhập lại mật khẩu" if is_vi else "Confirm password", type="password")
+                create = st.form_submit_button("Bật mật khẩu nhật ký" if is_vi else "Enable journal password", type="primary")
+            if create:
+                if len(new_password) < 8:
+                    st.warning("Mật khẩu cần ít nhất 8 ký tự." if is_vi else "Use at least 8 characters.")
+                elif new_password != repeated:
+                    st.warning("Hai mật khẩu chưa khớp." if is_vi else "The passwords do not match.")
+                else:
+                    try:
+                        save_journal_lock(client, user_id, new_password)
+                        st.session_state.journal_unlocked_for = user_id
+                        st.success("Đã bật mật khẩu cho nhật ký." if is_vi else "Journal password enabled.")
+                        st.rerun()
+                    except Exception as exc:
+                        LOGGER.warning("Journal password setup failed: %s", type(exc).__name__)
+                        st.error("Chưa lưu được mật khẩu. Hãy kiểm tra cấu hình Supabase." if is_vi else "Could not save the password. Check Supabase configuration.")
+    return True
 
 
 def get_app_timezone():
@@ -1591,12 +1748,7 @@ def friendly_chat_error(exc, is_vi):
 # Sidebar
 # ==============================
 if "language" not in st.session_state:
-    st.session_state.language = "Tiếng Việt"
-# Normalize existing sessions that still store the old flag-decorated labels.
-if str(st.session_state.language).startswith("Tiếng Việt"):
-    st.session_state.language = "Tiếng Việt"
-elif str(st.session_state.language).startswith("English"):
-    st.session_state.language = "English"
+    st.session_state.language = "Tiếng Việt 🇻🇳"
 is_vi = str(st.session_state.language).startswith("Tiếng Việt")
 
 with st.sidebar:
@@ -1686,14 +1838,14 @@ with st.sidebar:
         st.session_state.nickname_is_custom = True
 
     displayed_nickname = nickname_input.strip() or nickname_display
-    greeting_text = f"Chào {displayed_nickname}!" if is_vi else f"Hello {displayed_nickname}!"
+    greeting_text = f"👋 Chào {displayed_nickname}!" if is_vi else f"👋 Hello {displayed_nickname}!"
     st.markdown(
         f'<div class="welcome-greeting">{escape(greeting_text)}</div>',
         unsafe_allow_html=True,
     )
     lang = st.radio(
         "Ngôn ngữ" if is_vi else "Language",
-        ["Tiếng Việt", "English"],
+        ["Tiếng Việt 🇻🇳", "English 🇬🇧"],
         key="language",
         label_visibility="visible",
     )
@@ -1703,15 +1855,16 @@ with st.sidebar:
         st.session_state.support_style = queued_support_style
 
     support_style_labels = (
-        {"listen": "Chỉ lắng nghe", "untangle": "Cùng gỡ rối", "next_step": "Tìm bước nhỏ"}
+        {"listen": "🫶 Chỉ lắng nghe", "untangle": "🧭 Cùng gỡ rối", "next_step": "🌱 Tìm bước nhỏ"}
         if is_vi
-        else {"listen": "Just listen", "untangle": "Help me untangle it", "next_step": "Find a small step"}
+        else {"listen": "🫶 Just listen", "untangle": "🧭 Help me untangle it", "next_step": "🌱 Find a small step"}
     )
     st.radio(
         "Bạn muốn SkyeChat hỗ trợ thế nào?" if is_vi else "How would you like SkyeChat to help?",
         options=("listen", "untangle", "next_step"),
         format_func=lambda value: support_style_labels[value],
         key="support_style",
+        help=("Bạn có thể đổi lựa chọn bất cứ lúc nào." if is_vi else "You can change this any time."),
     )
 
     with st.expander("🌬️ Khoảng thở 1 phút" if is_vi else "🌬️ One-minute breathing space"):
@@ -1950,140 +2103,156 @@ if is_diary:
         empty_label, privacy_label = "You have not written any entries yet. Start with a few lines about today whenever you feel ready.", "Journal entries are saved to your Supabase account so you can view them after signing in on another device."
         mood_options = ["😟 Very low", "🙁 Not great", "😐 Okay", "🙂 Good", "😊 Great"]
 
-    if st.session_state.clear_diary_form:
-        st.session_state.diary_title_input = ""
-        st.session_state.diary_mood_input = 2
-        st.session_state.diary_text_input = ""
-        st.session_state.clear_diary_form = False
-
-    with st.form("diary_entry_form", clear_on_submit=False):
-        diary_title = st.text_input(
-            title_label, placeholder=title_placeholder, max_chars=80, key="diary_title_input"
-        )
-        diary_mood_index = st.select_slider(
-            mood_label,
-            options=(0, 1, 2, 3, 4),
-            value=2,
-            format_func=lambda value: mood_options[value],
-            key="diary_mood_input",
-        )
-        diary_text = st.text_area(
-            entry_label,
-            placeholder=entry_placeholder,
-            height=180,
-            max_chars=5000,
-            key="diary_text_input",
-        )
-        save_entry = st.form_submit_button(save_label, type="primary", use_container_width=True)
-
-    if save_entry:
-        if diary_text.strip():
-            try:
-                supabase_client.table("diary_entries").insert(
-                    {
-                        "user_id": st.session_state.auth_user_id,
-                        "title": diary_title.strip(),
-                        "mood": mood_options[diary_mood_index],
-                        "content": diary_text.strip(),
-                    }
-                ).execute()
-                st.session_state.clear_diary_form = True
-                st.session_state.journal_saved_recently = True
-                st.rerun()
-            except Exception as exc:
-                LOGGER.warning("Journal save failed: %s", type(exc).__name__)
-                st.error(
-                    "Chưa lưu được nhật ký. Hãy kiểm tra đã chạy file `supabase_setup.sql` và bật quyền truy cập an toàn."
-                    if is_vi
-                    else "Could not save the entry. Check that `supabase_setup.sql` has been applied and database access is configured."
-                )
-        else:
-            st.warning(empty_error)
-
-    if st.session_state.pop("journal_saved_recently", False):
-        st.success("Đã lưu nhật ký." if is_vi else "Journal entry saved.")
-
-    st.divider()
-    st.subheader(history_label)
+    diary_user_id = st.session_state.auth_user_id
     try:
-        entries = load_diary_entries(supabase_client, st.session_state.auth_user_id)
+        journal_lock = load_journal_lock(supabase_client, diary_user_id)
+        can_view_diary = render_journal_lock_controls(
+            supabase_client, diary_user_id, journal_lock, is_vi
+        )
     except Exception as exc:
-        LOGGER.warning("Journal load failed: %s", type(exc).__name__)
-        entries = []
+        LOGGER.warning("Journal lock settings load failed: %s", type(exc).__name__)
         st.error(
-            "Chưa tải được nhật ký. Hãy kiểm tra đã tạo bảng `diary_entries` trong Supabase."
+            "Chưa tải được cài đặt mật khẩu. Hãy chạy file `supabase_journal_password.sql` trong Supabase → SQL Editor rồi thử lại."
             if is_vi
-            else "Could not load entries. Check that the `diary_entries` table exists in Supabase."
+            else "Could not load password settings. Run `supabase_journal_password.sql` in Supabase → SQL Editor, then try again."
         )
-    if entries:
-        export_lines = ["# Nhật ký SkyeChat" if is_vi else "# SkyeChat Journal", ""]
-        for entry in reversed(entries):
-            title = str(entry.get("title") or ("Trang nhật ký" if is_vi else "Journal entry"))
-            formatted_created_at = format_created_at(entry.get("created_at"))
-            mood = str(entry.get("mood") or "")
-            content = str(entry.get("content") or "")
-            export_lines.extend(
-                [f"## {title}", f"{formatted_created_at} · {mood}", "", content, "", "---", ""]
-            )
+        can_view_diary = False
 
-        st.download_button(
-            download_label,
-            data="\n".join(export_lines),
-            file_name=f"skyechat_journal_{datetime.now(get_app_timezone()).strftime('%Y%m%d')}.md",
-            mime="text/markdown",
-            use_container_width=True,
-        )
-        if len(entries) == 100:
-            st.caption(
-                "Đang hiển thị 100 trang gần nhất." if is_vi else "Showing your 100 most recent entries."
-            )
+    if can_view_diary:
+        if st.session_state.clear_diary_form:
+            st.session_state.diary_title_input = ""
+            st.session_state.diary_mood_input = 2
+            st.session_state.diary_text_input = ""
+            st.session_state.clear_diary_form = False
 
-        for entry in entries:
-            entry_id = entry.get("id")
-            if entry_id is None:
-                continue
-            entry_id = str(entry_id)
-            label = str(entry.get("title") or ("Trang nhật ký" if is_vi else "Journal entry"))
-            formatted_created_at = format_created_at(entry.get("created_at"))
-            with st.expander(f"{entry.get('mood', '')} · {label} · {formatted_created_at}"):
-                st.write(str(entry.get("content") or ""))
-                if st.session_state.get("confirm_delete_diary_id") == entry_id:
-                    st.caption(confirm_delete_prompt)
-                    delete_col, cancel_col = st.columns(2)
-                    if delete_col.button(
-                        confirm_delete_label,
-                        key=f"confirm_delete_diary_{entry_id}",
-                        type="primary",
-                        use_container_width=True,
-                    ):
-                        try:
-                            (
-                                supabase_client.table("diary_entries")
-                                .delete()
-                                .eq("id", entry_id)
-                                .eq("user_id", st.session_state.auth_user_id)
-                                .execute()
-                            )
-                            st.session_state.confirm_delete_diary_id = None
-                            st.success(delete_success)
-                            st.rerun()
-                        except Exception as exc:
-                            LOGGER.warning("Journal delete failed: %s", type(exc).__name__)
-                            st.error(delete_error)
-                    if cancel_col.button(
-                        cancel_delete_label,
-                        key=f"cancel_delete_diary_{entry_id}",
-                        use_container_width=True,
-                    ):
-                        st.session_state.confirm_delete_diary_id = None
-                        st.rerun()
-                elif st.button(delete_label, key=f"delete_diary_{entry_id}"):
-                    st.session_state.confirm_delete_diary_id = entry_id
+        with st.form("diary_entry_form", clear_on_submit=False):
+            diary_title = st.text_input(
+                title_label, placeholder=title_placeholder, max_chars=80, key="diary_title_input"
+            )
+            diary_mood_index = st.select_slider(
+                mood_label,
+                options=(0, 1, 2, 3, 4),
+                value=2,
+                format_func=lambda value: mood_options[value],
+                key="diary_mood_input",
+            )
+            diary_text = st.text_area(
+                entry_label,
+                placeholder=entry_placeholder,
+                height=180,
+                max_chars=5000,
+                key="diary_text_input",
+            )
+            save_entry = st.form_submit_button(save_label, type="primary", use_container_width=True)
+
+        if save_entry:
+            if diary_text.strip():
+                try:
+                    supabase_client.table("diary_entries").insert(
+                        {
+                            "user_id": st.session_state.auth_user_id,
+                            "title": diary_title.strip(),
+                            "mood": mood_options[diary_mood_index],
+                            "content": diary_text.strip(),
+                        }
+                    ).execute()
+                    st.session_state.clear_diary_form = True
+                    st.session_state.journal_saved_recently = True
                     st.rerun()
-    else:
-        st.info(empty_label)
+                except Exception as exc:
+                    LOGGER.warning("Journal save failed: %s", type(exc).__name__)
+                    st.error(
+                        "Chưa lưu được nhật ký. Hãy kiểm tra đã chạy file `supabase_setup.sql` và bật quyền truy cập an toàn."
+                        if is_vi
+                        else "Could not save the entry. Check that `supabase_setup.sql` has been applied and database access is configured."
+                    )
+            else:
+                st.warning(empty_error)
 
-    st.caption(privacy_label)
+        if st.session_state.pop("journal_saved_recently", False):
+            st.success("Đã lưu nhật ký." if is_vi else "Journal entry saved.")
+
+        st.divider()
+        st.subheader(history_label)
+        try:
+            entries = load_diary_entries(supabase_client, st.session_state.auth_user_id)
+        except Exception as exc:
+            LOGGER.warning("Journal load failed: %s", type(exc).__name__)
+            entries = []
+            st.error(
+                "Chưa tải được nhật ký. Hãy kiểm tra đã tạo bảng `diary_entries` trong Supabase."
+                if is_vi
+                else "Could not load entries. Check that the `diary_entries` table exists in Supabase."
+            )
+        if entries:
+            export_lines = ["# Nhật ký SkyeChat" if is_vi else "# SkyeChat Journal", ""]
+            for entry in reversed(entries):
+                title = str(entry.get("title") or ("Trang nhật ký" if is_vi else "Journal entry"))
+                formatted_created_at = format_created_at(entry.get("created_at"))
+                mood = str(entry.get("mood") or "")
+                content = str(entry.get("content") or "")
+                export_lines.extend(
+                    [f"## {title}", f"{formatted_created_at} · {mood}", "", content, "", "---", ""]
+                )
+
+            st.download_button(
+                download_label,
+                data="\n".join(export_lines),
+                file_name=f"skyechat_journal_{datetime.now(get_app_timezone()).strftime('%Y%m%d')}.md",
+                mime="text/markdown",
+                use_container_width=True,
+            )
+            if len(entries) == 100:
+                st.caption(
+                    "Đang hiển thị 100 trang gần nhất." if is_vi else "Showing your 100 most recent entries."
+                )
+
+            for entry in entries:
+                entry_id = entry.get("id")
+                if entry_id is None:
+                    continue
+                entry_id = str(entry_id)
+                label = str(entry.get("title") or ("Trang nhật ký" if is_vi else "Journal entry"))
+                formatted_created_at = format_created_at(entry.get("created_at"))
+                with st.expander(f"{entry.get('mood', '')} · {label} · {formatted_created_at}"):
+                    st.write(str(entry.get("content") or ""))
+                    if st.session_state.get("confirm_delete_diary_id") == entry_id:
+                        st.caption(confirm_delete_prompt)
+                        delete_col, cancel_col = st.columns(2)
+                        if delete_col.button(
+                            confirm_delete_label,
+                            key=f"confirm_delete_diary_{entry_id}",
+                            type="primary",
+                            use_container_width=True,
+                        ):
+                            try:
+                                (
+                                    supabase_client.table("diary_entries")
+                                    .delete()
+                                    .eq("id", entry_id)
+                                    .eq("user_id", st.session_state.auth_user_id)
+                                    .execute()
+                                )
+                                st.session_state.confirm_delete_diary_id = None
+                                st.success(delete_success)
+                                st.rerun()
+                            except Exception as exc:
+                                LOGGER.warning("Journal delete failed: %s", type(exc).__name__)
+                                st.error(delete_error)
+                        if cancel_col.button(
+                            cancel_delete_label,
+                            key=f"cancel_delete_diary_{entry_id}",
+                            use_container_width=True,
+                        ):
+                            st.session_state.confirm_delete_diary_id = None
+                            st.rerun()
+                    elif st.button(delete_label, key=f"delete_diary_{entry_id}"):
+                        st.session_state.confirm_delete_diary_id = entry_id
+                        st.rerun()
+        else:
+            st.info(empty_label)
+
+        st.caption(privacy_label)
 
 else:
     hero_eyebrow = "Không gian an toàn để sẻ chia" if is_vi else "A safe space to share"
@@ -2167,15 +2336,15 @@ else:
     if not st.session_state.messages:
         starter_prompts = (
             [
-                ("Chỉ cần lắng nghe", "Mình chưa cần lời khuyên, chỉ muốn được lắng nghe một chút."),
-                ("Gỡ rối suy nghĩ", "Có vài điều đang rối trong đầu mình. Giúp mình nhìn từng phần nhé."),
-                ("Tìm bước nhỏ", "Mình đang gặp chuyện khó. Cùng tìm một bước nhỏ mình có thể làm nhé."),
+                ("🫶 Chỉ cần lắng nghe", "Mình chưa cần lời khuyên, chỉ muốn được lắng nghe một chút."),
+                ("🧭 Gỡ rối suy nghĩ", "Có vài điều đang rối trong đầu mình. Giúp mình nhìn từng phần nhé."),
+                ("🌱 Tìm bước nhỏ", "Mình đang gặp chuyện khó. Cùng tìm một bước nhỏ mình có thể làm nhé."),
             ]
             if is_vi
             else [
-                ("Just listen", "I do not need advice yet; I would just like to be heard for a moment."),
-                ("Untangle my thoughts", "A few things feel tangled in my mind. Could you help me look at them one at a time?"),
-                ("Find a small step", "I am dealing with something hard. Can we find one small step I could take?"),
+                ("🫶 Just listen", "I do not need advice yet; I would just like to be heard for a moment."),
+                ("🧭 Untangle my thoughts", "A few things feel tangled in my mind. Could you help me look at them one at a time?"),
+                ("🌱 Find a small step", "I am dealing with something hard. Can we find one small step I could take?"),
             ]
         )
         quick_cols = st.columns(3)
