@@ -1,7 +1,7 @@
-/* SkyeChat — responsive, theme-aware styling. No remote font dependencies. */
+/* SkyeChat — responsive, theme-aware styling with classic serif typography. */
 
 /* SECTION:base */
-@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Xanh+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap');
 :root {
   color-scheme: light;
   --sky-bg: #edf5f8;
@@ -1363,6 +1363,7 @@ html body .stApp [data-testid="stChatInput"] button {
   overflow-x: auto !important;
   line-height: 1.65 !important;
 }
+
 /* Streamlit widget accent: calm sky blue in light mode */
 :root, .stApp, [data-testid="stAppViewContainer"] {
   --primary-color: var(--sky-accent) !important;
@@ -1400,8 +1401,12 @@ input[type="radio"], input[type="checkbox"], input[type="range"] {
 }
 h1, h2, h3, h4, h5, h6, .hero-title, .hero-eyebrow {
   color: var(--sky-title-text) !important;
-  font-family: "Xanh Mono", "Courier New", monospace !important;
+  font-family: "Cormorant Garamond", "Palatino Linotype", "Book Antiqua", Georgia, serif !important;
   letter-spacing: 2px !important;
+}
+.sidebar-brand strong, .welcome-greeting {
+  font-family: "Cormorant Garamond", "Palatino Linotype", "Book Antiqua", Georgia, serif !important;
+  letter-spacing: 1px !important;
 }
 p, li, label, small, summary, blockquote,
 [data-testid="stCaptionContainer"],
@@ -1411,35 +1416,6 @@ p, li, label, small, summary, blockquote,
   color: var(--sky-copy-text) !important;
   font-family: "Lora", Georgia, serif !important;
   letter-spacing: 2px !important;
-}
-/* Hero artwork — light appearance */
-.hero {
-  background-image:
-    linear-gradient(
-      90deg,
-      rgba(232, 244, 250, .86) 0%,
-      rgba(232, 244, 250, .48) 58%,
-      rgba(232, 244, 250, .18) 100%
-    ),
-    url("app/static/hero-wide-light.webp");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-@media (max-width: 700px) {
-  .hero {
-    background-image:
-      linear-gradient(
-        180deg,
-        rgba(232, 244, 250, .86) 0%,
-        rgba(232, 244, 250, .45) 100%
-      ),
-      url("app/static/hero-wide-light.webp");
-  }
-}
-.hero::before,
-.hero::after {
-  display: none !important;
 }
 /* ENDSECTION */
 
@@ -1814,8 +1790,12 @@ input[type="radio"], input[type="checkbox"], input[type="range"] {
 }
 h1, h2, h3, h4, h5, h6, .hero-title, .hero-eyebrow {
   color: var(--sky-title-text) !important;
-  font-family: "Xanh Mono", "Courier New", monospace !important;
+  font-family: "Cormorant Garamond", "Palatino Linotype", "Book Antiqua", Georgia, serif !important;
   letter-spacing: 2px !important;
+}
+.sidebar-brand strong, .welcome-greeting {
+  font-family: "Cormorant Garamond", "Palatino Linotype", "Book Antiqua", Georgia, serif !important;
+  letter-spacing: 1px !important;
 }
 p, li, label, small, summary, blockquote,
 [data-testid="stCaptionContainer"],
@@ -1827,33 +1807,4 @@ p, li, label, small, summary, blockquote,
   letter-spacing: 2px !important;
 }
 
-/* Hero artwork — dark appearance */
-.hero {
-  background-image:
-    linear-gradient(
-      90deg,
-      rgba(15, 31, 41, .82) 0%,
-      rgba(15, 31, 41, .48) 58%,
-      rgba(15, 31, 41, .20) 100%
-    ),
-    url("app/static/hero-wide-dark.webp");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-@media (max-width: 700px) {
-  .hero {
-    background-image:
-      linear-gradient(
-        180deg,
-        rgba(15, 31, 41, .84) 0%,
-        rgba(15, 31, 41, .45) 100%
-      ),
-      url("app/static/hero-wide-dark.webp");
-  }
-}
-.hero::before,
-.hero::after {
-  display: none !important;
-}
 /* ENDSECTION */
