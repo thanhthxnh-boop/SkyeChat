@@ -814,11 +814,6 @@ def render_journal_lock_controls(client, user_id, settings, is_vi):
         return False
 
     with st.expander("🔐 Cài đặt mật khẩu nhật ký" if is_vi else "🔐 Journal password settings", expanded=not settings):
-        st.caption(
-            "Mật khẩu này riêng với mật khẩu đăng nhập. Đây là khóa giao diện; nội dung nhật ký vẫn được lưu dạng văn bản trong Supabase."
-            if is_vi
-            else "This password is separate from your sign-in password. It is an interface lock; journal text remains stored as readable text in Supabase."
-        )
         if settings:
             with st.form("change_journal_password_form"):
                 current = st.text_input("Mật khẩu hiện tại" if is_vi else "Current password", type="password")
