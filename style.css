@@ -1417,6 +1417,20 @@ p, li, label, small, summary, blockquote,
   font-family: "Lora", Georgia, serif !important;
   letter-spacing: 2px !important;
 }
+/* Hero artwork: Streamlit serves these files from the repository's static folder. */
+section.hero:has(.hero-title--greeting) {
+  background-image: linear-gradient(rgba(239, 247, 250, .50), rgba(239, 247, 250, .50)), url("/app/static/hero-wide-light.webp") !important;
+  background-position: center !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+}
+section.hero:has(.hero-title--greeting)::before,
+section.hero:has(.hero-title--greeting)::after { display: none !important; }
+@media (max-width: 700px) {
+  section.hero:has(.hero-title--greeting) {
+    background-image: linear-gradient(rgba(239, 247, 250, .50), rgba(239, 247, 250, .50)), url("/app/static/hero-mobile-light.webp") !important;
+  }
+}
 /* ENDSECTION */
 
 /* SECTION:auth */
@@ -1805,6 +1819,19 @@ p, li, label, small, summary, blockquote,
   color: var(--sky-copy-text) !important;
   font-family: "Lora", Georgia, serif !important;
   letter-spacing: 2px !important;
+}
+section.hero:has(.hero-title--greeting) {
+  background-image: linear-gradient(rgba(13, 27, 36, .52), rgba(13, 27, 36, .52)), url("/app/static/hero-wide-dark.webp") !important;
+  background-position: center !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+}
+section.hero:has(.hero-title--greeting)::before,
+section.hero:has(.hero-title--greeting)::after { display: none !important; }
+@media (max-width: 700px) {
+  section.hero:has(.hero-title--greeting) {
+    background-image: linear-gradient(rgba(13, 27, 36, .52), rgba(13, 27, 36, .52)), url("/app/static/hero-mobile-dark.webp") !important;
+  }
 }
 
 /* ENDSECTION */
