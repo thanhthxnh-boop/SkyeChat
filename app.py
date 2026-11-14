@@ -2249,6 +2249,8 @@ else:
     hero_eyebrow = "Không gian an toàn để sẻ chia" if is_vi else "A safe space to share"
     hero_greeting = "Chào bạn, mình là SkyeChat" if is_vi else "Hi, I’m SkyeChat"
     hero_tagline = "Mọi chuyện rồi sẽ ổn thôi." if is_vi else "Everything is gonna be alright."
+    hero_art_theme = "dark" if st.session_state.get("dark_mode", False) else "light"
+    hero_art_tint = "rgba(13, 27, 36, .36)" if hero_art_theme == "dark" else "rgba(239, 247, 250, .28)"
     hero_copy = (
         "Bạn có thể bắt đầu từ bất cứ điều gì đang ở trong lòng. Mình sẽ lắng nghe, không phán xét."
         if is_vi
@@ -2257,15 +2259,24 @@ else:
     st.markdown(
         f"""
         <section class="hero hero--art">
-          <div class="hero-eyebrow">{hero_eyebrow}</div>
-          <div class="hero-title hero-title--greeting">
-            <span class="hero-greeting-text">{hero_greeting}</span>
+          <div class="hero-artwork" aria-hidden="true" style="position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;">
+            <picture style="position:absolute;inset:0;display:block;">
+              <source media="(max-width: 700px)" srcset="/app/static/hero-mobile-{hero_art_theme}.webp">
+              <img src="/app/static/hero-wide-{hero_art_theme}.webp" alt="" loading="eager" style="display:block;width:100%;height:100%;object-fit:cover;object-position:center;">
+            </picture>
+            <div style="position:absolute;inset:0;background:{hero_art_tint};"></div>
           </div>
-          <div class="hero-tagline-row">
-            <span class="hero-tagline">{hero_tagline}</span>
-            <span class="hero-cloud" aria-hidden="true">☁️</span>
+          <div class="hero-content" style="position:relative;z-index:1;">
+            <div class="hero-eyebrow">{hero_eyebrow}</div>
+            <div class="hero-title hero-title--greeting">
+              <span class="hero-greeting-text">{hero_greeting}</span>
+            </div>
+            <div class="hero-tagline-row">
+              <span class="hero-tagline">{hero_tagline}</span>
+              <span class="hero-cloud" aria-hidden="true">☁️</span>
+            </div>
+            <p class="hero-copy">{hero_copy}</p>
           </div>
-          <p class="hero-copy">{hero_copy}</p>
         </section>
         """,
         unsafe_allow_html=True,
