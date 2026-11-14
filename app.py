@@ -1129,21 +1129,7 @@ if not is_authenticated and not st.session_state.guest_mode:
                     st.rerun()
                 except Exception as exc:
                     show_auth_error(exc, "Tạo tài khoản")
-        if signup_method == "Email":
-            st.info(
-                "Để nhập mã tại trang xác minh, vào Supabase → Authentication → Email Templates → "
-                "Confirm signup và dùng biến `{{ .Token }}` trong nội dung email."
-            )
-        else:
-            st.info(
-                "Đăng ký bằng SMS cần bật Phone provider, bật Confirm Phone và cấu hình nhà cung cấp SMS "
-                "trong Supabase → Authentication."
-            )
     with recovery_tab:
-        st.caption(
-            "Khôi phục qua email. Mẫu email khôi phục của Supabase cần hiển thị mã {{ .Token }} "
-            "để bạn có thể nhập mã trực tiếp tại đây."
-        )
         with st.form("skyechat_recovery_request_form"):
             recovery_target = st.text_input(
                 "Email đã đăng ký", placeholder="ban@example.com", autocomplete="email"
