@@ -1417,17 +1417,17 @@ p, li, label, small, summary, blockquote,
   font-family: "Lora", Georgia, serif !important;
   letter-spacing: 2px !important;
 }
-/* Hero artwork: Streamlit serves these files from the repository's static folder. */
-section.hero:has(.hero-title--greeting) {
+section.hero.hero--art {
   background-image: linear-gradient(rgba(239, 247, 250, .50), rgba(239, 247, 250, .50)), url("/app/static/hero-wide-light.webp") !important;
+  background-color: transparent !important;
   background-position: center !important;
   background-size: cover !important;
   background-repeat: no-repeat !important;
 }
-section.hero:has(.hero-title--greeting)::before,
-section.hero:has(.hero-title--greeting)::after { display: none !important; }
+section.hero.hero--art::before,
+section.hero.hero--art::after { display: none !important; }
 @media (max-width: 700px) {
-  section.hero:has(.hero-title--greeting) {
+  section.hero.hero--art {
     background-image: linear-gradient(rgba(239, 247, 250, .50), rgba(239, 247, 250, .50)), url("/app/static/hero-mobile-light.webp") !important;
   }
 }
@@ -1820,16 +1820,17 @@ p, li, label, small, summary, blockquote,
   font-family: "Lora", Georgia, serif !important;
   letter-spacing: 2px !important;
 }
-section.hero:has(.hero-title--greeting) {
+section.hero.hero--art {
   background-image: linear-gradient(rgba(13, 27, 36, .52), rgba(13, 27, 36, .52)), url("/app/static/hero-wide-dark.webp") !important;
+  background-color: transparent !important;
   background-position: center !important;
   background-size: cover !important;
   background-repeat: no-repeat !important;
 }
-section.hero:has(.hero-title--greeting)::before,
-section.hero:has(.hero-title--greeting)::after { display: none !important; }
+section.hero.hero--art::before,
+section.hero.hero--art::after { display: none !important; }
 @media (max-width: 700px) {
-  section.hero:has(.hero-title--greeting) {
+  section.hero.hero--art {
     background-image: linear-gradient(rgba(13, 27, 36, .52), rgba(13, 27, 36, .52)), url("/app/static/hero-mobile-dark.webp") !important;
   }
 }
