@@ -1418,19 +1418,11 @@ p, li, label, small, summary, blockquote,
   letter-spacing: 2px !important;
 }
 section.hero.hero--art {
-  background-image: linear-gradient(rgba(239, 247, 250, .50), rgba(239, 247, 250, .50)), url("/app/static/hero-wide-light.webp") !important;
+  background-image: none !important;
   background-color: transparent !important;
-  background-position: center !important;
-  background-size: cover !important;
-  background-repeat: no-repeat !important;
 }
 section.hero.hero--art::before,
 section.hero.hero--art::after { display: none !important; }
-@media (max-width: 700px) {
-  section.hero.hero--art {
-    background-image: linear-gradient(rgba(239, 247, 250, .50), rgba(239, 247, 250, .50)), url("/app/static/hero-mobile-light.webp") !important;
-  }
-}
 /* ENDSECTION */
 
 /* SECTION:auth */
@@ -1821,18 +1813,9 @@ p, li, label, small, summary, blockquote,
   letter-spacing: 2px !important;
 }
 section.hero.hero--art {
-  background-image: linear-gradient(rgba(13, 27, 36, .52), rgba(13, 27, 36, .52)), url("/app/static/hero-wide-dark.webp") !important;
+  background-image: none !important;
   background-color: transparent !important;
-  background-position: center !important;
-  background-size: cover !important;
-  background-repeat: no-repeat !important;
 }
 section.hero.hero--art::before,
 section.hero.hero--art::after { display: none !important; }
-@media (max-width: 700px) {
-  section.hero.hero--art {
-    background-image: linear-gradient(rgba(13, 27, 36, .52), rgba(13, 27, 36, .52)), url("/app/static/hero-mobile-dark.webp") !important;
-  }
-}
-
 /* ENDSECTION */
