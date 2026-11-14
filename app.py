@@ -2256,7 +2256,7 @@ else:
     )
     st.markdown(
         f"""
-        <section class="hero">
+        <section class="hero hero--art">
           <div class="hero-eyebrow">{hero_eyebrow}</div>
           <div class="hero-title hero-title--greeting">
             <span class="hero-greeting-text">{hero_greeting}</span>
