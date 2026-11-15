@@ -21,6 +21,10 @@
   --sky-new-chat-hover: #cbdfe7;
   --sky-title-text: #205a78;
   --sky-copy-text: #2d4b5c;
+  --sky-active-chat-bg: #315e78;
+  --sky-active-chat-ink: #ffffff;
+  --sky-active-chat-border: #315e78;
+  --sky-active-chat-hover: #274d63;
 }
 
 html, body, [class*="css"] {
@@ -1336,6 +1340,24 @@ html body .stApp [data-testid="stChatInput"] button {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.st-key-chat-history [data-testid="stButton"] button[kind="primary"] {
+  color: var(--sky-active-chat-ink) !important;
+  background: var(--sky-active-chat-bg) !important;
+  border-color: var(--sky-active-chat-border) !important;
+}
+.st-key-chat-history [data-testid="stButton"] button[kind="primary"] *,
+.st-key-chat-history [data-testid="stButton"] button[kind="primary"] svg {
+  color: var(--sky-active-chat-ink) !important;
+}
+.st-key-chat-history [data-testid="stButton"] button[kind="primary"]:hover {
+  color: var(--sky-active-chat-ink) !important;
+  background: var(--sky-active-chat-hover) !important;
+  border-color: var(--sky-active-chat-border) !important;
+}
+.st-key-chat-history [data-testid="stButton"] button[kind="primary"]:hover *,
+.st-key-chat-history [data-testid="stButton"] button[kind="primary"]:hover svg {
+  color: var(--sky-active-chat-ink) !important;
+}
 .st-key-delete-chat-action [data-testid="stButton"] button,
 .st-key-confirm-clear-chat-action [data-testid="stButton"] button {
   color: var(--sky-danger-ink) !important;
@@ -1532,6 +1554,10 @@ section.hero.hero--art::after { display: none !important; }
   --sky-new-chat-hover: #49768a;
   --sky-title-text: #d9f3ff;
   --sky-copy-text: #d4e2e9;
+  --sky-active-chat-bg: #a1d0e5;
+  --sky-active-chat-ink: #13252e;
+  --sky-active-chat-border: #a1d0e5;
+  --sky-active-chat-hover: #b7deed;
 }
 html, body { color: var(--sky-ink); background: #10191f; }
 .stApp { color: var(--sky-ink); background: linear-gradient(135deg, #10191f, #182933 58%, #111d25) !important; }
