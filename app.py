@@ -1755,26 +1755,94 @@ def extract_grounded_answer(response_data):
     return "\n\n".join(answer_parts).strip(), citations
 
 
+def answer_simple_number_question(query, is_vi):
+    """Answer a bare-number question from arithmetic, without requiring Search."""
+    if is_vi:
+        match = re.fullmatch(r"\s*([1-9]\d{0,5})\s+là\s+gì\s*[?!.…]*\s*", query, re.IGNORECASE)
+    else:
+        match = re.fullmatch(
+            r"\s*(?:what\s+is\s+)?([1-9]\d{0,5})(?:\s+what)?\s*[?!.…]*\s*",
+            query,
+            re.IGNORECASE,
+        )
+        if not match:
+            match = re.fullmatch(
+                r"\s*what\s+does\s+([1-9]\d{0,5})\s+mean\s*[?!.…]*\s*",
+                query,
+                re.IGNORECASE,
+            )
+    if not match:
+        return ""
+
+    number = int(match.group(1))
+    if is_vi:
+        parity = "chẵn" if number % 2 == 0 else "lẻ"
+        return (
+            f"Nếu bạn hỏi về số học, {number} là số nguyên {parity}, đứng giữa "
+            f"{number - 1} và {number + 1}. Nếu bạn đang hỏi {number} như một mã, ký hiệu "
+            "hay chi tiết trong nội dung nào đó, cho mình biết ngữ cảnh nhé."
+        )
+    parity = "even" if number % 2 == 0 else "odd"
+    return (
+        f"If you mean the number itself, {number} is an {parity} integer between "
+        f"{number - 1} and {number + 1}. If you mean {number} as a code, symbol, or reference "
+        "in a particular context, tell me where you saw it."
+    )
+
+
+def generate_unverified_fallback_reply(history, system_prompt):
+    """Still answer helpfully when Search fails, without presenting guesses as verified."""
+    query = latest_user_message(history)
+    if not query:
+        return
+    is_vi = system_prompt.startswith("Bạn là SkyeChat") or bool(
+        re.search(r"[À-ỹ]|\b(?:là|của|nhân vật|tác phẩm)\b", query, re.IGNORECASE)
+    )
+    if answer := answer_simple_number_question(query, is_vi):
+        yield answer
+        return
+
+    if is_vi:
+        fallback_rule = """
+
+KHI TRA CỨU KHÔNG CÓ NGUỒN DẪN:
+- Quy tắc fallback này áp dụng khi yêu cầu nguồn dẫn phía trên không thể đáp ứng: vẫn trả lời phần có thể nêu an toàn và đánh dấu rõ phần chưa xác minh.
+- Vẫn trả lời câu hỏi hữu ích nhất có thể; không từ chối chỉ vì Search lỗi hoặc không có trích dẫn.
+- Trả lời trực tiếp phần có thể suy ra chắc chắn từ phép tính, kiến thức phổ thông ổn định hoặc nội dung người dùng cung cấp.
+- Nói rõ phần nào chưa xác minh được; không giả vờ đã tra cứu thành công, không bịa dữ kiện, số liệu, nguồn hay kết quả hiện thời.
+- Nếu câu hỏi có nhiều nghĩa, nêu cách hiểu thông thường nhất rồi hỏi ngắn gọn một câu về ngữ cảnh.
+- Với thông tin hiện thời hoặc chưa chắc, nêu giới hạn xác minh và đưa giải thích chung hữu ích nhất thay vì chỉ xin người dùng thử lại.
+""".strip()
+    else:
+        fallback_rule = """
+
+WHEN SEARCH RETURNS NO CITABLE SOURCE:
+- This fallback applies when the citation requirement above cannot be met: answer the safe, useful part and label anything unverified.
+- Still answer as helpfully as possible; do not refuse only because Search failed or returned no citation.
+- Directly answer what can be established from arithmetic, stable general knowledge, or the user's own words.
+- Clearly label anything not verified; never pretend Search succeeded or invent facts, numbers, sources, or current results.
+- If the question has several meanings, give the most ordinary interpretation and ask one brief follow-up about context.
+- For current or uncertain facts, state the verification limit and give the most useful general explanation instead of only asking the user to retry.
+""".strip()
+
+    # Keep prior personal disclosures out of the fallback request too.
+    yield from generate_reply(
+        [{"role": "user", "content": query}],
+        f"{system_prompt}\n\n{fallback_rule}",
+        _rate_limit_reserved=True,
+        _skip_grounded_lookup=True,
+    )
+
+
 def generate_grounded_reply(history, system_prompt):
-    """Answer public factual lookups only when Gemini returns source citations."""
+    """Try cited Search first, then answer carefully if Search is unavailable."""
     query = latest_user_message(history)
     is_vi = system_prompt.startswith("Bạn là SkyeChat") or bool(
         re.search(r"[À-ỹ]|\b(?:là|của|nhân vật|tác phẩm)\b", query, re.IGNORECASE)
     )
-    no_source_reply = (
-        "Mình chưa xác minh được thông tin này từ nguồn có thể dẫn lại nên không muốn đoán. "
-        "Bạn có thể gửi thêm tên tác phẩm hoặc một đường dẫn để mình dựa vào đó."
-        if is_vi
-        else "I couldn't verify this from a source I can cite, so I don't want to guess. "
-        "Please share the exact title or a link I can use."
-    )
-    request_failed_reply = (
-        "Lượt này mình chưa tra cứu xác minh được thông tin, nên mình không muốn trả lời như thể chắc chắn. "
-        "Bạn thử lại sau hoặc gửi một nguồn tham khảo nhé."
-        if is_vi
-        else "I couldn't verify this lookup right now, so I don't want to present a guess as fact. "
-        "Please try again later or share a reference."
-    )
+    if answer := answer_simple_number_question(query, is_vi):
+        yield answer
+        return
     headers = {
         "Content-Type": "application/json",
         "Accept": "application/json",
@@ -1819,41 +1887,41 @@ def generate_grounded_reply(history, system_prompt):
                     LOGGER.warning(
                         "Gemini grounded lookup failed status=%s", response.status_code
                     )
-                    yield request_failed_reply
+                    yield from generate_unverified_fallback_reply(history, system_prompt)
                     return
                 else:
                     LOGGER.warning("Gemini grounded lookup failed status=%s", response.status_code)
-                    yield request_failed_reply
+                    yield from generate_unverified_fallback_reply(history, system_prompt)
                     return
             try:
                 response_data = response.json()
             except ValueError:
-                yield request_failed_reply
+                yield from generate_unverified_fallback_reply(history, system_prompt)
                 return
             if not isinstance(response_data, dict):
-                yield request_failed_reply
+                yield from generate_unverified_fallback_reply(history, system_prompt)
                 return
             if response_data.get("error"):
                 LOGGER.warning("Gemini grounded lookup returned an API error")
-                yield request_failed_reply
+                yield from generate_unverified_fallback_reply(history, system_prompt)
                 return
             interaction = response_data.get("interaction", response_data)
             if isinstance(interaction, dict) and interaction.get("status") not in (None, "completed"):
-                yield request_failed_reply
+                yield from generate_unverified_fallback_reply(history, system_prompt)
                 return
 
             answer, citations = extract_grounded_answer(response_data)
             if not answer or not citations:
-                yield no_source_reply
+                yield from generate_unverified_fallback_reply(history, system_prompt)
                 return
             yield answer
             return
         except requests.RequestException as exc:
             LOGGER.warning("Gemini grounded lookup network error (%s)", type(exc).__name__)
-            yield request_failed_reply
+            yield from generate_unverified_fallback_reply(history, system_prompt)
             return
 
-    yield request_failed_reply
+    yield from generate_unverified_fallback_reply(history, system_prompt)
 
 
 def generate_reply(
@@ -1863,6 +1931,7 @@ def generate_reply(
     _continuation_hops=0,
     _model_override=None,
     _rate_limit_reserved=False,
+    _skip_grounded_lookup=False,
 ):
     """Stream a reply from Gemini, retrying transient failures with backoff."""
     if not _continuation_token and is_immediate_crisis_message(history):
@@ -1874,10 +1943,20 @@ def generate_reply(
         if rate_limit:
             raise ChatRateLimitError(*rate_limit)
 
+    if not _continuation_token:
+        is_vi = system_prompt.startswith("Bạn là SkyeChat")
+        if answer := answer_simple_number_question(latest_user_message(history), is_vi):
+            yield answer
+            return
+
     if not GEMINI_API_KEY:
         raise GeminiAPIError("Gemini is not configured.")
 
-    if not _continuation_token and should_use_grounded_search(history):
+    if (
+        not _continuation_token
+        and not _skip_grounded_lookup
+        and should_use_grounded_search(history)
+    ):
         yield from generate_grounded_reply(history, system_prompt)
         return
 
