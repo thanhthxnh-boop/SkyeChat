@@ -53,6 +53,24 @@ MAX_STORED_MESSAGES = 64
 MAX_RETRIES = 2
 MAX_CONTINUATION_HOPS = 2
 GEMINI_READ_TIMEOUT_SECONDS = 75
+GROUNDING_LOOKUP_PATTERN = re.compile(
+    r"(?:\b(?:who\s+(?:is|was)|what\s+(?:is|are|was|were|happened)|when\s+(?:did|was|is)|"
+    r"where\s+(?:is|was|can)|which\s+(?:characters?|people|versions?|years?)|why\s+(?:did|is|was)|how\s+many|"
+    r"source|citation|fact|plot|storyline|characters?|lore|canon|latest|current|price|"
+    r"release\s+date|is\s+it\s+true|did\s+it\s+happen)\b|"
+    r"là\s+ai|ai\s+là|là\s+gì|ở\s+đâu|khi\s+nào|năm\s+nào|bao\s+nhiêu|"
+    r"thông\s+tin|sự\s+thật|sự\s+kiện|cốt\s+truyện|nhân\s+vật|tác\s+phẩm|"
+    r"nguồn|trích\s+dẫn|mới\s+nhất|hiện\s+tại|phiên\s+bản|ngày\s+phát\s+hành|"
+    r"có\s+thật\s+không|có\s+đúng\s+không|có\s+phải|vì\s+sao|tại\s+sao)",
+    re.IGNORECASE,
+)
+GROUNDING_SENSITIVE_PATTERN = re.compile(
+    r"(?:cảm\s+thấy|buồn|lo\s+lắng|hoảng\s+sợ|tổn\s+thương|tự\s+tử|"
+    r"tự\s+làm\s+hại|không\s+muốn\s+sống|khủng\s+hoảng|đang\s+gặp\s+nguy\s+hiểm|"
+    r"\b(?:i\s+feel|i\s+am\s+feeling|i'm\s+feeling|sad|anxious|panic|hurt|"
+    r"suicid(?:e|al)|self[- ]harm|crisis|in\s+danger)\b)",
+    re.IGNORECASE,
+)
 
 def get_secret(name, default=None):
     """Read Streamlit Secrets first, then environment variables, preserving explicit empty values."""
@@ -226,6 +244,10 @@ Chất lượng trả lời:
 - Không bịa dữ kiện, dịch vụ, số điện thoại hay khả năng của ứng dụng. Nói rõ khi
   chưa chắc; phân biệt thông tin đã biết với suy đoán. Không yêu cầu mật khẩu,
   địa chỉ nhà hoặc thông tin định danh nhạy cảm.
+- Với câu hỏi về sự kiện, tác phẩm, nhân vật hoặc thông tin bên ngoài cuộc trò
+  chuyện, không dùng trí nhớ của mô hình để khẳng định chi tiết cụ thể. Nếu không
+  có nguồn xác minh trong lượt trả lời, hãy nói rõ là chưa xác minh được và không
+  tự suy ra cốt truyện, động cơ, tính cách hoặc thông tin còn thiếu.
 
 An toàn:
 - Không chẩn đoán, kê đơn, đưa hướng dẫn điều trị hoặc thay thế chuyên gia.
@@ -268,6 +290,10 @@ Quality:
   in order and state assumptions when needed.
 - Do not invent facts, services, phone numbers, or app capabilities. State
   uncertainty plainly. Never request passwords, home addresses, or sensitive IDs.
+- For questions about events, works, characters, or facts outside the conversation,
+  do not rely on model memory to assert specific details. If the reply has no
+  verifiable source, say so plainly and do not infer missing plot points, motives,
+  personalities, or other details.
 
 Safety:
 - Do not diagnose, prescribe, provide treatment instructions, or replace a
@@ -1482,6 +1508,157 @@ def get_gemini_http_session():
     return http
 
 
+def latest_user_message(history):
+    for message in reversed(history or []):
+        if (
+            isinstance(message, dict)
+            and message.get("role") == "user"
+            and isinstance(message.get("content"), str)
+        ):
+            return message["content"].strip()
+    return ""
+
+
+def should_use_grounded_search(history):
+    """Use web grounding only for clear factual lookups, never personal disclosures."""
+    query = latest_user_message(history)
+    if not query or len(query) > 3000:
+        return False
+    if GROUNDING_SENSITIVE_PATTERN.search(query):
+        return False
+    return bool(GROUNDING_LOOKUP_PATTERN.search(query))
+
+
+def extract_grounded_answer(response_data):
+    """Read the model answer and URL citations from a non-streaming Interaction."""
+    interaction = response_data.get("interaction", response_data)
+    steps = interaction.get("steps", []) if isinstance(interaction, dict) else []
+    answer_parts = []
+    citations = []
+    seen_urls = set()
+
+    for step in steps if isinstance(steps, list) else []:
+        if not isinstance(step, dict) or step.get("type") != "model_output":
+            continue
+        content_blocks = step.get("content", [])
+        for block in content_blocks if isinstance(content_blocks, list) else []:
+            if not isinstance(block, dict) or block.get("type") != "text":
+                continue
+            text = block.get("text")
+            if isinstance(text, str) and text.strip():
+                answer_parts.append(text.strip())
+            annotations = block.get("annotations", [])
+            for annotation in annotations if isinstance(annotations, list) else []:
+                if not isinstance(annotation, dict) or annotation.get("type") != "url_citation":
+                    continue
+                url = str(annotation.get("url") or "").strip()
+                title = str(annotation.get("title") or "").strip()
+                parsed_url = urlsplit(url)
+                if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc or url in seen_urls:
+                    continue
+                seen_urls.add(url)
+                title = re.sub(r"[\[\]()!*_`<>\\\r\n]", "", title).strip()[:100]
+                citations.append((title or parsed_url.netloc, url))
+
+    return "\n\n".join(answer_parts).strip(), citations
+
+
+def generate_grounded_reply(history, system_prompt):
+    """Answer public factual lookups only when Gemini returns source citations."""
+    query = latest_user_message(history)
+    is_vi = system_prompt.startswith("Bạn là SkyeChat") or bool(
+        re.search(r"[À-ỹ]|\b(?:là|của|nhân vật|tác phẩm)\b", query, re.IGNORECASE)
+    )
+    no_source_reply = (
+        "Mình chưa xác minh được thông tin này từ nguồn có thể dẫn lại nên không muốn đoán. "
+        "Bạn có thể gửi thêm tên tác phẩm hoặc một đường dẫn để mình dựa vào đó."
+        if is_vi
+        else "I couldn't verify this from a source I can cite, so I don't want to guess. "
+        "Please share the exact title or a link I can use."
+    )
+    request_failed_reply = (
+        "Lượt này mình chưa tra cứu xác minh được thông tin, nên mình không muốn trả lời như thể chắc chắn. "
+        "Bạn thử lại sau hoặc gửi một nguồn tham khảo nhé."
+        if is_vi
+        else "I couldn't verify this lookup right now, so I don't want to present a guess as fact. "
+        "Please try again later or share a reference."
+    )
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "x-goog-api-key": GEMINI_API_KEY,
+    }
+    grounding_rule = (
+        "\n\nFACT CHECKING RULE: Use Google Search for this answer. State only claims supported by the search results, "
+        "and do not fill gaps from memory or inference. If sources do not clearly answer the question or conflict, "
+        "say that it could not be verified. Keep the answer concise."
+    )
+    model_candidates = (PRIMARY_MODEL, FALLBACK_MODEL, FAST_MODEL)
+    models = list(dict.fromkeys(model for model in model_candidates if model))
+    http = get_gemini_http_session()
+
+    for model in models:
+        model_thinking_level = select_gemini_thinking_level(history, model)
+        request_payload = {
+            "model": model,
+            "system_instruction": f"{system_prompt}{grounding_rule}",
+            # Send only the explicit lookup question; avoid forwarding prior private chat turns to Search.
+            "input": query,
+            "tools": [{"type": "google_search"}],
+            "stream": False,
+            "store": False,
+            "service_tier": "standard",
+            "generation_config": {
+                "max_output_tokens": select_gemini_max_output_tokens(history),
+                "thinking_level": model_thinking_level,
+            },
+        }
+        try:
+            response = http.post(
+                API_BASE,
+                json=request_payload,
+                headers=headers,
+                timeout=(5, GEMINI_READ_TIMEOUT_SECONDS),
+            )
+            if response.status_code != 200:
+                if response.status_code in {403, 404}:
+                    continue
+                LOGGER.warning("Gemini grounded lookup failed status=%s", response.status_code)
+                yield request_failed_reply
+                return
+            try:
+                response_data = response.json()
+            except ValueError:
+                yield request_failed_reply
+                return
+            if isinstance(response_data, dict) and response_data.get("error"):
+                LOGGER.warning("Gemini grounded lookup returned an API error")
+                yield request_failed_reply
+                return
+            interaction = response_data.get("interaction", response_data)
+            if isinstance(interaction, dict) and interaction.get("status") not in (None, "completed"):
+                yield request_failed_reply
+                return
+
+            answer, citations = extract_grounded_answer(response_data)
+            if not answer or not citations:
+                yield no_source_reply
+                return
+            source_lines = []
+            for title, url in citations[:6]:
+                safe_url = url.replace("(", "%28").replace(")", "%29").replace(" ", "%20")
+                source_lines.append(f"- [{title}]({safe_url})")
+            source_heading = "**Nguồn tham khảo:**" if is_vi else "**Sources:**"
+            yield f"{answer}\n\n{source_heading}\n" + "\n".join(source_lines)
+            return
+        except requests.RequestException as exc:
+            LOGGER.warning("Gemini grounded lookup network error (%s)", type(exc).__name__)
+            yield request_failed_reply
+            return
+
+    yield request_failed_reply
+
+
 def generate_reply(
     history,
     system_prompt,
@@ -1492,6 +1669,10 @@ def generate_reply(
     """Stream a reply from Gemini, retrying transient failures with backoff."""
     if not GEMINI_API_KEY:
         raise GeminiAPIError("Gemini is not configured.")
+
+    if not _continuation_token and should_use_grounded_search(history):
+        yield from generate_grounded_reply(history, system_prompt)
+        return
 
     interaction_input = prepare_gemini_input(history)
     headers = {
