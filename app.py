@@ -7,12 +7,13 @@ import random
 import re
 import inspect
 import secrets
+import threading
 import time
 import uuid
 from html import escape
 from datetime import datetime
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import requests
@@ -50,25 +51,59 @@ GEMINI_SERVICE_TIER = "standard"
 # Keep three recent exchanges in the model request to reduce prompt processing time.
 MAX_HISTORY_MESSAGES = 6
 MAX_STORED_MESSAGES = 64
+MAX_CHAT_THREADS = 20
 MAX_RETRIES = 2
 MAX_CONTINUATION_HOPS = 2
 GEMINI_READ_TIMEOUT_SECONDS = 75
+CHAT_MIN_INTERVAL_SECONDS = 1.5
+CHAT_MAX_REQUESTS_PER_HOUR = 40
 GROUNDING_LOOKUP_PATTERN = re.compile(
-    r"(?:\b(?:who\s+(?:is|was)|what\s+(?:is|are|was|were|happened)|when\s+(?:did|was|is)|"
-    r"where\s+(?:is|was|can)|which\s+(?:characters?|people|versions?|years?)|why\s+(?:did|is|was)|how\s+many|"
+    r"(?:\b(?:who\s+(?:is|was|won|wrote|plays|created|invented)|"
+    r"what\s+(?:is|are|was|were|happened|does|did|caused|means)|"
+    r"when\s+(?:did|was|is|will)|where\s+(?:is|was|can|did)|"
+    r"which\s+(?:characters?|people|versions?|years?|one|country|team)|"
+    r"why\s+(?:did|does|is|was|are)|how\s+(?:many|much|old|long|far|often|does|did|is|are)|"
+    r"how\s+to\b|tell\s+me\s+about|explain|define|describe|summarize|compare|list|"
+    r"difference\s+between|meaning\s+of|documentation|tutorial|specification|symptoms?|side\s+effects|"
     r"source|citation|fact|plot|storyline|characters?|lore|canon|latest|current|price|"
     r"release\s+date|is\s+it\s+true|did\s+it\s+happen)\b|"
-    r"là\s+ai|ai\s+là|là\s+gì|ở\s+đâu|khi\s+nào|năm\s+nào|bao\s+nhiêu|"
+    r"là\s+ai|ai\s+là|là\s+gì|nghĩa\s+là\s+gì|ở\s+đâu|khi\s+nào|năm\s+nào|bao\s+nhiêu|"
     r"thông\s+tin|sự\s+thật|sự\s+kiện|cốt\s+truyện|nhân\s+vật|tác\s+phẩm|"
     r"nguồn|trích\s+dẫn|mới\s+nhất|hiện\s+tại|phiên\s+bản|ngày\s+phát\s+hành|"
-    r"có\s+thật\s+không|có\s+đúng\s+không|có\s+phải|vì\s+sao|tại\s+sao)",
+    r"kể\s+về|hướng\s+dẫn|định\s+nghĩa|mô\s+tả|tóm\s+tắt|so\s+sánh|liệt\s+kê|"
+    r"khác\s+nhau|triệu\s+chứng|tác\s+dụng\s+phụ|thông\s+số|tài\s+liệu|"
+    r"cách\s+(?:làm|dùng|cài|kết\s+nối|thiết\s+lập|sửa|tạo|đổi)|"
+    r"giải\s+thích(?:\s+(?:ai|gì|vì\s+sao|cách))?|có\s+thật\s+không|"
+    r"có\s+đúng\s+không|có\s+phải|vì\s+sao|tại\s+sao)",
     re.IGNORECASE,
 )
 GROUNDING_SENSITIVE_PATTERN = re.compile(
-    r"(?:cảm\s+thấy|buồn|lo\s+lắng|hoảng\s+sợ|tổn\s+thương|tự\s+tử|"
-    r"tự\s+làm\s+hại|không\s+muốn\s+sống|khủng\s+hoảng|đang\s+gặp\s+nguy\s+hiểm|"
-    r"\b(?:i\s+feel|i\s+am\s+feeling|i'm\s+feeling|sad|anxious|panic|hurt|"
+    r"(?:cảm\s+thấy|buồn|lo\s+lắng|hoảng\s+sợ|tổn\s+thương|tâm\s+lý|trầm\s+cảm|"
+    r"lo\s+âu|tự\s+tử|tự\s+làm\s+hại|không\s+muốn\s+sống|khủng\s+hoảng|"
+    r"bạo\s+hành|bị\s+đánh|xâm\s+hại|bắt\s+nạt|đe\s+dọa|muốn\s+hại\s+mình|"
+    r"đang\s+gặp\s+nguy\s+hiểm|không\s+an\s+toàn|mình\s+nên\s+làm\s+gì|"
+    r"tôi\s+nên\s+làm\s+gì|giúp\s+(?:tôi|mình)\s+(?:với|xử\s+lý)|"
+    r"\b(?:i\s+feel|i\s+am\s+feeling|i'm\s+feeling|sad|anxious|anxiety|depress(?:ed|ion)|"
+    r"panic|hurt|abuse|abused|assault|stalk(?:ed|ing)|bullied|threatened|unsafe|"
+    r"trauma|therap(?:y|ist)|psychologist|mental\s+health|what\s+should\s+i\s+do|"
+    r"how\s+can\s+i\s+(?:cope|deal\s+with|handle)|how\s+to\s+(?:cope|deal\s+with|calm\s+down)|"
+    r"help\s+me\s+(?:cope|deal\s+with)|"
     r"suicid(?:e|al)|self[- ]harm|crisis|in\s+danger)\b)",
+    re.IGNORECASE,
+)
+IMMEDIATE_CRISIS_PATTERN = re.compile(
+    r"(?:\b(?:i\s+(?:want\s+to|plan\s+to|am\s+going\s+to|might|will)\s+"
+    r"(?:kill\s+myself|end\s+my\s+life|hurt\s+myself|self[- ]harm)|"
+    r"i\s+want\s+to\s+die|i\s+don't\s+want\s+to\s+(?:live|be\s+alive)|"
+    r"i(?:'m|\s+am)\s+(?:feeling\s+)?suicidal|thinking\s+about\s+(?:suicide|ending\s+my\s+life)|"
+    r"(?:(?:my\s+friend|someone\s+i\s+know|they)\s+(?:is|are)\s+suicidal|"
+    r"(?:my\s+friend|someone\s+i\s+know|they)\s+(?:wants?\s+to|plans?\s+to|is\s+going\s+to|are\s+going\s+to)\s+"
+    r"(?:die|kill\s+themselves|end\s+their\s+life|hurt\s+themselves))|"
+    r"i(?:'m|\s+am)\s+(?:in\s+immediate\s+danger|not\s+safe))\b|"
+    r"(?:tôi|mình|em|anh|chị)?\s*(?:đang\s+)?(?:muốn|định|sẽ|nghĩ\s+đến|chuẩn\s+bị)\s*"
+    r"(?:tự\s+tử|tự\s+sát|tự\s+làm\s+hại\s+(?:bản\s+thân|mình)?|"
+    r"kết\s+thúc\s+(?:cuộc\s+đời|mọi\s+thứ)|chết)|"
+    r"không\s+muốn\s+sống\s+nữa|không\s+an\s+toàn\s+(?:ngay\s+lúc\s+này|bây\s+giờ))",
     re.IGNORECASE,
 )
 
@@ -267,6 +302,8 @@ An toàn:
   dịch vụ khẩn cấp tại địa phương và nhờ một người tin cậy ở bên. Không cung cấp
   cách tự làm hại, không tranh luận, phán xét hay làm nhẹ nguy cơ. Không chờ chatbot
   xử lý thay hỗ trợ trực tiếp.
+- Nếu người dùng cho biết mình chưa đủ 18 tuổi, khuyến khích họ tìm một người lớn
+  đáng tin cậy hoặc nhân viên hỗ trợ phù hợp; không mặc định gia đình là nơi an toàn.
 - Không khuyến khích lệ thuộc vào AI, không tuyên bố là người duy nhất hiểu họ,
   luôn ở bên, hoặc có thể giữ bí mật tuyệt đối.
 - Tự kiểm tra câu trả lời có bám câu hỏi, có suy diễn quá mức và có an toàn không.
@@ -325,6 +362,8 @@ Safety:
   harm, contacting local emergency services, and asking someone trusted to stay.
   Never provide self-harm instructions or minimize the risk. Do not make a chatbot
   conversation a substitute for immediate human help.
+- If the user says they are under 18, encourage support from a trusted adult or
+  appropriate support professional; do not assume that family is a safe option.
 - Do not encourage dependence on AI or claim to be the only one who understands,
   always available, or able to keep absolute confidentiality.
 - Silently check relevance, assumptions, and safety before answering. Show only
@@ -342,11 +381,11 @@ respond only to the latest user message.
 # ==============================
 SKYECHAT_GUIDE_VI = """
 Hướng dẫn trò chuyện riêng của SkyeChat:
-- SkyeChat do Nguyễn Lâm Thanh, học sinh lớp 11A Trường THCS-THPT Phong Thạnh, tạo ra. Dự án bắt đầu từ mong muốn giúp người ở địa phương và những nơi khó tiếp cận dịch vụ tâm lý dễ tìm được một điểm tựa ban đầu.
-- Chỉ kể thông tin người sáng lập hoặc sứ mệnh khi người dùng hỏi, hoặc khi điều đó thật sự liên quan; không tự quảng bá trong mỗi cuộc trò chuyện.
+- SkyeChat là dự án AI đồng hành đang phát triển, hướng tới việc tạo một điểm tựa ban đầu dễ tiếp cận cho người cần được lắng nghe.
+- Chỉ chia sẻ tên thương hiệu hoặc sứ mệnh khi người dùng hỏi hoặc khi thật sự liên quan; không tiết lộ thông tin tiểu sử riêng của người tạo ra dự án.
 - Trình bày sứ mệnh như một mong muốn đang được xây dựng, không khẳng định SkyeChat đã thay thế được bác sĩ tâm lý, chuyên gia hay trung tâm tư vấn.
 - SkyeChat là AI đồng hành, không phải bác sĩ hoặc nhà tâm lý học; không chẩn đoán hay điều trị. Khuyến khích hỗ trợ từ người đáng tin cậy và chuyên gia khi phù hợp.
-- Tôn trọng hoàn cảnh, văn hóa và khả năng tiếp cận dịch vụ khác nhau; không mặc định người dùng đang sống ở địa phương của người sáng lập.
+- Tôn trọng hoàn cảnh, văn hóa và khả năng tiếp cận dịch vụ khác nhau; không mặc định người dùng đang sống ở cùng địa phương với dự án.
 - Lắng nghe trước, phản hồi cảm xúc bằng giọng ấm áp và không phán xét.
 - Hỏi từng câu ngắn, không gây áp lực để người dùng phải kể thêm.
 - Khi người dùng lo lắng về công việc, quan hệ hoặc một quyết định, giúp họ gọi
@@ -359,11 +398,11 @@ Hướng dẫn trò chuyện riêng của SkyeChat:
 
 SKYECHAT_GUIDE_EN = """
 SkyeChat conversation guide:
-- SkyeChat was created by Nguyễn Lâm Thanh, a Grade 11A student at Phong Thạnh Lower and Upper Secondary School. The project began with a wish to make an approachable first point of emotional support easier to reach locally and in places where professional services are difficult to access.
-- Share the creator or mission details only when asked or when directly relevant; do not turn ordinary conversations into promotion.
+- SkyeChat is an AI companion project in development, intended to offer an approachable first point of support for people who need to be heard.
+- Share the brand or mission only when asked or directly relevant; do not disclose private biographical details about the creator.
 - Describe the mission as an aspiration the project is working toward. Never claim SkyeChat has replaced psychologists, clinicians, or counseling centers.
 - SkyeChat is an AI companion, not a doctor or psychologist; it does not diagnose or treat. Encourage trusted people and qualified professionals when appropriate.
-- Respect differences in culture, circumstances, and access to care; do not assume the user lives near the creator.
+- Respect differences in culture, circumstances, and access to care; do not assume the user lives near the project.
 - Listen first and respond to feelings with warmth and without judgment.
 - Ask one brief question at a time; do not pressure the user to share more.
 - If someone is worried about work, a relationship, or a decision, help identify
@@ -552,6 +591,24 @@ def chat_title_from_messages(messages):
     return ""
 
 
+def trim_chat_threads():
+    """Keep only the most recent chats in this Streamlit session."""
+    threads = st.session_state.get("chat_threads")
+    if not isinstance(threads, list):
+        st.session_state.chat_threads = []
+        return
+    threads = [thread for thread in threads if isinstance(thread, dict)]
+    active_id = st.session_state.get("active_chat_id")
+    threads.sort(
+        key=lambda item: (
+            item.get("id") == active_id,
+            float(item.get("updated_at", 0) or 0),
+        ),
+        reverse=True,
+    )
+    st.session_state.chat_threads = threads[:MAX_CHAT_THREADS]
+
+
 def sync_active_chat_thread():
     """Persist the current transcript in the session-only conversation list."""
     threads = st.session_state.get("chat_threads")
@@ -568,6 +625,7 @@ def sync_active_chat_thread():
     thread["updated_at"] = time.time()
     if not thread.get("title"):
         thread["title"] = chat_title_from_messages(thread["messages"])
+    trim_chat_threads()
     return thread
 
 
@@ -577,6 +635,7 @@ def begin_new_chat():
         current = make_chat_thread()
         st.session_state.chat_threads.insert(0, current)
         st.session_state.active_chat_id = current["id"]
+        trim_chat_threads()
     else:
         current["title"] = ""
         current["updated_at"] = time.time()
@@ -606,8 +665,8 @@ def open_chat_thread(thread_id):
 
 
 FENCED_CODE_BLOCK_PATTERN = re.compile(
-    r"(?ms)^[ \t]{0,3}(?P<fence>`{3,}|~{3,})(?P<info>[^\r\n]*)\r?\n"
-    r"(?P<code>.*?)(?:\r?\n)[ \t]{0,3}(?P=fence)[ \t]*$"
+    r"(?ms)^[ \t]{0,3}(?P<fence>`{3,}|~{3,})(?P<info>[^\n]*)\n?\n"
+    r"(?P<code>.*?)(?:\n?\n)[ \t]{0,3}(?P=fence)[ \t]*$"
 )
 CODE_LANGUAGE_ALIASES = {
     "py": "python", "js": "javascript", "ts": "typescript", "sh": "bash",
@@ -641,7 +700,7 @@ def render_chat_message_content(content):
         if language not in SUPPORTED_CODE_LANGUAGES:
             language = None
 
-        code = match.group("code").rstrip("\r\n")
+        code = match.group("code").rstrip("\n")
         code_kwargs = {"language": language}
         try:
             if "wrap_lines" in inspect.signature(st.code).parameters:
@@ -1411,6 +1470,13 @@ class GeminiAPIError(RuntimeError):
         self.api_code = api_code
 
 
+class ChatRateLimitError(RuntimeError):
+    def __init__(self, retry_after_seconds, limit_kind):
+        super().__init__("The chat request limit was reached.")
+        self.retry_after_seconds = max(1, int(retry_after_seconds + 0.999))
+        self.limit_kind = limit_kind
+
+
 def api_error_details(response):
     try:
         data = response.json()
@@ -1541,6 +1607,71 @@ def latest_user_message(history):
     return ""
 
 
+def is_immediate_crisis_message(history):
+    """Recognize a small set of explicit, first-person urgent-risk statements."""
+    return bool(IMMEDIATE_CRISIS_PATTERN.search(latest_user_message(history)))
+
+
+def immediate_crisis_reply(is_vi):
+    if is_vi:
+        return (
+            "Mình nghe điều bạn vừa nói và muốn ưu tiên an toàn của bạn lúc này. Bạn hoặc người bạn đang lo cho "
+            "có đang gặp nguy hiểm ngay bây giờ, hoặc đã chuẩn bị làm hại bản thân không? Nếu có, hãy gọi dịch vụ "
+            "khẩn cấp tại nơi bạn đang ở hoặc đến khoa cấp cứu gần nhất; nếu có thể, sang chỗ có người và nhờ một "
+            "người bạn tin cậy ở cạnh, đồng thời tạo khoảng cách với những thứ có thể gây thương tích. Nếu bạn chưa "
+            "đủ 18 tuổi, hãy tìm một người lớn đáng tin cậy ngay. Bạn có thể cho mình biết bạn đang an toàn không; "
+            "không cần chia sẻ địa chỉ."
+        )
+    return (
+        "I hear what you just shared, and I want to focus on safety right now. Are you or the person you are worried "
+        "about in immediate danger, or have they prepared to hurt themselves? If yes, contact the local emergency "
+        "service or go to the nearest emergency department; if possible, move near other people, ask someone trusted "
+        "to stay, and create distance from anything that could cause injury. If you are under 18, reach out to a "
+        "trusted adult now. You can tell me whether you are safe; you do not need to share your address."
+    )
+
+
+@st.cache_resource(show_spinner=False)
+def get_chat_rate_limit_store():
+    """Share in-memory rate-limit buckets across sessions in this app process."""
+    return {"lock": threading.Lock(), "requests": {}}
+
+
+def reserve_chat_request(state, now=None, store=None):
+    """Apply an in-process account/session cooldown and rolling hourly cap."""
+    now = time.monotonic() if now is None else float(now)
+    store = store or get_chat_rate_limit_store()
+    user_id = str(state.get("auth_user_id") or "").strip()
+    if user_id:
+        bucket_key = f"user:{user_id}"
+    else:
+        session_id = state.get("_chat_rate_session_id")
+        if not session_id:
+            session_id = secrets.token_urlsafe(24)
+            state["_chat_rate_session_id"] = session_id
+        bucket_key = f"session:{session_id}"
+
+    with store["lock"]:
+        buckets = store["requests"]
+        for key, values in list(buckets.items()):
+            active = [stamp for stamp in values if now - 3600 < stamp <= now]
+            if active:
+                buckets[key] = active
+            else:
+                del buckets[key]
+        recent_times = buckets.get(bucket_key, [])
+        cooldown_remaining = CHAT_MIN_INTERVAL_SECONDS - (
+            now - recent_times[-1] if recent_times else CHAT_MIN_INTERVAL_SECONDS
+        )
+        if recent_times and cooldown_remaining > 0:
+            return cooldown_remaining, "cooldown"
+        if len(recent_times) >= CHAT_MAX_REQUESTS_PER_HOUR:
+            return max(1.0, recent_times[0] + 3600 - now), "hourly"
+
+        buckets[bucket_key] = [*recent_times, now]
+    return None
+
+
 def should_use_grounded_search(history):
     """Use web grounding only for clear factual lookups, never personal disclosures."""
     query = latest_user_message(history)
@@ -1553,8 +1684,12 @@ def should_use_grounded_search(history):
 
 def extract_grounded_answer(response_data):
     """Read the model answer and URL citations from a non-streaming Interaction."""
+    if not isinstance(response_data, dict):
+        return "", []
     interaction = response_data.get("interaction", response_data)
-    steps = interaction.get("steps", []) if isinstance(interaction, dict) else []
+    if not isinstance(interaction, dict):
+        return "", []
+    steps = interaction.get("steps", [])
     answer_parts = []
     citations = []
     seen_urls = set()
@@ -1567,20 +1702,55 @@ def extract_grounded_answer(response_data):
             if not isinstance(block, dict) or block.get("type") != "text":
                 continue
             text = block.get("text")
-            if isinstance(text, str) and text.strip():
-                answer_parts.append(text.strip())
+            if not isinstance(text, str) or not text.strip():
+                continue
             annotations = block.get("annotations", [])
+            insertions = []
+            seen_insertions = set()
             for annotation in annotations if isinstance(annotations, list) else []:
                 if not isinstance(annotation, dict) or annotation.get("type") != "url_citation":
                     continue
                 url = str(annotation.get("url") or "").strip()
-                title = str(annotation.get("title") or "").strip()
-                parsed_url = urlsplit(url)
-                if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc or url in seen_urls:
+                try:
+                    parsed_url = urlsplit(url)
+                    hostname = parsed_url.hostname
+                    parsed_url.port
+                except ValueError:
                     continue
-                seen_urls.add(url)
-                title = re.sub(r"[\[\]()!*_`<>\\\r\n]", "", title).strip()[:100]
-                citations.append((title or parsed_url.netloc, url))
+                start = annotation.get("start_index")
+                end = annotation.get("end_index")
+                if (
+                    parsed_url.scheme not in {"http", "https"}
+                    or not hostname
+                    or parsed_url.username is not None
+                    or parsed_url.password is not None
+                    or type(start) is not int
+                    or type(end) is not int
+                    or start < 0
+                    or end <= start
+                    or end > len(text)
+                ):
+                    continue
+                insertion_key = (url, start, end)
+                if insertion_key in seen_insertions:
+                    continue
+                seen_insertions.add(insertion_key)
+                if url not in seen_urls:
+                    seen_urls.add(url)
+                    citations.append((hostname, url))
+                citation_number = next(
+                    index for index, (_, known_url) in enumerate(citations, start=1)
+                    if known_url == url
+                )
+                safe_url = quote(url, safe=":/?#@!$&'()*+,;=%")
+                safe_url = safe_url.replace("(", "%28").replace(")", "%29")
+                label = "nguồn" if re.search(r"[À-ỹ]", text) else "source"
+                insertions.append((end, citation_number, f" ([{label} {citation_number}](<{safe_url}>))"))
+
+            rendered_text = text
+            for end, _number, citation_link in sorted(insertions, reverse=True):
+                rendered_text = rendered_text[:end] + citation_link + rendered_text[end:]
+            answer_parts.append(rendered_text.strip())
 
     return "\n\n".join(answer_parts).strip(), citations
 
@@ -1643,17 +1813,27 @@ def generate_grounded_reply(history, system_prompt):
                 timeout=(5, GEMINI_READ_TIMEOUT_SECONDS),
             )
             if response.status_code != 200:
-                if response.status_code in {403, 404}:
-                    continue
-                LOGGER.warning("Gemini grounded lookup failed status=%s", response.status_code)
-                yield request_failed_reply
-                return
+                if response.status_code in {403, 404, 408, 429, 500, 502, 503, 504}:
+                    if model != models[-1]:
+                        continue
+                    LOGGER.warning(
+                        "Gemini grounded lookup failed status=%s", response.status_code
+                    )
+                    yield request_failed_reply
+                    return
+                else:
+                    LOGGER.warning("Gemini grounded lookup failed status=%s", response.status_code)
+                    yield request_failed_reply
+                    return
             try:
                 response_data = response.json()
             except ValueError:
                 yield request_failed_reply
                 return
-            if isinstance(response_data, dict) and response_data.get("error"):
+            if not isinstance(response_data, dict):
+                yield request_failed_reply
+                return
+            if response_data.get("error"):
                 LOGGER.warning("Gemini grounded lookup returned an API error")
                 yield request_failed_reply
                 return
@@ -1666,12 +1846,7 @@ def generate_grounded_reply(history, system_prompt):
             if not answer or not citations:
                 yield no_source_reply
                 return
-            source_lines = []
-            for title, url in citations[:6]:
-                safe_url = url.replace("(", "%28").replace(")", "%29").replace(" ", "%20")
-                source_lines.append(f"- [{title}]({safe_url})")
-            source_heading = "**Nguồn tham khảo:**" if is_vi else "**Sources:**"
-            yield f"{answer}\n\n{source_heading}\n" + "\n".join(source_lines)
+            yield answer
             return
         except requests.RequestException as exc:
             LOGGER.warning("Gemini grounded lookup network error (%s)", type(exc).__name__)
@@ -1687,8 +1862,18 @@ def generate_reply(
     _continuation_token=None,
     _continuation_hops=0,
     _model_override=None,
+    _rate_limit_reserved=False,
 ):
     """Stream a reply from Gemini, retrying transient failures with backoff."""
+    if not _continuation_token and is_immediate_crisis_message(history):
+        yield immediate_crisis_reply(system_prompt.startswith("Bạn là SkyeChat"))
+        return
+
+    if not _continuation_token and not _rate_limit_reserved:
+        rate_limit = reserve_chat_request(st.session_state)
+        if rate_limit:
+            raise ChatRateLimitError(*rate_limit)
+
     if not GEMINI_API_KEY:
         raise GeminiAPIError("Gemini is not configured.")
 
@@ -1890,6 +2075,19 @@ def generate_reply(
 
 def friendly_chat_error(exc, is_vi):
     """Keep technical details out of the user-facing error message."""
+    if isinstance(exc, ChatRateLimitError):
+        if exc.limit_kind == "hourly":
+            wait_minutes = max(1, (exc.retry_after_seconds + 59) // 60)
+            return (
+                f"Bạn đã chạm giới hạn tạm thời. Hãy thử lại sau khoảng {wait_minutes} phút nhé."
+                if is_vi
+            else f"You've reached the temporary chat limit. Please try again in about {wait_minutes} minutes."
+            )
+        return (
+            "Bạn chờ một chút rồi gửi tiếp nhé."
+            if is_vi
+            else "Please wait a moment before sending another message."
+        )
     status = getattr(exc, "status_code", None)
     if status is None:
         status = {
@@ -2498,9 +2696,13 @@ else:
         )
 
     st.caption(
-        "Vì quyền riêng tư của bạn, đừng chia sẻ mật khẩu, địa chỉ nhà hoặc thông tin nhận dạng nhạy cảm."
+        "Tin nhắn được gửi tới Google Gemini để tạo phản hồi; lịch sử chat chỉ được giữ trong phiên ứng dụng hiện tại. "
+        "Nhật ký bạn chủ động lưu được lưu trong Supabase theo tài khoản. SkyeChat dùng AI nên đôi khi có thể sai và không thay thế chuyên gia. "
+        "Đừng chia sẻ mật khẩu, địa chỉ nhà hoặc thông tin nhận dạng nhạy cảm."
         if is_vi
-        else "For your privacy, do not share passwords, home addresses, or sensitive identifying information."
+        else "Messages are sent to Google Gemini to generate replies; chat history is kept only in the current app session. "
+        "Journal entries you choose to save are stored in Supabase under your account. SkyeChat uses AI and can be wrong; it is not a substitute for professional care. "
+        "Do not share passwords, home addresses, or sensitive identifying information."
     )
 
     if not st.session_state.messages:
@@ -2576,6 +2778,15 @@ else:
     prompt = queued_prompt or chat_input_prompt
     if prompt and prompt.strip():
         prompt = prompt.strip()
+        crisis_request = is_immediate_crisis_message(
+            [{"role": "user", "content": prompt}]
+        )
+        if not crisis_request:
+            rate_limit = reserve_chat_request(st.session_state)
+            if rate_limit:
+                st.warning(friendly_chat_error(ChatRateLimitError(*rate_limit), is_vi))
+                prompt = None
+    if prompt and prompt.strip():
         candidate_history = [*st.session_state.messages, {"role": "user", "content": prompt}]
         # Keep the user's turn even if Gemini is temporarily unavailable.
         st.session_state.messages = candidate_history[-MAX_STORED_MESSAGES:]
@@ -2590,6 +2801,7 @@ else:
                         generate_reply(
                             candidate_history,
                             build_system_prompt(is_vi, st.session_state.support_style),
+                            _rate_limit_reserved=not crisis_request,
                         )
                     )
             if not isinstance(reply, str) or not reply.strip():
